@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+    <TextView
+        android:id="@+id/enterscreen"
+        android:gravity="center_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="51dp"
+        android:text="Connect to a boat"
+        android:textSize="@dimen/open"
+
+        />
+
+    <TextView
+        android:id="@+id/ipaddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal|center_vertical"
+        android:paddingLeft="10dp"
+
+        android:text="IP Address"
+        />
+
+    <EditText
+        android:id="@+id/ipAddress1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="XXX.XXX.XXX.XXX"
+        android:inputType="" />
+
+
+    <!--<TextView-->
+        <!--android:paddingLeft="10dp"-->
+        <!--android:id="@+id/phoneId"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Phone ID number" />-->
+
+    <!--<EditText-->
+        <!--android:id="@+id/phoneIDNumber"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:hint="XX"-->
+        <!--android:inputType="number" />-->
+
+
+    <!--<TextView-->
+        <!--android:paddingLeft="10dp"-->
+        <!--android:id="@+id/color"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Color" />-->
+
+    <!--&lt;!&ndash;  &ndash;&gt;-->
+
+    <!--<EditText-->
+        <!--android:id="@+id/colorBox"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_gravity="left"-->
+        <!--android:inputType="text" >-->
+<!--
+    </EditText>
+-->
+        <RadioGroup
+        android:id="@+id/simvsactual"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <RadioButton
+            android:id="@+id/actualBoatRadio"
+            android:layout_width="wrap_content"
+            android:layout_height="52dp"
+            android:checked="true"
+            android:text="ActualBoat" />
+        <RadioButton
+            android:id="@+id/simulationRadio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:paddingRight="15dp"
+            android:text="Simulation" />
+    </RadioGroup>
+
+    <RadioGroup
+        android:id="@+id/connecttype"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <RadioButton
+            android:id="@+id/reg"
+            android:layout_width="wrap_content"
+            android:layout_height="52dp"
+            android:checked="true"
+            android:text="Registry" />
+        <RadioButton
+            android:id="@+id/wifi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:paddingRight="15dp"
+            android:text="Direct IP" />
+    </RadioGroup>
+
+
+    <Button
+        android:id="@+id/submit"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="Connect" />
+
+</LinearLayout><!-- From: file:/Users/zeshengxi/AndroidStudio/MapBox/Platypus-Android/app/src/main/res/layout/connectdialog.xml -->

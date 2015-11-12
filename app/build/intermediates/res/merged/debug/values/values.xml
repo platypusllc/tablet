@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- From: file:/Users/zeshengxi/AndroidStudio/MapBox/Platypus-Android/app/src/main/res/values/colors.xml -->
+    <eat-comment/>
+    <color name="asdf">#339900</color>
+    <color name="black">#000000</color>
+    <color name="cyan">#0080FF</color>
+    <color name="green">#080000</color>
+    <color name="red">#FF0000</color>
+    <!-- From: file:/Users/zeshengxi/AndroidStudio/MapBox/Platypus-Android/app/build/intermediates/exploded-aar/com.mapbox.mapboxsdk/mapbox-android-sdk/0.7.4/res/values/values.xml -->
+    <eat-comment/>
+    <color name="white">#FFFFFF</color>
+    <declare-styleable name="MapView"><attr format="string" name="mapid"/><attr format="string" name="accessToken"/><attr format="string" name="centerLat"/><attr format="string" name="centerLng"/><attr format="string" name="zoomLevel"/><attr format="string" name="uiControls"/></declare-styleable>
+    <!-- From: file:/Users/zeshengxi/AndroidStudio/MapBox/Platypus-Android/app/src/main/res/values/dimens.xml -->
+    <eat-comment/>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="open">20dp</dimen>
+    <!-- From: file:/Users/zeshengxi/AndroidStudio/MapBox/Platypus-Android/app/src/main/res/values/strings.xml -->
+    <eat-comment/>
+    <string name="action_settings">Settings</string>
+    <string name="app_name">Platypus Control App</string>
+    <string name="color">Which color will this boat be?</string>
+    <string name="connect">Connect To the Boat</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="ipAddress">Type in the UP Address</string>
+    <!-- From: file:/Users/zeshengxi/AndroidStudio/MapBox/Platypus-Android/app/build/intermediates/exploded-aar/com.mapbox.mapboxsdk/mapbox-android-sdk/0.7.4/res/values/values.xml -->
+    <eat-comment/>
+    <string name="mapboxAndroidSDKVersion">0.7.4</string>
+    <string name="toolTipAddress">Address</string>
+    <string name="toolTipDescription">Description</string>
+    <string name="toolTipTitle">Title</string>
+    <!-- From: file:/Users/zeshengxi/AndroidStudio/MapBox/Platypus-Android/app/src/main/res/values/styles.xml -->
+    <eat-comment/>
+    <style name="AppBaseTheme" parent="android:Theme.Light">
+        <!--
+            Theme customizations available in newer API levels can go in
+            res/values-vXX/styles.xml, while customizations related to
+            backward-compatibility can go here.
+        -->
+    </style>
+    <style name="AppTheme" parent="AppBaseTheme">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+    </style>
+</resources>
