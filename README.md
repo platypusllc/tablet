@@ -1,8 +1,8 @@
 Platypus Android Control App
 
-* Note current used branch is mapbox, this will be merged later
-* Currently connects to the first ip on the registry server, this is being fixed atm
-* If you get a random crash after attempting to connect, restart the app and try again (this should fix it, looking into this as well)
+* This code is used for the tablet control interface, user can operate the boat either by teleopration or waypoint. There are three kinds of sensor data and battery voltage shown on the tablet. 
+* Moved from shatanu's Mapbox branch
+* Using joystick to control the boat
+* Adding the offline map function. 
 
-Please report all issues to issue tracker or email them to me at
-shantanusvyas@gmail.com
+
