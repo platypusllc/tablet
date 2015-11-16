@@ -31,7 +31,7 @@ public final class R {
 		public static final int tooltip_title = 0x7f090038;
 	}
 	public static final class layout {
-		public static final int tooltip = 0x7f030008;
+		public static final int tooltip = 0x7f030009;
 	}
 	public static final class string {
 		public static final int mapboxAndroidSDKVersion = 0x7f070006;

@@ -88,10 +88,11 @@ int layout maptest 0x7f030002
 int layout registryview 0x7f030003
 int layout servertest 0x7f030004
 int layout tabletlayout 0x7f030005
-int layout tabletlayout_vertical 0x7f030006
-int layout teleoppanel 0x7f030007
-int layout tooltip 0x7f030008
-int layout waypointeditor 0x7f030009
+int layout tabletlayout_lg8 0x7f030006
+int layout tabletlayout_vertical 0x7f030007
+int layout teleoppanel 0x7f030008
+int layout tooltip 0x7f030009
+int layout waypointeditor 0x7f03000a
 int menu loading_screen 0x7f080000
 int string action_settings 0x7f070000
 int string app_name 0x7f070001

@@ -151,10 +151,11 @@ containing a value of this type.
         public static final int registryview=0x7f030003;
         public static final int servertest=0x7f030004;
         public static final int tabletlayout=0x7f030005;
-        public static final int tabletlayout_vertical=0x7f030006;
-        public static final int teleoppanel=0x7f030007;
-        public static final int tooltip=0x7f030008;
-        public static final int waypointeditor=0x7f030009;
+        public static final int tabletlayout_lg8=0x7f030006;
+        public static final int tabletlayout_vertical=0x7f030007;
+        public static final int teleoppanel=0x7f030008;
+        public static final int tooltip=0x7f030009;
+        public static final int waypointeditor=0x7f03000a;
     }
     public static final class menu {
         public static final int loading_screen=0x7f080000;

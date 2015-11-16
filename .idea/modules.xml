@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Platypus-Android.iml" filepath="$PROJECT_DIR$/Platypus-Android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Tablet.iml" filepath="$PROJECT_DIR$/Tablet.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
 </project>
-

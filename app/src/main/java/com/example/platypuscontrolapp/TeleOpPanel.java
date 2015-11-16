@@ -1,7 +1,12 @@
 package com.example.platypuscontrolapp;
 //code load waypoitns from file
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -175,6 +180,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     LatLng pHollowStartingPoint = new LatLng((float) 40.436871,
             (float) -79.948825);
     LatLng UCMerced = new LatLng((float)37.400732,(float) -120.487372);
+    LatLng Mapcenter ;
     long lastTime = -1;
     double lat = 10;
     double lon = 10;
@@ -262,8 +268,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     protected void onCreate(Bundle savedInstanceState)   {
         super.onCreate(savedInstanceState);
 
+        this.setContentView(R.layout.tabletlayout_lg8);  // layout for LG GpadF 8
         //this.setContentView(R.layout.tabletlayout);
-        this.setContentView(R.layout.tabletlayout);
 
         ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
         //thrust = (SeekBar) this.findViewById(R.id.thrustBar);
@@ -296,6 +302,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         removeMap = (Button) this.findViewById(R.id.removeMap);
         refreshMap = (Button) this.findViewById(R.id.refreshMap);
         progressBar = (ProgressBar) this.findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.GONE);
         //sensorvalueButton.setTextColor(Color.BLACK);
         //sensorvalueButton.setText("Show SensorData");
       //  sensorValueBox = (TextView) this.findViewById(R.id.SensorValue);
@@ -306,6 +313,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
      // ****************//
         joystick = (JoystickView) findViewById(R.id.joystickView);
         joystick.setYAxisInverted(false);
+
 
 
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -353,7 +361,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 }
                             });
 
-                            mv.setZoom(14);
+                            mv.setZoom(16);
 
 
 //                    mv.setOnTouchListener(new View.OnTouchListener() {
@@ -383,7 +391,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
                     else{
                         if(offlineMapDownloader.getMutableOfflineMapDatabases() != null & offlineMapDownloader.getMutableOfflineMapDatabases().size()>0){
-                            mv.setCenter(pHollowStartingPoint);
+                            //mv.setCenter(pHollowStartingPoint);
                             //Thread threadoffline = new Thread(){
                             //   public void run(){
                             loadOfflineMap();
@@ -392,7 +400,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             //   threadoffline.start();
                         }
                         else{
-                            Toast.makeText(getApplicationContext(),"No OfflineMap available, Connect to Internet", Toast.LENGTH_LONG).show();
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), "No OfflineMap available, Connect to Internet", Toast.LENGTH_LONG).show();
+                                }
+                            });
+
                         }
                     }
                 }
@@ -567,9 +581,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     Toast.makeText(getApplicationContext(), "MapID has already been downloaded.\n" +
                             "Please remove it before trying to download again", Toast.LENGTH_SHORT).show();
                 }
+                Mapcenter = mv.getCenter();
+                writeToFile(Mapcenter.toString());
                 Thread thread = new Thread(){
                     public void run(){
-                        saveOfflineMap();
+                        saveOfflineMap(Mapcenter);
                     }
                 };
                 thread.start();
@@ -580,7 +596,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             @Override
             public void onClick(View v) {
                 //loadOfflineMap();
-                mv.setCenter(pHollowStartingPoint);
+
                 Thread thread = new Thread(){
                     public void run(){
                         loadOfflineMap();
@@ -613,6 +629,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 offlineMapDownloader.removeOfflineMapDatabaseWithID(MapID);
                 Toast.makeText(getApplicationContext(), "Removed OfflineMap", Toast.LENGTH_SHORT).show();
                 progressBar.setProgress(0);
+                String dir = getFilesDir().getAbsolutePath();
+                File file = new File(dir, "Mapcenter.txt");
+                file.delete();
+
 
             }
         });
@@ -622,14 +642,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     }
 
-    private void saveOfflineMap (){
+    private void saveOfflineMap (LatLng Mapcenter){
         offlineMapDownloader = OfflineMapDownloader.getOfflineMapDownloader(this);
        // mv.setCenter(pHollowStartingPoint);
        // mv.setZoom(17);
-        BoundingBox boundingBox = new BoundingBox(new LatLng(40.435203, -79.951636), new LatLng(40.439345, -79.944796));
+
+        //BoundingBox boundingBox = new BoundingBox(new LatLng(40.435203, -79.951636), new LatLng(40.439345, -79.944796));
+
+        BoundingBox boundingBox = new BoundingBox(new LatLng(Mapcenter.getLatitude() -0.003,Mapcenter.getLongitude()-0.003), new LatLng(Mapcenter.getLatitude() +0.003,Mapcenter.getLongitude()+0.003));
         CoordinateSpan span = new CoordinateSpan(boundingBox.getLatitudeSpan(), boundingBox.getLongitudeSpan());
-        CoordinateRegion coordinateRegion = new CoordinateRegion(pHollowStartingPoint, span);
-        offlineMapDownloader.beginDownloadingMapID(MapID, coordinateRegion, 11, 19);
+        CoordinateRegion coordinateRegion = new CoordinateRegion(Mapcenter, span);
+        offlineMapDownloader.beginDownloadingMapID(MapID, coordinateRegion, 17, 19);
 
         OfflineMapDownloaderListener listener = new OfflineMapDownloaderListener() {
             @Override
@@ -682,6 +705,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     @Override
                     public void run() {
                         Toast.makeText(getApplicationContext(), "Finish Saving Map", Toast.LENGTH_LONG).show();
+                        progressBar.setVisibility(View.GONE);
                     }
                 });
 
@@ -712,7 +736,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 @Override
                 public void run() {
                     Marker marker = new Marker("Test", "", pHollowStartingPoint);
-
+                    String mapcenter = readFromFile();
+                    String[] mc  = mapcenter.split(",", 3);
+                    double lat = Double.parseDouble(mc[0]);
+                    double lon = Double.parseDouble(mc[1]);
+                    mv.setCenter(new LatLng(lat, lon));
+                    mv.setZoom(17);
                     mv.setTileSource(new MBTilesLayer(getApplicationContext(), "shantanuv.nkob79p0.mblite"));
                     //mv.addOverlay(offlineMapOverlay);
                    // mv.addMarker(marker);
@@ -730,6 +759,48 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             });
 
         }
+    }
+
+    private void writeToFile(String data) {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput("Mapcenter.txt", Context.MODE_PRIVATE));
+            outputStreamWriter.write(data);
+            outputStreamWriter.close();
+        }
+        catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+    }
+
+
+    private String readFromFile() {
+
+        String ret = "";
+
+        try {
+            InputStream inputStream = openFileInput("Mapcenter.txt");
+
+            if ( inputStream != null ) {
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString = "";
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                    stringBuilder.append(receiveString);
+                }
+
+                inputStream.close();
+                ret = stringBuilder.toString();
+            }
+        }
+        catch (FileNotFoundException e) {
+            Log.e("login activity", "File not found: " + e.toString());
+        } catch (IOException e) {
+            Log.e("login activity", "Can not read file: " + e.toString());
+        }
+
+        return ret;
     }
     // This method checks the wifi connection but not Internet access
     public static boolean isNetworkAvailable(final Context context) {
@@ -1174,15 +1245,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         break;
                     case 1:
                         sensorData1.setText(sensorV);
-                        sensorType1.setText("" + Data.type);
+                        sensorType1.setText(Data.type+"\n"+unit(Data.type));
                         break;
                     case 2:
                         sensorData2.setText(sensorV);
-                        sensorType2.setText("DO \nmg/L");
+                        sensorType2.setText(Data.type+ "\n"+unit(Data.type));
                         break;
                     case 3:
                         sensorData3.setText(sensorV);
-                        sensorType3.setText(" ES2 \nEC(µS/cm)\nTE(°C)");
+                        sensorType3.setText(Data.type+ "\n"+unit(Data.type));
                         break;
                     case 9:
                         break;
@@ -1217,7 +1288,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //thrustTemp = fromProgressToRange(thrust.getProgress(), THRUST_MIN, THRUST_MAX);
        // rudderTemp = fromProgressToRange(rudder.getProgress(), RUDDER_MIN, RUDDER_MAX);
         thrustProgress.setText(velFormatter.format(thrustTemp * 100.0) + "%");
-        rudderProgress.setText(velFormatter.format(rudderTemp * 100.0) + "%");
+        rudderProgress.setText(velFormatter.format(rudderTemp * -100.0) + "%");
 
         log.setText("Waypoint Status: \n" + boatwaypoint);
         autoBox.setChecked(isAutonomous);
@@ -1259,6 +1330,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //                handlerRudder.postDelayed(this, 200);
 //            }
 //        });
+    }
+    private String unit(VehicleServer.SensorType Type){
+        String unit="";
+        if(Type.toString().equalsIgnoreCase("ATLAS_PH")){
+            unit = "pH";
+        }
+        if(Type.toString().equalsIgnoreCase("ATLAS_DO")){
+            unit = "mg/L";
+        }
+        if(Type.toString().equalsIgnoreCase("ES2")){
+            unit = "EC(µS/cm)\n" +
+                    "TE(°C)";
+        }
+
+
+        return unit;
     }
 
     public void setVelListener() {
