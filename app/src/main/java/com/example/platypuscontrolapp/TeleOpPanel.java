@@ -247,7 +247,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public static int counter = 0;
     public TextView sensorValueBox;
     boolean dialogClosed = false;
-    boolean sensorReady = false;
+    boolean sensorReady =false;
     public static TextView log;
     public boolean Auto = false;
     private String MapID = "shantanuv.nkob79p0";
@@ -268,8 +268,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     protected void onCreate(Bundle savedInstanceState)   {
         super.onCreate(savedInstanceState);
 
-        this.setContentView(R.layout.tabletlayout_lg8);  // layout for LG GpadF 8
-        //this.setContentView(R.layout.tabletlayout);
+      // this.setContentView(R.layout.tabletlayout_lg8);  // layout for LG GpadF 8
+        this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
 
         ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
         //thrust = (SeekBar) this.findViewById(R.id.thrustBar);
@@ -308,6 +308,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       //  sensorValueBox = (TextView) this.findViewById(R.id.SensorValue);
         //thrust.setProgress(0); //initially set thrust to 0
         //rudder.setProgress(50); //initially set rudder to center (50)
+
+
+
+//        sensorData1.setText("6.56");
+//        sensorType1.setText("ATLAS_PH \n pH");
+//        sensorData2.setText("9.56");
+//        sensorType2.setText("ATLAS_DO \n mg/L");
+//        sensorData3.setText("305\n19.0");
+//        sensorType3.setText("ES2 \nEC(µS/cm)\nTE(°C)");
+//        battery.setText("14.566");
      // *****************//
      //      Joystick   //
      // ****************//
@@ -1212,8 +1222,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
         }
-            catch(Exception e)
-            {
+            catch(Exception e) {
 
             }
 
@@ -1231,13 +1240,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             sensorvalueButton.setClickable(sensorReady);
             sensorvalueButton.setTextColor(Color.BLACK);
             sensorvalueButton.setText("Show SensorData");
+
+
+
             if(Data.channel == 4){
                 String[] batteries = sensorV.split(",");
                 battery.setText(batteries[0]);
+
             }
 
             if (sensorvalueButton.isChecked()) {
               //  sensorValueBox.setBackgroundColor(Color.GREEN);
+
                 switch (Data.channel) {
                     case 4:
 //                        String[] batteries = sensorV.split(",");
@@ -1246,14 +1260,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     case 1:
                         sensorData1.setText(sensorV);
                         sensorType1.setText(Data.type+"\n"+unit(Data.type));
+
                         break;
                     case 2:
                         sensorData2.setText(sensorV);
                         sensorType2.setText(Data.type+ "\n"+unit(Data.type));
+
                         break;
                     case 3:
                         sensorData3.setText(sensorV);
                         sensorType3.setText(Data.type+ "\n"+unit(Data.type));
+
                         break;
                     case 9:
                         break;
@@ -1342,6 +1359,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         if(Type.toString().equalsIgnoreCase("ES2")){
             unit = "EC(µS/cm)\n" +
                     "TE(°C)";
+        }
+        if(Type.toString().equalsIgnoreCase("HDS_DEPTH")){
+            unit = "m";
         }
 
 
@@ -1778,7 +1798,7 @@ public void FindIP() {
             currentBoat.returnServer().getVehicleServices(new FunctionObserver<Map<SocketAddress, String>>() {
                 @Override
                 public void completed(Map<SocketAddress, String> socketAddressStringMap) {
-                    System.out.println("Completed");
+                    Log.i(logTag,"Completed");
                     for (Map.Entry<SocketAddress, String> entry : socketAddressStringMap.entrySet()) {
                         //newaddressstring = entry.getKey().toString();
                         //System.out.println(newaddressstring);
