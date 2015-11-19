@@ -252,6 +252,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public boolean Auto = false;
     private String MapID = "shantanuv.nkob79p0";
     Dialog connectDialog;
+    private PoseListener pl;
+    private SensorListener sl;
+
+
 
     List<ILatLng> waypointList = new ArrayList<ILatLng>();
     List<Marker> markerList = new ArrayList(); //List of all the
@@ -303,6 +307,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         refreshMap = (Button) this.findViewById(R.id.refreshMap);
         progressBar = (ProgressBar) this.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
+
         //sensorvalueButton.setTextColor(Color.BLACK);
         //sensorvalueButton.setText("Show SensorData");
       //  sensorValueBox = (TextView) this.findViewById(R.id.SensorValue);
@@ -310,7 +315,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //rudder.setProgress(50); //initially set rudder to center (50)
 
 
-
+//**********************************************************************
+//  faked sensor data
+//***********************************************************************
 //        sensorData1.setText("6.56");
 //        sensorType1.setText("ATLAS_PH \n pH");
 //        sensorData2.setText("9.56");
@@ -324,6 +331,52 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         joystick = (JoystickView) findViewById(R.id.joystickView);
         joystick.setYAxisInverted(false);
 
+//*****************************************************************************
+//  Initialize Poselistener
+//*****************************************************************************
+        pl = new PoseListener() { //gets the location of the boat
+            public void receivedPose(UtmPose upwcs) {
+
+                UtmPose _pose = upwcs.clone();
+                {
+                    xValue = _pose.pose.getX();
+                    yValue = _pose.pose.getY();
+                    zValue = _pose.pose.getZ();
+                    rotation = String.valueOf(Math.PI / 2
+                            - _pose.pose.getRotation().toYaw());
+                    rot =  Math.PI/2 - _pose.pose.getRotation().toYaw();
+
+                    zone = String.valueOf(_pose.origin.zone);
+
+                    latlongloc = UTM.utmToLatLong(UTM.valueOf(
+                                    _pose.origin.zone, 'T', _pose.pose.getX(),
+                                    _pose.pose.getY(), SI.METER),
+                            ReferenceEllipsoid.WGS84);
+
+                    //Log.i(logTag, "rot:" + rot);
+                }
+            }
+        };
+
+//*******************************************************************************
+//  Initialize Sensorlistener
+//*******************************************************************************
+         sl = new SensorListener() {
+            @Override
+            public void receivedSensor(SensorData sensorData) {
+                Data = sensorData;
+
+                sensorV = Arrays.toString(Data.data);
+                sensorV = sensorV.substring(1, sensorV.length()-1);
+                sensorReady = true;
+                //Log.i("Platypus","Get sensor Data");
+            }
+        };
+
+//****************************************************************************
+//  Initialize the Boat
+// ****************************************************************************
+        currentBoat = new Boat(pl, sl);
 
 
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -1061,73 +1114,73 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //            }
 
         //    offlineMapDownloader.addOfflineMapDownloaderListener(this);
-            PoseListener pl = new PoseListener() { //gets the location of the boat
-                public void receivedPose(UtmPose upwcs) {
-
-                    UtmPose _pose = upwcs.clone();
-                    {
-                        xValue = _pose.pose.getX();
-                        yValue = _pose.pose.getY();
-                        zValue = _pose.pose.getZ();
-                        rotation = String.valueOf(Math.PI / 2
-                                - _pose.pose.getRotation().toYaw());
-                        rot =  Math.PI/2 - _pose.pose.getRotation().toYaw();
-
-                        zone = String.valueOf(_pose.origin.zone);
-
-                        latlongloc = UTM.utmToLatLong(UTM.valueOf(
-                                        _pose.origin.zone, 'T', _pose.pose.getX(),
-                                        _pose.pose.getY(), SI.METER),
-                                ReferenceEllipsoid.WGS84);
-
-                        //Log.i(logTag, "rot:" + rot);
-                    }
-                }
-            };
-
-            currentBoat.returnServer().addPoseListener(pl, null);
+//            PoseListener pl = new PoseListener() { //gets the location of the boat
+//                public void receivedPose(UtmPose upwcs) {
+//
+//                    UtmPose _pose = upwcs.clone();
+//                    {
+//                        xValue = _pose.pose.getX();
+//                        yValue = _pose.pose.getY();
+//                        zValue = _pose.pose.getZ();
+//                        rotation = String.valueOf(Math.PI / 2
+//                                - _pose.pose.getRotation().toYaw());
+//                        rot =  Math.PI/2 - _pose.pose.getRotation().toYaw();
+//
+//                        zone = String.valueOf(_pose.origin.zone);
+//
+//                        latlongloc = UTM.utmToLatLong(UTM.valueOf(
+//                                        _pose.origin.zone, 'T', _pose.pose.getX(),
+//                                        _pose.pose.getY(), SI.METER),
+//                                ReferenceEllipsoid.WGS84);
+//
+//                        //Log.i(logTag, "rot:" + rot);
+//                    }
+//                }
+//            };
+//
+//            currentBoat.returnServer().addPoseListener(pl, null);
             testWaypointListener();
 
 
 
 
-            final SensorListener sensorListener = new SensorListener() {
-                @Override
-                public void receivedSensor(SensorData sensorData) {
-                    Data = sensorData;
-
-                    sensorV = Arrays.toString(Data.data);
-                    sensorV = sensorV.substring(1, sensorV.length()-1);
-                    sensorReady = true;
-                    //Log.i("Platypus","Get sensor Data");
-                }
-            };
-
-            currentBoat.returnServer().getNumSensors(new FunctionObserver<Integer>() {
-                @Override
-                public void completed(Integer num) {
-                    Log.i(logTag, "Sensor Number:" + Integer.toString(num));
-                    for (channel = 0; channel < num; channel++) {
-                        currentBoat.returnServer().addSensorListener(channel, sensorListener, null);
-                    }
-//                    currentBoat.returnServer().addSensorListener(4, sensorListener, new FunctionObserver<Void>() {
-//                        @Override
-//                        public void completed(Void aVoid) {
-//                            Log.i(logTag, "Adding battery listener");
-//                        }
+//            final SensorListener sensorListener = new SensorListener() {
+//                @Override
+//                public void receivedSensor(SensorData sensorData) {
+//                    Data = sensorData;
 //
-//                        @Override
-//                        public void failed(FunctionError functionError) {
+//                    sensorV = Arrays.toString(Data.data);
+//                    sensorV = sensorV.substring(1, sensorV.length()-1);
+//                    sensorReady = true;
+//                    //Log.i("Platypus","Get sensor Data");
+//                }
+//            };
 //
-//                        }
-//                    });
-                }
-
-                @Override
-                public void failed(FunctionError functionError) {
-
-                }
-            });
+//            currentBoat.returnServer().getNumSensors(new FunctionObserver<Integer>() {
+//                @Override
+//                public void completed(Integer num) {
+//                    Log.i(logTag, "Sensor Number:" + Integer.toString(num));
+//                    for (channel = 0; channel < num; channel++) {
+//                        currentBoat.returnServer().addSensorListener(channel, sensorListener, null);
+//                    }
+////                    currentBoat.returnServer().addSensorListener(4, sensorListener, new FunctionObserver<Void>() {
+////                        @Override
+////                        public void completed(Void aVoid) {
+////                            Log.i(logTag, "Adding battery listener");
+////                        }
+////
+////                        @Override
+////                        public void failed(FunctionError functionError) {
+////
+////                        }
+////                    });
+//                }
+//
+//                @Override
+//                public void failed(FunctionError functionError) {
+//
+//                }
+//            });
 
             // For test, comment this when using for real implementation
             //publishProgress();
@@ -1141,6 +1194,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         counter++; // if counter == 10 (1000ms), update sensor value
                         if (currentBoat.isConnected() == true) {
                             connected = true;
+                            //sensorReady = true;
                         }
                         if (currentBoat.isConnected() == false) {
                             connected = false;
@@ -1606,11 +1660,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
                     address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":11411");
 //                    log.append("\n" + address.toString());
-                    currentBoat = new Boat(address);
+                    //currentBoat = new Boat(address);
+                    currentBoat.setAddress(address);
                 }
                 else if(reg.isChecked())
                 {
-                    System.out.println("finding ip");
+                    Log.i(logTag,"finding ip");
                     FindIP();
                 }
                 dialog.dismiss();
@@ -1790,10 +1845,10 @@ public void FindIP() {
     Thread thread = new Thread() {
 
         public void run() {
-            //address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
-            address = CrwNetworkUtils.toInetSocketAddress(textIpAddress);
-            currentBoat = new Boat();
-            UdpVehicleServer tempserver = new UdpVehicleServer();
+            address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
+            //address = CrwNetworkUtils.toInetSocketAddress(textIpAddress);
+            //currentBoat = new Boat();
+           // UdpVehicleServer tempserver = new UdpVehicleServer();
             currentBoat.returnServer().setRegistryService(address);
             currentBoat.returnServer().getVehicleServices(new FunctionObserver<Map<SocketAddress, String>>() {
                 @Override
@@ -1806,50 +1861,52 @@ public void FindIP() {
 //                        adapter.add(entry);
 //                        adapter.notifyDataSetChanged();
 
-
+                        Log.i(logTag, entry.toString());
                         currentBoat.returnServer().setVehicleService(entry.getKey());
-                        PoseListener pl = new PoseListener() { //gets the location of the boat
-                            public void receivedPose(UtmPose upwcs) {
-
-                                UtmPose _pose = upwcs.clone();
-                                {
-                                    xValue = _pose.pose.getX();
-                                    yValue = _pose.pose.getY();
-                                    zValue = _pose.pose.getZ();
-                                    rotation = String.valueOf(Math.PI / 2
-                                            - _pose.pose.getRotation().toYaw());
-                                    rot =  Math.PI/2 - _pose.pose.getRotation().toYaw();
-
-                                    zone = String.valueOf(_pose.origin.zone);
-
-                                    latlongloc = UTM.utmToLatLong(UTM.valueOf(
-                                                    _pose.origin.zone, 'T', _pose.pose.getX(),
-                                                    _pose.pose.getY(), SI.METER),
-                                            ReferenceEllipsoid.WGS84);
-                                    System.out.println(latlongloc.toString());
-
-                                    //Log.i(logTag, "rot:" + rot);
-                                }
-                            }
-                        };
-
-                        currentBoat.returnServer().addPoseListener(pl, null);
-
-
+//                        PoseListener pl = new PoseListener() { //gets the location of the boat
+//                            public void receivedPose(UtmPose upwcs) {
+//
+//                                UtmPose _pose = upwcs.clone();
+//                                {
+//                                    xValue = _pose.pose.getX();
+//                                    yValue = _pose.pose.getY();
+//                                    zValue = _pose.pose.getZ();
+//                                    rotation = String.valueOf(Math.PI / 2
+//                                            - _pose.pose.getRotation().toYaw());
+//                                    rot =  Math.PI/2 - _pose.pose.getRotation().toYaw();
+//
+//                                    zone = String.valueOf(_pose.origin.zone);
+//
+//                                    latlongloc = UTM.utmToLatLong(UTM.valueOf(
+//                                                    _pose.origin.zone, 'T', _pose.pose.getX(),
+//                                                    _pose.pose.getY(), SI.METER),
+//                                            ReferenceEllipsoid.WGS84);
+//                                    System.out.println(latlongloc.toString());
+//
+//                                    //Log.i(logTag, "rot:" + rot);
+//                                }
+//                            }
+//                        };
+//
+//                        currentBoat.returnServer().addPoseListener(pl, null);
 
 
-                        System.out.println(entry.getKey().toString());
-                        System.out.println(entry.getValue().toString());
+
+
+                        Log.i(logTag,entry.getKey().toString());
+                        Log.i(logTag,entry.getValue().toString());
 
                     }
                 }
 
                 @Override
                 public void failed(FunctionError functionError) {
-                    System.out.println("No Response");
+                    Log.i(logTag,"No Response");
                 }
             });
-//            regcheck.show();
+            if(currentBoat.isConnected() == true){
+                Log.i(logTag, "Connected");
+            }
         }
     };
     thread.start();

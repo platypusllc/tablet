@@ -1,5 +1,7 @@
 package com.example.platypuscontrolapp;
 
+import android.util.Log;
+
 import java.net.InetSocketAddress;
 
 import com.platypus.crw.FunctionObserver;
@@ -23,6 +25,7 @@ public class Boat
 	private InetSocketAddress ipAddress;
 	private Twist tw = null;
 	private PoseListener pl;
+	private SensorListener sl;
 	private UtmPose pose;
 	private double xValue;
 	private double yValue;
@@ -32,16 +35,35 @@ public class Boat
 	private UtmPose _waypoint = new UtmPose();
 	private final Object _waypointLock = new Object();
 	private String boatLog = "";
+	private String logTag = Boat.class.getName();
 
 	public Boat()
 	{
 		server = new UdpVehicleServer();
 	}
 
+	public Boat(PoseListener _pl, SensorListener _sl){
+		pl = _pl;
+		sl = _sl;
+		server = new UdpVehicleServer();
+		try {
+			server.addPoseListener(pl, null);
+			for (int channel = 0; channel < 5; channel++) {
+				server.addSensorListener(channel, sl, null);
+			}
+		}
+		catch(Exception e){
+			Log.i(logTag, "Failed to add listener");
+		}
+		tw = new Twist();
+	}
+
 	public Boat(InetSocketAddress _ipAddress)
 	{
 		ipAddress = _ipAddress;
+
 		server = new UdpVehicleServer();
+
 		server.setVehicleService(ipAddress);
 		tw = new Twist();
 	}
