@@ -266,7 +266,7 @@
             android:layout_alignBottom="@+id/waypointStartButton"
             android:layout_alignParentEnd="false" />
 
-        <com.example.platypuscontrolapp.Joystick.JoystickView
+        <com.platypus.android.tablet.Joystick.JoystickView
             android:layout_width="85dp"
             android:layout_height="85dp"
             android:id="@+id/joystickView"
