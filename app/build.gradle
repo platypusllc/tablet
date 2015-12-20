@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 android {
-    compileSdkVersion 21
+    compileSdkVersion 23
     buildToolsVersion '21.1.2'
     defaultConfig {
         applicationId "com.platypus.android.tablet"
-        minSdkVersion 12
+        minSdkVersion 20
         targetSdkVersion 21
     }
     buildTypes {
@@ -36,17 +36,20 @@ android {
 
 }
 dependencies {
+//    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:2.3.0@aar') {
+//       transitive = true
+//    }
     compile('com.mapbox.mapboxsdk:mapbox-android-sdk:0.7.4@aar') {
         transitive = true
     }
     compile files('libs/jscience.jar')
-    compile files('libs/crwlib_core.jar')
+
     compile files('libs/activation.jar')
     compile files('libs/mail.jar')
     compile files('libs/additionnal.jar')
-    compile files('libs/platypus-core-1.0.0-SNAPSHOT-jar-with-dependencies.jar')
-    compile files('libs/crwlib_core1.jar')
+
     compile files('libs/platypus-core.jar')
+   // compile files('libs/mapbox-android-sdk-0.7.4.jar')
 }
 
 repositories {
