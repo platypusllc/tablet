@@ -154,6 +154,7 @@
         android:id="@+id/relativeLayout"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
+
         android:layout_below="@+id/printIpAddress"
 
         android:layout_toRightOf="@+id/relativeLayout3"
