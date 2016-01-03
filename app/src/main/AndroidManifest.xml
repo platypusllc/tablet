@@ -2,10 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     android:versionCode="1"
     android:versionName="1.0" 
-    package="com.example.platypuscontrolapp">
+    package="com.platypus.android.tablet">
  	    
     <uses-sdk
-        android:minSdkVersion="11"
+        android:minSdkVersion="20"
         android:targetSdkVersion="21" />
 
     <application
@@ -31,7 +31,7 @@
         <!--</activity>-->
         
          <activity
-            android:name="com.example.platypuscontrolapp.TeleOpPanel"
+            android:name="TeleOpPanel"
             android:label="@string/app_name"
             android:screenOrientation="landscape"
    			android:configChanges="orientation|keyboardHidden"> 
@@ -44,7 +44,7 @@
 
 
          <activity
-            android:name="com.example.platypuscontrolapp.ServerTest"
+            android:name="ServerTest"
             android:label="@string/app_name" >
 
         </activity>

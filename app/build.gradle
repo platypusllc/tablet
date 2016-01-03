@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 android {
-    compileSdkVersion 21
+    compileSdkVersion 23
     buildToolsVersion '21.1.2'
     defaultConfig {
-        applicationId "com.example.platypuscontrolapp"
-        minSdkVersion 12
+        applicationId "com.platypus.android.tablet"
+        minSdkVersion 20
         targetSdkVersion 21
     }
     buildTypes {
@@ -15,16 +15,41 @@ android {
     }
     productFlavors {
     }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig getSigningConfig()
+            applicationVariants.all { variant ->
+                variant.outputs.each { output ->
+                    def date = new Date();
+                    //def formattedDate = date.format('yyyyMMddHHmmss')
+                    output.outputFile = new File(output.outputFile.parent,
+                            output.outputFile.name.replace("-release", "-Tablet")
+                            //for Debug use output.outputFile = new File(output.outputFile.parent,
+                            //                             output.outputFile.name.replace("-debug", "-" + formattedDate)
+                    )
+                }
+            }
+        }
+    }
+
 }
 dependencies {
+//    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:2.3.0@aar') {
+//       transitive = true
+//    }
     compile('com.mapbox.mapboxsdk:mapbox-android-sdk:0.7.4@aar') {
         transitive = true
     }
     compile files('libs/jscience.jar')
-    compile files('libs/crwlib_core.jar')
+
     compile files('libs/activation.jar')
     compile files('libs/mail.jar')
     compile files('libs/additionnal.jar')
+
+    compile files('libs/platypus-core.jar')
+   // compile files('libs/mapbox-android-sdk-0.7.4.jar')
 }
 
 repositories {

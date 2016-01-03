@@ -154,6 +154,7 @@
         android:id="@+id/relativeLayout"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
+
         android:layout_below="@+id/printIpAddress"
 
         android:layout_toRightOf="@+id/relativeLayout3"
@@ -164,7 +165,7 @@
             android:layout_width="fill_parent"
             android:layout_height="400dp"
 
-            mapbox:accessToken="pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0NTMzZzh4YTJyeWx4azhiZ2toMzUifQ.juDMFHzZybMwwO1C4DUN1A"
+           />/ mapbox:accessToken="pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0NTMzZzh4YTJyeWx4azhiZ2toMzUifQ.juDMFHzZybMwwO1C4DUN1A"
             mapbox:mapid="shantanuv.nkob79p0"
              />
 
@@ -268,7 +269,7 @@
             android:layout_toEndOf="@+id/waypointStartButton"
             android:layout_alignBottom="@+id/waypointStartButton" />
 
-        <com.example.platypuscontrolapp.Joystick.JoystickView
+        <com.platypus.android.tablet.Joystick.JoystickView
             android:layout_width="165dp"
             android:layout_height="165dp"
             android:id="@+id/joystickView"
