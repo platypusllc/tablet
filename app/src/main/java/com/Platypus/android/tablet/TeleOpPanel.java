@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -14,6 +15,7 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -128,6 +130,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Button loadMap = null;
     Button removeMap = null;
     Button refreshMap = null;
+    Button route = null;
     //TextView log = null;
     Handler network = new Handler();
     ImageView cameraStream = null;
@@ -251,7 +254,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
 
-    List<ILatLng> waypointList = new ArrayList<ILatLng>();
+    List<LatLng> waypointList = new ArrayList<LatLng>();
     List<Marker> markerList = new ArrayList(); //List of all the
     List<Float>touchList = new ArrayList<Float>();
     //markers on the map
@@ -303,7 +306,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         refreshMap = (Button) this.findViewById(R.id.refreshMap);
         progressBar = (ProgressBar) this.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
-
+        route = (Button) this.findViewById(R.id.Route);
 
 
 //**********************************************************************
@@ -693,7 +696,27 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         });
 
 
+        route.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LatLng wp1 = new LatLng(40.43683327334392,-79.94899168610573);
+                LatLng wp2 = new LatLng(40.43681285847137,-79.94882136583328);
+                LatLng wp3 = new LatLng(40.436801630288834,-79.94869530200958);
+                LatLng wp4 = new LatLng(40.436943513548584,-79.94863897562027);
+                LatLng wp5 = new LatLng(40.437061919492976,-79.94865104556084);
+                LatLng wp6 = new LatLng(40.437094583165084,-79.9487717449665);
+                LatLng wp7 = new LatLng(40.43703640098811,-79.94891256093979);
+                LatLng wp8 = new LatLng(40.436958645252844,-79.94903887999624);
+                LatLng wp9 = new LatLng(40.43691838324968,-79.94905889558552);
 
+                Collections.addAll(waypointList, wp1, wp2, wp3, wp4, wp5, wp6, wp7, wp8, wp9);
+
+                for(WPnum = 1 ; WPnum <= waypointList.size(); WPnum ++){
+                    mv.addMarker(new Marker(Integer.toString(WPnum), "", waypointList.get(WPnum-1)));
+                }
+
+            }
+        });
 
     }
 

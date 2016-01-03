@@ -275,6 +275,14 @@
             android:id="@+id/joystickView"
             android:layout_marginBottom="20dp" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Route"
+            android:id="@+id/Route"
+            android:layout_above="@+id/waypointDeleteButton"
+            android:layout_toEndOf="@+id/waypointButton" />
+
 
     </RelativeLayout>
 
