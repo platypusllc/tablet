@@ -3,6 +3,9 @@ package com.platypus.android.tablet;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,6 +49,7 @@ import com.mapbox.mapboxsdk.util.GeometryMath;
 import com.mapbox.mapboxsdk.views.MapView;
 import com.mapbox.mapboxsdk.views.util.Projection;
 
+import android.app.AlertDialog;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -76,10 +80,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
@@ -131,6 +138,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Button removeMap = null;
     Button refreshMap = null;
     Button route = null;
+	Button saveWaypoints;
+    Button loadWaypoints;
+	
     //TextView log = null;
     Handler network = new Handler();
     ImageView cameraStream = null;
@@ -170,6 +180,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Marker boat2;
     Marker compass;
 
+    int currentselected = -1; //which element selected
+	String saveName; //shouldnt be here?
     LatLng pHollowStartingPoint = new LatLng((float) 40.436871,
             (float) -79.948825);
     LatLng UCMerced = new LatLng((float)37.400732,(float) -120.487372);
@@ -289,6 +301,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
        // loadWPFile = (Button)this.findViewById(R.id.loadFileButton);
         autoBox = (CheckBox) this.findViewById(R.id.autonomousBox);
         startWaypoints = (Button) this.findViewById(R.id.waypointStartButton);
+
+        saveWaypoints = (Button) this.findViewById(R.id.savewpbutton);
+        loadWaypoints = (Button) this.findViewById(R.id.loadwpbutton);
         sensorData1 = (TextView) this.findViewById(R.id.SValue1);
         sensorData2 = (TextView) this.findViewById(R.id.SValue2);
         sensorData3 = (TextView) this.findViewById(R.id.SValue3);
@@ -299,13 +314,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         sensorvalueButton.setClickable(sensorReady);
         sensorvalueButton.setTextColor(Color.GRAY);
         battery = (TextView)this.findViewById(R.id.batteryVoltage);
-
+		
         saveMap = (Button) this.findViewById(R.id.saveMap);
         loadMap = (Button) this.findViewById(R.id.loadMap);
         removeMap = (Button) this.findViewById(R.id.removeMap);
         refreshMap = (Button) this.findViewById(R.id.refreshMap);
         progressBar = (ProgressBar) this.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
+		
         route = (Button) this.findViewById(R.id.Route);
 
 
@@ -367,6 +383,34 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         };
 
+//***********************************************************************
+// Initialize save and load waypoint buttons
+// **********************************************************************
+
+        saveWaypoints.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    SaveWaypointsToFile();
+                }
+                catch(Exception e)
+                {}
+            }
+        });
+
+        loadWaypoints.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    LoadWaypointsFromFile();
+                }
+                catch (Exception e)
+                {}
+            }
+        });
+
+
+		 
 //****************************************************************************
 //  Initialize the Boat
 // ****************************************************************************
@@ -1982,6 +2026,252 @@ public void FindIP() {
         setIntent.addCategory(Intent.CATEGORY_HOME);
         setIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(setIntent);
+    }
+
+	/*
+    * format of waypoint file
+    * x x x x x x (first save)
+    * x x x x x x (second save) ..etc
+    * */
+    public void SaveWaypointsToFile() throws IOException
+    {
+        //nothing to
+        // save if no waypoints
+        if (waypointList.isEmpty() == true)
+        {
+            //return;
+        }
+
+
+        final BufferedWriter writer;
+        try {
+            File waypointFile = new File(getFilesDir() + "/waypoints.txt");
+            writer= new BufferedWriter(new FileWriter(waypointFile, true));
+        }
+        catch(Exception e)
+        {
+            return;
+        }
+
+        final Dialog dialog = new Dialog(context);
+        dialog.setContentView(R.layout.wpsavedialog);
+        dialog.setTitle("Save Waypoint Set");
+        final EditText input = (EditText) dialog.findViewById(R.id.newname);
+        Button submit = (Button) dialog.findViewById(R.id.savebutton);
+        submit.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+
+                //NO NUMBERS OR SPACES LOL
+                saveName = input.getText().toString();
+
+                if (!(saveName.contains(" ") || saveName.matches(".*\\d+.*"))) {
+                    try {
+                        writer.append("\n" + input.getText());
+                        writer.flush();
+                        //writer.append(input.getText());
+                        for (ILatLng i : waypointList) {
+                            writer.append(" " + i.getLatitude() + " " + i.getLongitude());
+                            writer.flush();
+                        }
+                        //writer.write("\n");
+
+                        writer.close();
+                    } catch (Exception e) {
+                    }
+                    dialog.dismiss();
+                }
+                else
+                {
+                    final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+                    alertDialog.setTitle("No Numbers or Spaces in Title");
+                    alertDialog.show();
+                    alertDialog.setCancelable(true);
+                    alertDialog.setCanceledOnTouchOutside(true);
+                }
+
+            }
+        });
+        dialog.show();
+        File waypointFile = new File(getFilesDir() + "/waypoints.txt");
+
+        //if (waypointFile.exists())
+        //{
+            //System.out.println("made new file");
+    //}
+
+    }
+    public void LoadWaypointsFromFile() throws IOException {
+        final File waypointFile = new File(getFilesDir() + "/waypoints.txt");
+        Scanner fileScanner = new Scanner(waypointFile); //Scans each
+        //line of the file
+        final ArrayList<ArrayList<ILatLng>> waypointsaves = new ArrayList<ArrayList<ILatLng>>();
+        final ArrayList<String> saveName = new ArrayList<String>();
+		/* scans each line of the file as a waypoint save
+		 * then scans each line every two elements makes a latlng
+		 * adds all saves to arraylist
+		 * chose between arraylist later on
+		 */
+
+        if (waypointFile.exists()) {
+            while (fileScanner.hasNext()) {
+                final ArrayList<ILatLng> currentSave = new ArrayList<ILatLng>();
+                String s = fileScanner.nextLine();
+                System.out.println(s);
+                final Scanner stringScanner = new Scanner(s);
+
+                //get save name
+                if (stringScanner.hasNext()) {
+                    String name = stringScanner.next();
+                    saveName.add(name);
+                }
+                while (stringScanner.hasNext()) {
+                    // System.out.println(stringScanner.next());
+//                    System.out.println(Double.parseDouble(stringScanner.next()) + " " + Double.parseDouble(stringScanner.next()));
+
+                    final double templat = Double.parseDouble(stringScanner.next());
+                    final double templon = Double.parseDouble(stringScanner.next());
+                    ILatLng temp = new ILatLng() {
+                        @Override
+                        public double getLatitude() {
+                            return templat;
+
+                        }
+
+                        @Override
+                        public double getLongitude() {
+                            return templon;
+                        }
+
+                        @Override
+                        public double getAltitude() {
+                            return 0;
+                        }
+                    };
+
+                    currentSave.add(temp);
+
+                }
+                if (currentSave.size() > 0) { //make sure no empty arrays (throws offset of wpsaves also why this?!?!)
+                    waypointsaves.add(currentSave);
+                }
+                stringScanner.close();
+            }
+            fileScanner.close();
+
+            final Dialog dialog = new Dialog(context);
+            dialog.setContentView(R.layout.waypointsavelistview);
+            dialog.setTitle("List of Waypoint Saves");
+            final ListView wpsaves = (ListView) dialog.findViewById(R.id.waypointlistview);
+            Button submitButton = (Button) dialog.findViewById(R.id.submitsave);
+
+
+            final ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+                    TeleOpPanel.this,
+                    android.R.layout.select_dialog_singlechoice);
+            wpsaves.setAdapter(adapter);
+            for (String s : saveName) {
+                adapter.add(s);
+                adapter.notifyDataSetChanged();
+            }
+            final int chosensave;
+            wpsaves.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+                    System.out.println("on long click");
+                    final Dialog confirmdialog = new Dialog(context);
+                    confirmdialog.setContentView(R.layout.confirmdeletewaypoints);
+                    confirmdialog.setTitle("Delete This Waypoint Path?");
+                    Button deletebutton = (Button) confirmdialog.findViewById(R.id.yesbutton);
+                    Button cancel = (Button) confirmdialog.findViewById(R.id.nobutton);
+                    deletebutton.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            //delete line from file
+
+                            //delete object from list since update wont occur until you press load wp again
+                            adapter.remove(adapter.getItem(position));
+                            try
+                            {
+                                File inputFile = new File(getFilesDir() + "/waypoints.txt");
+                                File tempFile = new File(getFilesDir() + "/tempwaypoints.txt");
+
+                                BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+                                BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+                                String lineToRemove = saveName.get(position);
+                                String currentLine;
+
+                                while((currentLine = reader.readLine()) != null)
+                                {
+                                    int index = currentLine.indexOf(' ');
+                                    System.out.println(index);
+                                    String tempasdf = currentLine;
+
+                                    String trimmedLine = currentLine.trim();
+                                    if(trimmedLine.contains(lineToRemove))
+                                    {
+                                        System.out.println(lineToRemove);
+                                        System.out.println("found");
+                                        continue;
+                                    }
+                                    writer.write(currentLine + System.getProperty("line.separator"));
+                                }
+                                writer.close();
+                                reader.close();
+                                tempFile.renameTo(inputFile);
+                            }
+                            catch(Exception e)
+                            {
+                            }
+                            confirmdialog.dismiss();
+                        }
+                    });
+                    cancel.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            confirmdialog.dismiss();
+                        }
+                    });
+                    confirmdialog.show();
+
+                    return false;
+                }
+            });
+            wpsaves.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    currentselected = position;
+                }
+            });
+            submitButton.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //Object checkedItem = wpsaves.getAdapter().getItem(wpsaves.getCheckedItemPosition());
+                    //System.out.println(chosensave);
+
+                    if (currentselected == -1) {
+                        dialog.dismiss();
+                        //write no selected box
+                    }
+                    waypointList.clear();
+                    markerList.clear();
+                    //System.out.println(currentselected);
+                    for (ArrayList<ILatLng> i : waypointsaves)
+                    {
+                        System.out.println(i.size());
+                    }
+                        for (ILatLng i : waypointsaves.get(currentselected)) //tbh not sure why there is a 1 offset but there is
+                        {
+                            //System.out.println(i.getLatitude() + " " + i.getLongitude());
+                            mv.addMarker(new Marker("marker", "Waypoint", new LatLng(i.getLatitude(), i.getLongitude())));
+                        }
+                    dialog.dismiss();
+                }
+            });
+            dialog.show();
+        }
     }
 
 }

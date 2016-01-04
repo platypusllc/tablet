@@ -7,16 +7,6 @@
     android:focusableInTouchMode="true">
 
     <TextView
-        android:id="@+id/enterscreen"
-        android:gravity="center_horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="51dp"
-        android:text="Connect to a boat"
-        android:textSize="@dimen/open"
-
-        />
-
-    <TextView
         android:id="@+id/ipaddress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -98,13 +88,13 @@
             android:id="@+id/reg"
             android:layout_width="wrap_content"
             android:layout_height="52dp"
-            android:checked="false"
+            android:checked="true"
             android:text="Registry" />
         <RadioButton
             android:id="@+id/wifi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="true"
+            android:checked="false"
             android:paddingRight="15dp"
             android:text="Direct IP" />
     </RadioGroup>

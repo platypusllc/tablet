@@ -15,7 +15,7 @@
         android:text="Teleop Control"
         android:textSize="@dimen/open"
         android:layout_alignParentTop="true"/>
-        //android:layout_alignParentStart="true" />
+    //android:layout_alignParentStart="true" />
 
     <TextView
         android:id="@+id/printIpAddress"
@@ -27,7 +27,7 @@
         android:textColor="@color/green"
         android:background="@color/cyan"
         android:layout_below="@+id/controlScreenEnter"/>
-        android:layout_alignParentStart="true" />
+    android:layout_alignParentStart="true" />
 
     <RelativeLayout
         android:layout_width="200dp"
@@ -165,9 +165,9 @@
             android:layout_width="fill_parent"
             android:layout_height="400dp"
 
-           />/ mapbox:accessToken="pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0NTMzZzh4YTJyeWx4azhiZ2toMzUifQ.juDMFHzZybMwwO1C4DUN1A"
-            mapbox:mapid="shantanuv.nkob79p0"
-             />
+            />/ mapbox:accessToken="pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0NTMzZzh4YTJyeWx4azhiZ2toMzUifQ.juDMFHzZybMwwO1C4DUN1A"
+        mapbox:mapid="shantanuv.nkob79p0"
+        />
 
     </RelativeLayout>
 
@@ -281,7 +281,27 @@
             android:text="Route"
             android:id="@+id/Route"
             android:layout_above="@+id/waypointDeleteButton"
-            android:layout_toEndOf="@+id/waypointButton" />
+            android:layout_toRightOf="@+id/waypointButton" />
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save Waypoints"
+            android:id="@+id/savewpbutton"
+            android:layout_below="@+id/waypointStartButton"
+            android:layout_alignLeft="@+id/waypointStartButton"
+            android:layout_alignStart="@+id/waypointStartButton" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Load Waypoints"
+            android:id="@+id/loadwpbutton"
+            android:layout_below="@+id/waypointStartButton"
+            android:layout_toRightOf="@+id/savewpbutton"
+            android:layout_toEndOf="@+id/savewpbutton" />
+
 
 
     </RelativeLayout>

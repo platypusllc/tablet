@@ -5,7 +5,7 @@
     package="com.platypus.android.tablet">
  	    
     <uses-sdk
-        android:minSdkVersion="20"
+        android:minSdkVersion="11"
         android:targetSdkVersion="21" />
 
     <application
