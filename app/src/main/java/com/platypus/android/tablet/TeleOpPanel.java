@@ -1666,6 +1666,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     {
         final Dialog dialog = new Dialog(context);
         dialog.setContentView(R.layout.connectdialog);
+        dialog.setTitle("Connect To A Boat");
         ipAddress = (EditText) dialog.findViewById(R.id.ipAddress1);
 
         Button submitButton = (Button) dialog.findViewById(R.id.submit);
@@ -2266,6 +2267,7 @@ public void FindIP() {
                         {
                             //System.out.println(i.getLatitude() + " " + i.getLongitude());
                             mv.addMarker(new Marker("marker", "Waypoint", new LatLng(i.getLatitude(), i.getLongitude())));
+                            waypointList.add(new LatLng(i.getLatitude(),i.getLongitude()));
                         }
                     dialog.dismiss();
                 }
