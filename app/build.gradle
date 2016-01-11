@@ -4,7 +4,7 @@ android {
     buildToolsVersion '21.1.2'
     defaultConfig {
         applicationId "com.platypus.android.tablet"
-        minSdkVersion 12
+        minSdkVersion 15
         targetSdkVersion 21
     }
     buildTypes {

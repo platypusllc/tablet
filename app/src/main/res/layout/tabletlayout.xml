@@ -276,14 +276,6 @@
             android:layout_marginBottom="20dp" />
 
         <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Route"
-            android:id="@+id/Route"
-            android:layout_above="@+id/waypointDeleteButton"
-            android:layout_toRightOf="@+id/waypointButton" />
-
-        <Button
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -302,6 +294,27 @@
             android:layout_toRightOf="@+id/savewpbutton"
             android:layout_toEndOf="@+id/savewpbutton" />
 
+        <Switch
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mapping Speed"
+            android:id="@+id/Sswitch"
+            android:checked="false"
+            android:layout_alignLeft="@+id/rudderBarTextView"
+            android:layout_alignStart="@+id/rudderBarTextView"
+            android:layout_above="@+id/savewpbutton" />
+
+        <ToggleButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set Home"
+            android:id="@+id/sethome"
+            android:textOff="Set Home"
+            android:textOn="Set Home"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/waypointButton"
+            android:layout_toEndOf="@+id/waypointButton"
+            android:layout_alignBottom="@+id/waypointButton" />
 
 
     </RelativeLayout>
@@ -320,7 +333,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/autonomousBox"
-        android:layout_toRightOf="@+id/relativeLayout2" />
+        android:layout_toRightOf="@+id/relativeLayout2"
+        android:text="Waypoint Status" />
 
     <RelativeLayout
         android:layout_width="wrap_content"
@@ -398,6 +412,15 @@
         android:layout_below="@+id/saveMap"
         android:layout_alignRight="@+id/loadMap"
         android:layout_marginTop="15dp" />
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/gohome"
+        android:src="@drawable/home1"
+        android:layout_alignBottom="@+id/relativeLayout2"
+        android:layout_alignRight="@+id/refreshMap"
+        android:layout_alignEnd="@+id/refreshMap" />
 
 
     <!--     <Button
