@@ -187,10 +187,12 @@ public class Boat
 		{
 			public void completed(Void v)
 			{
+				Log.i(logTag, "Start waypoint");
 			}
 
 			public void failed(FunctionError fe)
 			{
+				Log.i(logTag,"Failed to start waypoint");
 			}
 		});
 	}
