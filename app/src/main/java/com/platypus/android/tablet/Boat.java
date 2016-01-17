@@ -153,16 +153,23 @@ public class Boat
 		{
 			public void completed(Boolean v)
 			{
+				System.out.println("ran");
 				connected = true;
 			}
 
 			public void failed(FunctionError fe)
 			{
 				connected = false;
+				System.out.println("ran");
 			}
 		});
 		return connected;
 
+	}
+
+	public boolean getConnected()
+	{
+		return connected;
 	}
 
 	public void initWaypointListener()

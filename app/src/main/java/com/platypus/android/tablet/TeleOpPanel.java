@@ -33,6 +33,7 @@ import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
 import com.mapbox.mapboxsdk.api.ILatLng;
+import com.mapbox.mapboxsdk.clustering.geometry.Point;
 import com.mapbox.mapboxsdk.constants.MapboxConstants;
 import com.mapbox.mapboxsdk.geometry.BoundingBox;
 import com.mapbox.mapboxsdk.geometry.CoordinateRegion;
@@ -53,11 +54,13 @@ import android.app.AlertDialog;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 
+import android.net.Network;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
@@ -84,6 +87,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -287,6 +291,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     List<LatLng> waypointList = new ArrayList<LatLng>();
     List<Marker> markerList = new ArrayList(); //List of all the
+
+
+
     List<Float>touchList = new ArrayList<Float>();
     //markers on the map
     //corresponding to the
@@ -341,10 +348,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         refreshMap = (Button) this.findViewById(R.id.refreshMap);
         progressBar = (ProgressBar) this.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
+        joystick = (JoystickView) findViewById(R.id.joystickView);
 
         setHome = (ToggleButton) this.findViewById(R.id.sethome);
         speed = (Switch) this.findViewById(R.id.Sswitch);
         goHome = (ImageButton) this.findViewById(R.id.gohome);
+
+
+
 
 
         //**********************************************************************
@@ -360,7 +371,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         // *****************//
         //      Joystick   //
         // ****************//
-        joystick = (JoystickView) findViewById(R.id.joystickView);
+
         joystick.setYAxisInverted(false);
 
         //*****************************************************************************
@@ -449,6 +460,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //File file = new File("/Android/data/com.example.platypuscontrolapp/cache/mapbox_tiles_cache");
         //final MBTilesLayer mbTilesLayer = new MBTilesLayer(file);
         mv = (MapView) findViewById(R.id.mapview);
+
         offlineMapDownloader = OfflineMapDownloader.getOfflineMapDownloader(this);
         mv.setDiskCacheEnabled(false);
         //mv.setMapRotationEnabled(true);
@@ -457,6 +469,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         compass = new Marker("Compass","",pHollowStartingPoint);
         mv.addMarker(compass);
         MapProj = new Projection(mv);
+
+        //System.out.println("x"+ compass.getPosition().toString());
+//        System.out.println(point.toString() + " " + temppoint.toString());
 
         // If has Internet connection, using online map, else using offline map
 
@@ -1205,6 +1220,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                     //                            wpLoc = new LatLng(Lat, Lng);
                                     WPnum += 1;
                                     mv.addMarker(new Marker(Integer.toString(WPnum), "", wpLoc));
+
                                     waypointList.add(wpLoc);
                                     wpstirng = wpLoc.toString();
                                     //SendEmail();
@@ -1258,7 +1274,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 });
 
 
-            networkThread = new NetworkAsync().execute(); //launch networking asnyc task
+            networkThread = new NetworkAsync(this).execute(); //launch networking asnyc task
 
         }
         else if (getBoatType() == false) {
@@ -1370,12 +1386,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     private class NetworkAsync extends AsyncTask<String, Integer, String> {
         long oldTime = 0;
-        long oldTime1 = 0;
+        //long oldTime1 = 0;
         String tester = "done";
         boolean connected = false;
         boolean firstTime = true;
+        Context context;
+        int tempnum = 100;
+        DrawView drawview;
 
 
+
+        public NetworkAsync(Context t)
+        {
+            context = t;
+            drawview = new DrawView(context);//, new ViewGroup.LayoutParams(1000,1000));
+            //System.out.println(markerList.size());
+            TeleOpPanel.this.addContentView(drawview,new ViewGroup.LayoutParams(1000,1000));
+            ViewGroup view = (ViewGroup) findViewById(android.R.id.content);
+        }
 
         @Override
         protected void onPreExecute()
@@ -1384,26 +1412,25 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         @Override
         protected String doInBackground(String... arg0) {
-            //
-            testWaypointListener();
-
-
-
-
-            //
+            currentBoat.isConnected();
             while (true) { //constantly looping
                 if (currentBoat != null) {
-                    if (System.currentTimeMillis() % 100 == 0
-                        && oldTime != System.currentTimeMillis()) {
-
+                    if (System.currentTimeMillis() % 100 == 0 && oldTime != System.currentTimeMillis())
+                    {
+                        System.out.println("start network");
                         counter++; // if counter == 10 (1000ms), update sensor value
-                        if (currentBoat.isConnected() == true) {
+
+                        long tempconn = System.currentTimeMillis();
+                        if (currentBoat.getConnected() == true)
+                        {
                             connected = true;
                             //sensorReady = true;
                         }
-                        if (currentBoat.isConnected() == false) {
+                        else
+                        {
                             connected = false;
                         }
+                        System.out.println("Time took for is connected: " + (System.currentTimeMillis() - tempconn));
 
                         if (old_thrust != thrustTemp) { //update velocity
                             updateVelocity(currentBoat);
@@ -1413,37 +1440,43 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             updateVelocity(currentBoat);
                         }
 
-                        //                    }
-                        //make this a method
                         if (stopWaypoints == true) {
                             currentBoat.returnServer().stopWaypoints(null);
                             stopWaypoints = false;
                         }
-
-
-
                         old_thrust = thrustTemp;
                         old_rudder = rudderTemp;
                         oldTime = System.currentTimeMillis();
-
-
-
                         publishProgress();
-
                     }
-                    //
                 }
             }
-
-
         }
 
         @Override
         protected void onProgressUpdate(Integer... result) {
 
+            Projection proj = mv.getProjection();
+            ArrayList<PointF> points = new ArrayList<PointF>();
+            for (LatLng i : waypointList) {
+
+                PointF temppoint = proj.toPixels(i, null);
+                temppoint.offset(200,50);
+                //points.add(proj.toPixels(i, null));
+                points.add(temppoint);
+
+
+            }
+
+            //drawview.points = points;
+            //drawview.invalidate(); //forces redraw
+
+            //if (markerList.size() > 2)
+            {
+
+            }
             //cameraStream.setImageBitmap(currentImage);
-            try
-                {
+
                     //                Projection mvproj = mv.getProjection();
                     //                int size = mvproj.getHalfWorldSize();
                     //                int right = mvproj.getCenterX();
@@ -1452,18 +1485,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     //                LatLng comp = new LatLng(Icomp.getLatitude(),Icomp.getLongitude());
                     //compass.setPoint(comp);
 
-                    LatLng curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-                    float degree = (float)(rot * 180 /Math.PI);  // degree is -90 to 270
-                    degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+                    LatLng curLoc;
+                    if (latlongloc != null) {
+                        curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
 
-                    float bias = mv.getMapOrientation(); // bias is the map orirentation
-                    // Using bitmap to make marker rotatable.
-                    Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
-                    Drawable d = new BitmapDrawable(getResources(),boatarrow);
-                    boat2.setDescription(curLoc.toString());
-                    boat2.setIcon(new Icon(d));
-                    boat2.setPoint(curLoc);
+                        float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
+                        degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
 
+                        float bias = mv.getMapOrientation(); // bias is the map orirentation
+                        // Using bitmap to make marker rotatable.
+                        Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
+                        Drawable d = new BitmapDrawable(getResources(), boatarrow);
+                        boat2.setDescription(curLoc.toString());
+                        boat2.setIcon(new Icon(d));
+                        boat2.setPoint(curLoc);
+                    }
                     //mvproj.toMapPixels(curLoc,null);
 
                     // boat2.setRelatedObject(mv);
@@ -1472,44 +1508,36 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     mv.animate();
 
 
-                    if (firstTime == true) {
-                        try {
-                            mv.getController().setCenter(new ILatLng() {
-                                    @Override
-                                    public double getLatitude() {
-                                        return latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI;
-
-                                    }
-
-                                    @Override
-                                    public double getLongitude() {
-                                        return latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI;
-
-                                    }
-
-                                    @Override
-                                    public double getAltitude() {
-                                        return 0;
-                                    }
-                                });
-                            //mv.addMarker(compass);
-                            mv.animate();
-                            firstTime = false;
-
-                        } catch (Exception e) {
-                            firstTime = true; //for false/fake lat long values until the phone gets real location values
-                        }
-                    }
-
-
-
+//
+            if (firstTime == true) {
+//                        try {
+//                            mv.getController().setCenter(new ILatLng() {
+//                                    @Override
+//                                    public double getLatitude() {
+//                                        return latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI;
+//
+//                                    }
+//
+//                                    @Override
+//                                    public double getLongitude() {
+//                                        return latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI;
+//
+//                                    }
+//
+//                                    @Override
+//                                    public double getAltitude() {
+//                                        return 0;
+//                                    }
+//                                });
+//                            //mv.addMarker(compass);
+//                            mv.animate();
+//                            firstTime = false;
+//
+//                        } catch (Exception e) {
+//                            System.out.println(e.toString());
+//                            firstTime = true; //for false/fake lat long values until the phone gets real location values
+//                        }
                 }
-            catch(Exception e) {
-
-            }
-
-
-
             if (connected == true) {
                 ipAddressBox.setBackgroundColor(Color.GREEN);
             }
@@ -1599,9 +1627,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             else{
                 Mapping_S = false;
             }
-
-
-
         }
     }
 
