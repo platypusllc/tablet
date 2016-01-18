@@ -48,6 +48,7 @@ import com.mapbox.mapboxsdk.overlay.TilesOverlay;
 import com.mapbox.mapboxsdk.tileprovider.tilesource.*;
 import com.mapbox.mapboxsdk.util.GeometryMath;
 import com.mapbox.mapboxsdk.views.MapView;
+import com.mapbox.mapboxsdk.views.MapViewListener;
 import com.mapbox.mapboxsdk.views.util.Projection;
 
 import android.app.AlertDialog;
@@ -88,6 +89,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -96,6 +98,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -181,7 +184,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     double zValue;
     LatLong latlongloc;
     LatLng boatLocation;
-
+    DrawView drawview;
 
     MapView mv;
     String zone;
@@ -311,6 +314,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         super.onCreate(savedInstanceState);
 
         //this.setContentView(R.layout.tabletlayout_lg8);  // layout for LG GpadF 8
+        //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
 
         ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
@@ -1149,9 +1153,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
              */
 
 
+        Thread thread = new Thread() {
+                        public void run() {
+                            while(true)
+                            {
+
+                            }
+                        }
+        };
+            //thread.start();
             mv.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
+                        drawWaypointLines();
                         if(event.getAction() == MotionEvent.ACTION_DOWN){
                             startTime = event.getEventTime();
                             Log.d(logTag,"IN DOWN");
@@ -1186,7 +1200,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                             // Matrix mRotate = MapProj.getRotationMatrix();
                             if(!touchList.isEmpty() && touchList.get(touchList.size()-2) == event.getX() &&
-                               touchList.get(touchList.size()-1) == event.getY()){
+                              touchList.get(touchList.size()-1) == event.getY()){
                                 Log.i(logTag,"multi-touch");
                             }
                             else
@@ -1235,6 +1249,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
 
                 });
+
 
             /*
              * If they press delete wayponts delete all markers off the map and delete waypoints
@@ -1391,8 +1406,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         boolean connected = false;
         boolean firstTime = true;
         Context context;
+
         int tempnum = 100;
-        DrawView drawview;
+
 
 
 
@@ -1400,9 +1416,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         {
             context = t;
             drawview = new DrawView(context);//, new ViewGroup.LayoutParams(1000,1000));
-            //System.out.println(markerList.size());
-            TeleOpPanel.this.addContentView(drawview,new ViewGroup.LayoutParams(1000,1000));
-            ViewGroup view = (ViewGroup) findViewById(android.R.id.content);
+            ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(mv.getWidth(),mv.getHeight());
+            TeleOpPanel.this.addContentView(drawview, lp);
+            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) drawview.getLayoutParams();
+
+            int[] mvabscoord = new int[2];
+            mv.getLocationOnScreen(mvabscoord);
+
+            //using 50 because mvabscoord contains titlebar and
+            p.setMargins(mvabscoord[0], 60, 0, 0);
+            drawview.requestLayout();
+
+
         }
 
         @Override
@@ -1417,7 +1442,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 if (currentBoat != null) {
                     if (System.currentTimeMillis() % 100 == 0 && oldTime != System.currentTimeMillis())
                     {
-                        System.out.println("start network");
                         counter++; // if counter == 10 (1000ms), update sensor value
 
                         long tempconn = System.currentTimeMillis();
@@ -1430,8 +1454,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         {
                             connected = false;
                         }
-                        System.out.println("Time took for is connected: " + (System.currentTimeMillis() - tempconn));
-
                         if (old_thrust != thrustTemp) { //update velocity
                             updateVelocity(currentBoat);
                         }
@@ -1456,20 +1478,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         @Override
         protected void onProgressUpdate(Integer... result) {
 
-            Projection proj = mv.getProjection();
-            ArrayList<PointF> points = new ArrayList<PointF>();
-            for (LatLng i : waypointList) {
-
-                PointF temppoint = proj.toPixels(i, null);
-                temppoint.offset(200,50);
-                //points.add(proj.toPixels(i, null));
-                points.add(temppoint);
-
-
-            }
-
-            //drawview.points = points;
-            //drawview.invalidate(); //forces redraw
+            drawWaypointLines(); //zooming doesnt get handled by ontouch
+            //is there a "anyinteraction with map listener"
+//            Projection proj = mv.getProjection();
+//            ArrayList<PointF> points = new ArrayList<PointF>();
+//            for (LatLng i : waypointList) {
+//
+//                PointF temppoint = proj.toPixels(i, null);
+//                temppoint.offset(200,50);
+//                //points.add(proj.toPixels(i, null));
+//                points.add(temppoint);
+//
+//
+//            }
+//
+//            //drawview.points = points;
+//            //drawview.invalidate(); //forces redraw
 
             //if (markerList.size() > 2)
             {
@@ -2521,7 +2545,28 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         Log.i(logTag, "Drawing...");
         canvas.drawRGB(255, 128, 128);
     }
+    public void drawWaypointLines()
+    {
+        Projection proj = mv.getProjection();
+        ArrayList<PointF> points = new ArrayList<PointF>();
+        for (LatLng i : waypointList) {
 
+            PointF temppoint = proj.toPixels(i, null);
+
+//            temppoint.offset(200, 50);
+            //points.add(proj.toPixels(i, null));
+//            if (temppoint.x < 200){temppoint.x = 200;}
+//            if (temppoint.x > 1200){temppoint.x = 1200;}
+//            if (temppoint.y < 50){temppoint.y = 50;}
+//            if (temppoint.y > 450){temppoint.y = 450;}
+            points.add(temppoint);
+
+        }
+
+        drawview.points = points;
+        drawview.invalidate();
+
+    }
 }
 //
 //class

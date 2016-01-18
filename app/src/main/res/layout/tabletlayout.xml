@@ -9,13 +9,14 @@
     <TextView
         android:id="@+id/controlScreenEnter"
         android:layout_width="match_parent"
-        android:layout_height="28dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center_horizontal|center_vertical"
-        android:text="Teleop Control"
-        android:textSize="@dimen/open"
-        android:layout_alignParentTop="true"/>
-    //android:layout_alignParentStart="true" />
+        android:text="TeleOp Panel"
+        android:textSize="25dp"
+    android:layout_alignParentTop="true"/>
+
+
 
     <TextView
         android:id="@+id/printIpAddress"
