@@ -423,6 +423,14 @@
         android:layout_alignRight="@+id/refreshMap"
         android:layout_alignEnd="@+id/refreshMap" />
 
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:id="@+id/drawPolygon"
+        android:layout_alignBottom="@+id/gohome"
+        android:layout_toLeftOf="@+id/gohome" />
+
 
     <!--     <Button
         android:id="@+id/mapButton"
