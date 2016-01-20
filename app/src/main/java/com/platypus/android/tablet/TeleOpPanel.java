@@ -1205,7 +1205,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             /*
              * if the add waypoint button is pressed and new marker where ever they click
              */
-
+        testWaypointListener();
 
         Thread thread = new Thread() {
                         public void run() {
@@ -1373,6 +1373,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             if(home != null) {
                                 mv.addMarker(home_M);
                             }
+
+                            drawWaypointLines(waypointList,false);
                         } catch (Exception e) {
                             //boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", new LatLng(pHollowStartingPoint.getLatitude(), pHollowStartingPoint.getLongitude()));
                         }
@@ -1578,41 +1580,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         @Override
         protected void onProgressUpdate(Integer... result) {
 
-           // drawWaypointLines(waypointList); //zooming doesnt get handled by ontouch
-            //is there a "anyinteraction with map listener"
-            //drawPolygonline();
-//            Projection proj = mv.getProjection();
-//            ArrayList<PointF> points = new ArrayList<PointF>();
-//            for (LatLng i : waypointList) {
-//
-//                PointF temppoint = proj.toPixels(i, null);
-//                temppoint.offset(200,50);
-//                //points.add(proj.toPixels(i, null));
-//                points.add(temppoint);
-//
-//
-//            }
-//
-//            //drawview.points = points;
-//            //drawview.invalidate(); //forif(waypointButton.isChecked()){
+
+            if(waypointList.size()>0) {
                 drawWaypointLines(waypointList, true);
-
-
+            }
+            if(touchpointList.size()>0){
                 drawPolygonline(touchpointList);
 
-            //if (markerList.size() > 2)
-            {
-
             }
-            //cameraStream.setImageBitmap(currentImage);
 
-                    //                Projection mvproj = mv.getProjection();
-                    //                int size = mvproj.getHalfWorldSize();
-                    //                int right = mvproj.getCenterX();
-                    //                int top = mvproj.getCenterY();
-                    //                ILatLng Icomp = mvproj.fromPixels(2084, 112);
-                    //                LatLng comp = new LatLng(Icomp.getLatitude(),Icomp.getLongitude());
-                    //compass.setPoint(comp);
 
                     LatLng curLoc;
                     if (latlongloc != null) {
@@ -2671,6 +2647,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
 
         drawview.setPaint("green", 6, dotted);
+        drawview.setClose(false);
         drawview.points = points;
         drawview.invalidate();
 
@@ -2694,6 +2671,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
 
         drawview2.setPaint("blue", 8, false);
+        drawview2.setClose(true);
         drawview2.points = points;
         drawview2.invalidate();
     }

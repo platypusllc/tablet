@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.view.View;
@@ -22,6 +23,8 @@ import java.util.List;
 public class DrawView extends View {
     private Paint paint;
     private Paint black;
+    private Path path;
+    private boolean close = false;
     ArrayList<PointF> points;
 
     public DrawView(Context c){
@@ -32,9 +35,11 @@ public class DrawView extends View {
         super(c, s);
 
         paint=new Paint();
+
         paint.setColor(Color.BLACK);
         paint.setStrokeWidth(5);
         paint.setAntiAlias(true);
+        paint.setStyle(Paint.Style.STROKE);
     }
     public void setPaint (String color, float width, boolean dotted){
         switch (color){
@@ -52,6 +57,9 @@ public class DrawView extends View {
             paint.setPathEffect(new DashPathEffect(new float[]{10,10}, 5));
         }
     }
+    public void setClose (boolean c){
+        close = c;
+    }
 
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -60,8 +68,17 @@ public class DrawView extends View {
         {
             return;
         }
+        path = new Path();
+        //path.reset();
+        path.moveTo(points.get(0).x, points.get(0).y);
         for (int i = 1; i < points.size(); i++) {
-            canvas.drawLine(points.get(i-1).x,points.get(i-1).y,points.get(i).x,points.get(i).y,paint);
+            path.lineTo(points.get(i).x, points.get(i).y);
         }
+
+        if(close){
+            path.close();
+        }
+
+        canvas.drawPath(path, paint);
     }
 }
