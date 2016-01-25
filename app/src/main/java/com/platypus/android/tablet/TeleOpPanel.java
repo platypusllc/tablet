@@ -291,6 +291,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     double[] low_rPID = {.1, 0, .3};
     double[] rPID = {.2, 0, .3};
 
+    private UtmPose _pose;
+    private UtmPose[] wpPose = null , tempPose = null;
+    private int N_waypoint = 0;
+
 
 
 
@@ -390,7 +394,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         pl = new PoseListener() { //gets the location of the boat
                 public void receivedPose(UtmPose upwcs) {
 
-                    UtmPose _pose = upwcs.clone();
+                     _pose = upwcs.clone();
                     {
                         xValue = _pose.pose.getX();
                         yValue = _pose.pose.getY();
@@ -626,12 +630,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                                         //System.out.println("wps" + waypointStatus);
                                         currentBoat.addWaypoint(tempUtm.pose, tempUtm.origin);
-                                        UtmPose[] wpPose = new UtmPose[waypointList.size()];
+                                        wpPose = new UtmPose[waypointList.size()];
                                         synchronized (_waypointLock) {
                                             //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
                                             for (int i = 0; i < waypointList.size(); i++) {
                                                 wpPose[i] = convertLatLngUtm(waypointList.get(i));
                                             }
+                                            tempPose = wpPose;
                                         }
 
                                         checkAndSleepForCmd();
@@ -1220,10 +1225,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
 
-                            drawWaypointLines(waypointList, true);
-
-
-                            drawPolygonline(touchpointList);
+//                            drawWaypointLines(waypointList, true);
+//
+//
+//                            drawPolygonline(touchpointList);
 
                        // drawPolygonline();
                         if(event.getAction() == MotionEvent.ACTION_DOWN){
@@ -1373,6 +1378,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             if(home != null) {
                                 mv.addMarker(home_M);
                             }
+                            N_waypoint = 0;
 
                             drawWaypointLines(waypointList,false);
                         } catch (Exception e) {
@@ -1501,6 +1507,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         boolean firstTime = true;
         Context context;
 
+
         int tempnum = 100;
 
 
@@ -1570,6 +1577,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         old_thrust = thrustTemp;
                         old_rudder = rudderTemp;
                         oldTime = System.currentTimeMillis();
+
+                        if(tempPose != null){
+                            Pose3D waypoint = tempPose[0].pose;
+                            double distanceSq = planarDistanceSq(_pose.pose, waypoint);
+
+                            if(distanceSq <= 25){
+                                //UtmPose[] queuedWaypoints = new UtmPose[tempPose.length - 1];
+                                tempPose = Arrays.copyOfRange(tempPose,1,tempPose.length);
+                                if(N_waypoint < waypointList.size()){
+                                    N_waypoint += 1;
+                                }
+
+                            }
+                        }
+
                        // Log.i(logTag, "doInbackground "+ oldTime);
                         publishProgress();
                     }
@@ -1582,7 +1604,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
             if(waypointList.size()>0) {
-                drawWaypointLines(waypointList, true);
+                List<LatLng> P_waypoints; // previous waypoints
+                List<LatLng> N_waypoints; // next waypoints
+
+                P_waypoints = waypointList.subList(0,N_waypoint);
+
+
+                N_waypoints = waypointList.subList(N_waypoint,waypointList.size());
+                drawWaypointLines(P_waypoints, false); // solid line represents completed waypoints
+                drawWaypointLines(N_waypoints, true); // dotted line represents incompleted waypoints
             }
             if(touchpointList.size()>0){
                 drawPolygonline(touchpointList);
@@ -2391,6 +2421,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
     public void LoadWaypointsFromFile() throws IOException {
         final File waypointFile = new File(getFilesDir() + "/waypoints.txt");
+        //waypointFile.delete();
         Scanner fileScanner = new Scanner(waypointFile); //Scans each
         //line of the file
         final ArrayList<ArrayList<ILatLng>> waypointsaves = new ArrayList<ArrayList<ILatLng>>();
@@ -2636,12 +2667,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
             PointF temppoint = proj.toPixels(i, null);
 
-//            temppoint.offset(200, 50);
-            //points.add(proj.toPixels(i, null));
-//            if (temppoint.x < 200){temppoint.x = 200;}
-//            if (temppoint.x > 1200){temppoint.x = 1200;}
-//            if (temppoint.y < 50){temppoint.y = 50;}
-//            if (temppoint.y > 450){temppoint.y = 450;}
+//
             points.add(temppoint);
 
         }
@@ -2660,12 +2686,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
             PointF temppoint = proj.toPixels(i, null);
 
-//            temppoint.offset(200, 50);
-            //points.add(proj.toPixels(i, null));
-//            if (temppoint.x < 200){temppoint.x = 200;}
-//            if (temppoint.x > 1200){temppoint.x = 1200;}
-//            if (temppoint.y < 50){temppoint.y = 50;}
-//            if (temppoint.y > 450){temppoint.y = 450;}
             points.add(temppoint);
 
         }
@@ -2676,6 +2696,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         drawview2.invalidate();
     }
 
+    public static double planarDistanceSq(Pose3D a, Pose3D b) {
+        double dx = a.getX() - b.getX();
+        double dy = a.getY() - b.getY();
+        return dx * dx + dy * dy;
+    }
 
 
 }
