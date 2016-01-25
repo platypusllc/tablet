@@ -166,9 +166,9 @@
             android:layout_width="fill_parent"
             android:layout_height="400dp"
 
-            />/ mapbox:accessToken="pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0NTMzZzh4YTJyeWx4azhiZ2toMzUifQ.juDMFHzZybMwwO1C4DUN1A"
-        mapbox:mapid="shantanuv.nkob79p0"
-        />
+            mapbox:access_token="pk.eyJ1IjoiemVzaGVuZ3giLCJhIjoiY2loeHRjb3J2MDNleHQ1a2hpaHNpdWg4biJ9._iGMxo0BrVJc39brlkzOew"
+
+            />
 
     </RelativeLayout>
 

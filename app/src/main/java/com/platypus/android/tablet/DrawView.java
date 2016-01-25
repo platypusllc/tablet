@@ -14,7 +14,6 @@ import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.mapbox.mapboxsdk.overlay.Marker;
 
 import java.util.ArrayList;
 import java.util.List;

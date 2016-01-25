@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 android {
-    compileSdkVersion 21
-    buildToolsVersion '21.1.2'
+    compileSdkVersion 23
+    buildToolsVersion '23'
     defaultConfig {
         applicationId "com.platypus.android.tablet"
         minSdkVersion 15
@@ -39,7 +39,7 @@ dependencies {
     //    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:2.3.0@aar') {
     //       transitive = true
     //    }
-    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:0.7.4@aar') {
+    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:3.1.0@aar') {
         transitive = true
     }
     compile files('libs/jscience.jar')

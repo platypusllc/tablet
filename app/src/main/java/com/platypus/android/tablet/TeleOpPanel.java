@@ -34,26 +34,23 @@ import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
-import com.mapbox.mapboxsdk.api.ILatLng;
-import com.mapbox.mapboxsdk.clustering.geometry.Point;
-import com.mapbox.mapboxsdk.constants.MapboxConstants;
-import com.mapbox.mapboxsdk.geometry.BoundingBox;
-import com.mapbox.mapboxsdk.geometry.CoordinateRegion;
-import com.mapbox.mapboxsdk.geometry.CoordinateSpan;
+import com.mapbox.mapboxsdk.annotations.Polygon;
+import com.mapbox.mapboxsdk.annotations.PolygonOptions;
+import com.mapbox.mapboxsdk.annotations.Polyline;
+import com.mapbox.mapboxsdk.annotations.PolylineOptions;
+import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.offline.OfflineMapDatabase;
-import com.mapbox.mapboxsdk.offline.OfflineMapDownloader;
-import com.mapbox.mapboxsdk.offline.OfflineMapDownloaderListener;
-import com.mapbox.mapboxsdk.overlay.Icon;
-import com.mapbox.mapboxsdk.overlay.Marker;
-import com.mapbox.mapboxsdk.overlay.TilesOverlay;
-import com.mapbox.mapboxsdk.tileprovider.tilesource.*;
-import com.mapbox.mapboxsdk.util.GeometryMath;
+import com.mapbox.mapboxsdk.geometry.ILatLng;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+import com.mapbox.mapboxsdk.annotations.Icon;
+import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.views.MapView;
-import com.mapbox.mapboxsdk.views.MapViewListener;
-import com.mapbox.mapboxsdk.views.util.Projection;
+import com.mapbox.mapboxsdk.utils.ApiAccess;
+
 
 import android.app.AlertDialog;
+import android.app.Notification;
 import android.content.DialogInterface;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -65,6 +62,7 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 
 import android.net.Network;
+import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
@@ -204,7 +202,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     int currentselected = -1; //which element selected
     String saveName; //shouldnt be here?
     LatLng pHollowStartingPoint = new LatLng((float) 40.436871,
-                                             (float) -79.948825);
+            (float) -79.948825);
     LatLng UCMerced = new LatLng((float)37.400732,(float) -120.487372);
     LatLng Mapcenter ;
     long lastTime = -1;
@@ -298,9 +296,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
 
+
     List<LatLng>touchpointList = new ArrayList<LatLng>();
     List<LatLng> waypointList = new ArrayList<LatLng>();
     List<Marker> markerList = new ArrayList(); //List of all the
+    List<Marker> boundryList = new ArrayList();
+    List<Polyline> Waypath = new ArrayList();
+    List<Polygon> Boundry = new ArrayList();
 
 
 
@@ -309,17 +311,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //corresponding to the
     //given way
 
-    OfflineMapDownloader offlineMapDownloader;
-    TilesOverlay offlineMapOverlay;
+    // OfflineMapDownloader offlineMapDownloader;
+    //  TilesOverlay offlineMapOverlay;
     LatLng OfflineCenter = null ;
-    Projection MapProj;
+    // Projection MapProj;
     LatLng home = null;
     Timer timer;
     TimerTask timerTask;
 
     private static final String logTag = TeleOpPanel.class.getName();
 
-    protected void onCreate(Bundle savedInstanceState)   {
+    protected void onCreate(final Bundle savedInstanceState)   {
         super.onCreate(savedInstanceState);
 
         //this.setContentView(R.layout.tabletlayout_lg8);  // layout for LG GpadF 8
@@ -392,69 +394,69 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //  Initialize Poselistener
         //*****************************************************************************
         pl = new PoseListener() { //gets the location of the boat
-                public void receivedPose(UtmPose upwcs) {
+            public void receivedPose(UtmPose upwcs) {
 
-                     _pose = upwcs.clone();
-                    {
-                        xValue = _pose.pose.getX();
-                        yValue = _pose.pose.getY();
-                        zValue = _pose.pose.getZ();
-                        rotation = String.valueOf(Math.PI / 2
-                                                  - _pose.pose.getRotation().toYaw());
-                        rot =  Math.PI/2 - _pose.pose.getRotation().toYaw();
+                _pose = upwcs.clone();
+                {
+                    xValue = _pose.pose.getX();
+                    yValue = _pose.pose.getY();
+                    zValue = _pose.pose.getZ();
+                    rotation = String.valueOf(Math.PI / 2
+                            - _pose.pose.getRotation().toYaw());
+                    rot =  Math.PI/2 - _pose.pose.getRotation().toYaw();
 
-                        zone = String.valueOf(_pose.origin.zone);
+                    zone = String.valueOf(_pose.origin.zone);
 
-                        latlongloc = UTM.utmToLatLong(UTM.valueOf(
-                                                                  _pose.origin.zone, 'T', _pose.pose.getX(),
-                                                                  _pose.pose.getY(), SI.METER),
-                                                      ReferenceEllipsoid.WGS84);
+                    latlongloc = UTM.utmToLatLong(UTM.valueOf(
+                                    _pose.origin.zone, 'T', _pose.pose.getX(),
+                                    _pose.pose.getY(), SI.METER),
+                            ReferenceEllipsoid.WGS84);
 
-                        //Log.i(logTag, "rot:" + rot);
-                    }
+                    //Log.i(logTag, "rot:" + rot);
                 }
-            };
+            }
+        };
 
         //*******************************************************************************
         //  Initialize Sensorlistener
         //*******************************************************************************
         sl = new SensorListener() {
-                @Override
-                public void receivedSensor(SensorData sensorData) {
-                    Data = sensorData;
+            @Override
+            public void receivedSensor(SensorData sensorData) {
+                Data = sensorData;
 
-                    sensorV = Arrays.toString(Data.data);
-                    sensorV = sensorV.substring(1, sensorV.length()-1);
-                    sensorReady = true;
-                    //Log.i("Platypus","Get sensor Data");
-                }
-            };
+                sensorV = Arrays.toString(Data.data);
+                sensorV = sensorV.substring(1, sensorV.length()-1);
+                sensorReady = true;
+                //Log.i("Platypus","Get sensor Data");
+            }
+        };
 
         //***********************************************************************
         // Initialize save and load waypoint buttons
         // **********************************************************************
-
-        saveWaypoints.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    try {
-                        SaveWaypointsToFile();
-                    }
-                    catch(Exception e)
-                        {}
-                }
-            });
-
-        loadWaypoints.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    try {
-                        LoadWaypointsFromFile();
-                    }
-                    catch (Exception e)
-                        {}
-                }
-            });
+//
+//        saveWaypoints.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    try {
+//                        SaveWaypointsToFile();
+//                    }
+//                    catch(Exception e)
+//                        {}
+//                }
+//            });
+//
+//        loadWaypoints.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    try {
+//                        LoadWaypointsFromFile();
+//                    }
+//                    catch (Exception e)
+//                        {}
+//                }
+//            });
 
 
 
@@ -466,98 +468,110 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager
-            .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         senSensorManager.registerListener(this, senAccelerometer,
-                                          SensorManager.SENSOR_DELAY_NORMAL);
+                SensorManager.SENSOR_DELAY_NORMAL);
         //
         //        //cameraStream.setImageResource(R.drawable.streamnotfound);
         //File file = new File("/Android/data/com.example.platypuscontrolapp/cache/mapbox_tiles_cache");
         //final MBTilesLayer mbTilesLayer = new MBTilesLayer(file);
         mv = (MapView) findViewById(R.id.mapview);
+//        mv.setAccessToken(ApiAccess.getToken(this));
 
-        offlineMapDownloader = OfflineMapDownloader.getOfflineMapDownloader(this);
-        mv.setDiskCacheEnabled(false);
+        // offlineMapDownloader = OfflineMapDownloader.getOfflineMapDownloader(this);
+        // mv.setDiskCacheEnabled(false);
         //mv.setMapRotationEnabled(true);
         //mv.setMapOrientation(90f);
-        mv.setUserLocationEnabled(true);
-        compass = new Marker("Compass","",pHollowStartingPoint);
-        mv.addMarker(compass);
-        MapProj = new Projection(mv);
+        mv.setMyLocationEnabled(true);
+        mv.setCompassEnabled(true);
+        mv.setLatLng(pHollowStartingPoint);
+        mv.setStyleUrl(Style.SATELLITE_STREETS);
+        IconFactory mIconFactory = IconFactory.getInstance(this);
+        Drawable mhome = ContextCompat.getDrawable(this, R.drawable.home1);
+        final Icon Ihome = mIconFactory.fromDrawable(mhome);
+
+
+
+        mv.setZoom(16);
+        mv.onCreate(savedInstanceState);
+
+
+
+
 
         //System.out.println("x"+ compass.getPosition().toString());
 //        System.out.println(point.toString() + " " + temppoint.toString());
 
         // If has Internet connection, using online map, else using offline map
 
-        Thread thread = new Thread() {
-                public void run() {
-                    if (isInternetAvailable()) {
-                        try {
-
-                            mv.setAccessToken("pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
-                            // AccessToken "pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0NTMzZzh4YTJyeWx4azhiZ2toMzUifQ.juDMFHzZybMwwO1C4DUN1A"
-                            //mv.setTileSource(new MapboxTileLayer("mapbox.streets"));
-                            mv.setTileSource(new MapboxTileLayer(MapID));
-                            // mv.loadFromGeoJSONURL("https://www.mapbox.com/studio/styles/zeshengx/cihxtezs800nxaikon74h4v4l/");
-                            // mv.setTileSource(mbTilesLayer);
-
-                            mv.setCenter(new ILatLng() {
-                                    @Override
-                                    public double getLatitude() {
-                                        return pHollowStartingPoint.getLatitude();
-                                    }
-
-                                    @Override
-                                    public double getLongitude() {
-
-                                        return pHollowStartingPoint.getLongitude();
-                                    }
-
-                                    @Override
-                                    public double getAltitude() {
-                                        return 0;
-                                    }
-                                });
-
-                            mv.setZoom(16);
-
-
-                            //
-
-                        }catch(Exception e){
-                            System.err.println(e);
-                        }
-                    }
-                    else{
-                        if(offlineMapDownloader.getMutableOfflineMapDatabases() != null & offlineMapDownloader.getMutableOfflineMapDatabases().size()>0){
-
-                            loadOfflineMap();
-
-                        }
-                        else{
-                            runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(getApplicationContext(), "No OfflineMap available, Connect to Internet", Toast.LENGTH_LONG).show();
-                                    }
-                                });
-
-                        }
-                    }
-                }
-            };
-        thread.start();
+//        Thread thread = new Thread() {
+//                public void run() {
+//                    if (isInternetAvailable()) {
+//                        try {
+//
+////                            mv.setAccessToken("pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
+////                            // AccessToken "pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0NTMzZzh4YTJyeWx4azhiZ2toMzUifQ.juDMFHzZybMwwO1C4DUN1A"
+////                            //mv.setTileSource(new MapboxTileLayer("mapbox.streets"));
+////                            mv.setTileSource(new MapboxTileLayer(MapID));
+////                            // mv.loadFromGeoJSONURL("https://www.mapbox.com/studio/styles/zeshengx/cihxtezs800nxaikon74h4v4l/");
+////                            // mv.setTileSource(mbTilesLayer);
+////
+////                            mv.setCenter(new ILatLng() {
+////                                    @Override
+////                                    public double getLatitude() {
+////                                        return pHollowStartingPoint.getLatitude();
+////                                    }
+////
+////                                    @Override
+////                                    public double getLongitude() {
+////
+////                                        return pHollowStartingPoint.getLongitude();
+////                                    }
+////
+////                                    @Override
+////                                    public double getAltitude() {
+////                                        return 0;
+////                                    }
+////                                });
+//
+//
+//
+//                            //
+//
+//                        }catch(Exception e){
+//                            System.err.println(e);
+//                        }
+//                    }
+////                    else{
+////                        if(offlineMapDownloader.getMutableOfflineMapDatabases() != null & offlineMapDownloader.getMutableOfflineMapDatabases().size()>0){
+////
+////                            loadOfflineMap();
+////
+////                        }
+////                        else{
+////                            runOnUiThread(new Runnable() {
+////                                    @Override
+////                                    public void run() {
+////                                        Toast.makeText(getApplicationContext(), "No OfflineMap available, Connect to Internet", Toast.LENGTH_LONG).show();
+////                                    }
+////                                });
+////
+////                        }
+////                    }
+//                }
+//            };
+//        thread.start();
 
 
 
 
         connectButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    currentBoat = new Boat(pl, sl);
-                    connectBox();
-                }
-            });
+            @Override
+            public void onClick(View view) {
+                currentBoat = new Boat(pl, sl);
+                connectBox();
+            }
+        });
 
 
 
@@ -615,138 +629,138 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
          */
 
         startWaypoints.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Thread thread = new Thread(){
-                            public void run(){
-                                if (currentBoat.isConnected() == true) {
-                                    System.out.println("called");
-                                    // System.out.println("waypointList > 0");
-                                    checktest = true;
-                                    if (waypointList.size() > 0) {
-                                        UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
+            @Override
+            public void onClick(View view) {
+                Thread thread = new Thread(){
+                    public void run(){
+                        if (currentBoat.isConnected() == true) {
+                            System.out.println("called");
+                            // System.out.println("waypointList > 0");
+                            checktest = true;
+                            if (waypointList.size() > 0) {
+                                UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
 
-                                        waypointStatus = tempUtm.toString();
+                                waypointStatus = tempUtm.toString();
 
-                                        //System.out.println("wps" + waypointStatus);
-                                        currentBoat.addWaypoint(tempUtm.pose, tempUtm.origin);
-                                        wpPose = new UtmPose[waypointList.size()];
-                                        synchronized (_waypointLock) {
-                                            //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
-                                            for (int i = 0; i < waypointList.size(); i++) {
-                                                wpPose[i] = convertLatLngUtm(waypointList.get(i));
-                                            }
-                                            tempPose = wpPose;
-                                        }
-
-                                        checkAndSleepForCmd();
-                                        currentBoat.returnServer().startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>() {
-                                                @Override
-                                                public void completed(Void aVoid) {
-                                                    System.out.println("completed");
-                                                }
-
-                                                @Override
-                                                public void failed(FunctionError functionError) {
-                                                    isCurrentWaypointDone = false;
-                                                    System.out.println("asdf");
-                                                    // = waypointStatus + "\n" + functionError.toString();
-                                                    // System.out.println(waypointStatus);
-                                                }
-                                            });
-                                        currentBoat.returnServer().getWaypoints(new FunctionObserver<UtmPose[]>() {
-                                                @Override
-                                                public void completed(UtmPose[] wps) {
-                                                    for (UtmPose i : wps) {
-                                                        System.out.println("wp");
-                                                        System.out.println(i.toString());
-                                                    }
-                                                }
-
-                                                @Override
-                                                public void failed(FunctionError functionError) {
-                                                    System.out.println("shit");
-                                                }
-                                            });
+                                //System.out.println("wps" + waypointStatus);
+                                currentBoat.addWaypoint(tempUtm.pose, tempUtm.origin);
+                                wpPose = new UtmPose[waypointList.size()];
+                                synchronized (_waypointLock) {
+                                    //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
+                                    for (int i = 0; i < waypointList.size(); i++) {
+                                        wpPose[i] = convertLatLngUtm(waypointList.get(i));
                                     }
-                                    else{
-                                        runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    Toast.makeText(getApplicationContext(), "Please Select Waypoints", Toast.LENGTH_LONG).show();
-                                                }
-                                            });
-                                    }
+                                    tempPose = wpPose;
                                 }
 
+                                checkAndSleepForCmd();
+                                currentBoat.returnServer().startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>() {
+                                    @Override
+                                    public void completed(Void aVoid) {
+                                        System.out.println("completed");
+                                    }
 
+                                    @Override
+                                    public void failed(FunctionError functionError) {
+                                        isCurrentWaypointDone = false;
+                                        System.out.println("asdf");
+                                        // = waypointStatus + "\n" + functionError.toString();
+                                        // System.out.println(waypointStatus);
+                                    }
+                                });
+                                currentBoat.returnServer().getWaypoints(new FunctionObserver<UtmPose[]>() {
+                                    @Override
+                                    public void completed(UtmPose[] wps) {
+                                        for (UtmPose i : wps) {
+                                            System.out.println("wp");
+                                            System.out.println(i.toString());
+                                        }
+                                    }
 
+                                    @Override
+                                    public void failed(FunctionError functionError) {
+                                        System.out.println("shit");
+                                    }
+                                });
                             }
-                        };
-                    thread.start();
-                }
-            });
+                            else{
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(getApplicationContext(), "Please Select Waypoints", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                            }
+                        }
+
+
+
+                    }
+                };
+                thread.start();
+            }
+        });
 
         waypointButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View view) {
+            @Override
+            public void onClick(View view) {
 
-                    Thread thread = new Thread() {
-                            public void run() {
-                                if (waypointButton.isChecked()) {
-                                    runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Toast.makeText(getApplicationContext(), "Use long press to add waypoints", Toast.LENGTH_LONG).show();
-                                            }
-                                        });
-                                    Auto = true;
-                                } else {
-                                    Auto = false;
+                Thread thread = new Thread() {
+                    public void run() {
+                        if (waypointButton.isChecked()) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), "Use long press to add waypoints", Toast.LENGTH_LONG).show();
                                 }
-                                if (Auto) {
-                                    currentBoat.returnServer().setAutonomous(true, null);
-                                } else {
-                                    currentBoat.returnServer().setAutonomous(false, null);
-                                }
-                                if(speed.isChecked()){
-                                    currentBoat.returnServer().setGains(0, low_tPID, null);
-                                    currentBoat.returnServer().setGains(5, low_rPID, null);
-                                }
-                                else{
-                                    currentBoat.returnServer().setGains(0, tPID, null);
-                                    currentBoat.returnServer().setGains(5, rPID, null);
-                                }
+                            });
+                            Auto = true;
+                        } else {
+                            Auto = false;
+                        }
+                        if (Auto) {
+                            currentBoat.returnServer().setAutonomous(true, null);
+                        } else {
+                            currentBoat.returnServer().setAutonomous(false, null);
+                        }
+                        if(speed.isChecked()){
+                            currentBoat.returnServer().setGains(0, low_tPID, null);
+                            currentBoat.returnServer().setGains(5, low_rPID, null);
+                        }
+                        else{
+                            currentBoat.returnServer().setGains(0, tPID, null);
+                            currentBoat.returnServer().setGains(5, rPID, null);
+                        }
 
-                                currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
-                                        @Override
-                                        public void completed(Boolean aBoolean) {
-                                            isAutonomous = aBoolean;
-                                            Log.i(logTag, "isAutonomous: " + isAutonomous);
-                                        }
-
-                                        @Override
-                                        public void failed(FunctionError functionError) {
-
-                                        }
-                                    });
-
-                                currentBoat.returnServer().getGains(0, new FunctionObserver<double[]>() {
-                                        @Override
-                                        public void completed(double[] doubles) {
-                                            Log.i(logTag, "PID: " + doubles[0]);
-                                        }
-
-                                        @Override
-                                        public void failed(FunctionError functionError) {
-
-                                        }
-                                    });
+                        currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
+                            @Override
+                            public void completed(Boolean aBoolean) {
+                                isAutonomous = aBoolean;
+                                Log.i(logTag, "isAutonomous: " + isAutonomous);
                             }
-                        };
-                    thread.start();
-                }
-            });
+
+                            @Override
+                            public void failed(FunctionError functionError) {
+
+                            }
+                        });
+
+                        currentBoat.returnServer().getGains(0, new FunctionObserver<double[]>() {
+                            @Override
+                            public void completed(double[] doubles) {
+                                Log.i(logTag, "PID: " + doubles[0]);
+                            }
+
+                            @Override
+                            public void failed(FunctionError functionError) {
+
+                            }
+                        });
+                    }
+                };
+                thread.start();
+            }
+        });
 
 
         //        speed.setOnClickListener(new OnClickListener() {
@@ -773,193 +787,198 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //        });
 
         // download offline map
-        saveMap.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(offlineMapDownloader.isMapIdAlreadyAnOfflineMapDatabase(MapID)){
-                        Toast.makeText(getApplicationContext(), "MapID has already been downloaded.\n" +
-                                       "Please remove it before trying to download again", Toast.LENGTH_SHORT).show();
-                    }
-                    // mv.setDiskCacheEnabled(true);
-                    Mapcenter = mv.getCenter();
-                    writeToFile(Mapcenter.toString());
-                    Thread thread = new Thread(){
-                            public void run(){
-                                saveOfflineMap(Mapcenter);
-                            }
-                        };
-                    thread.start();
-                }
-            });
-        // display offline map
-        loadMap.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //loadOfflineMap();
-
-                    Thread thread = new Thread(){
-                            public void run(){
-                                loadOfflineMap();
-                            }
-                        };
-                    thread.start();
-                }
-            });
-        // switch to online map
-        refreshMap.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                    if(isInternetAvailable()){
-                        mv.setAccessToken("pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
-                        //mv.setTileSource(new MapboxTileLayer("mapbox.streets"));
-                        mv.setTileSource(new MapboxTileLayer(MapID));
-                    }
-                    else{
-                        Toast.makeText(getApplicationContext(),"Need Internet Connection", Toast.LENGTH_LONG).show();
-                    }
-
-
-                }
-            });
-        // remove offline map database
-        removeMap.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    offlineMapDownloader.removeOfflineMapDatabaseWithID(MapID);
-                    Toast.makeText(getApplicationContext(), "Removed OfflineMap", Toast.LENGTH_SHORT).show();
-                    progressBar.setProgress(0);
-                    String dir = getFilesDir().getAbsolutePath();
-                    File file = new File(dir, "Mapcenter.txt");
-                    file.delete();
-
-
-                }
-            });
+//        saveMap.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    if(offlineMapDownloader.isMapIdAlreadyAnOfflineMapDatabase(MapID)){
+//                        Toast.makeText(getApplicationContext(), "MapID has already been downloaded.\n" +
+//                                       "Please remove it before trying to download again", Toast.LENGTH_SHORT).show();
+//                    }
+//                    // mv.setDiskCacheEnabled(true);
+//                    Mapcenter = mv.getCenter();
+//                    writeToFile(Mapcenter.toString());
+//                    Thread thread = new Thread(){
+//                            public void run(){
+//                                saveOfflineMap(Mapcenter);
+//                            }
+//                        };
+//                    thread.start();
+//                }
+//            });
+//        // display offline map
+//        loadMap.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    //loadOfflineMap();
+//
+//                    Thread thread = new Thread(){
+//                            public void run(){
+//                                loadOfflineMap();
+//                            }
+//                        };
+//                    thread.start();
+//                }
+//            });
+//        // switch to online map
+//        refreshMap.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//
+//                    if(isInternetAvailable()){
+//                        mv.setAccessToken("pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
+//                        //mv.setTileSource(new MapboxTileLayer("mapbox.streets"));
+//                       // mv.setTileSource(new MapboxTileLayer(MapID));
+//                    }
+//                    else{
+//                        Toast.makeText(getApplicationContext(),"Need Internet Connection", Toast.LENGTH_LONG).show();
+//                    }
+//
+//
+//                }
+//            });
+//        // remove offline map database
+//        removeMap.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    offlineMapDownloader.removeOfflineMapDatabaseWithID(MapID);
+//                    Toast.makeText(getApplicationContext(), "Removed OfflineMap", Toast.LENGTH_SHORT).show();
+//                    progressBar.setProgress(0);
+//                    String dir = getFilesDir().getAbsolutePath();
+//                    File file = new File(dir, "Mapcenter.txt");
+//                    file.delete();
+//
+//
+//                }
+//            });
 
         setHome.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(setHome.isChecked()){
-                        new AlertDialog.Builder(context)
-                                .setTitle("Set Home")
-                                .setMessage("Which position do you want to use?")
-                                .setPositiveButton("Phone", new DialogInterface.OnClickListener(){
-                                    public void onClick(DialogInterface dialog, int which){
-                                        if( latlongloc != null) {
-                                            home = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-                                            home_M = new Marker("Home", "", home);
-                                            mv.addMarker(home_M);
-                                            //Bitmap home_B = BitmapFactory.decodeResource(getResources(), R.drawable.home);
-                                            //Drawable d = new BitmapDrawablegit (getResources(), home_B);
-                                            home_M.setIcon(new Icon(getResources().getDrawable(R.drawable.home1)));
+            @Override
+            public void onClick(View v) {
+                if(setHome.isChecked()){
+                    new AlertDialog.Builder(context)
+                            .setTitle("Set Home")
+                            .setMessage("Which position do you want to use?")
+                            .setPositiveButton("Phone", new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int which){
+                                    if( latlongloc != null) {
+                                        home = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+                                        MarkerOptions home_MO = new MarkerOptions()
+                                                .position(home)
+                                                .title("Home")
+                                                .icon(Ihome);
+                                        home_M =mv.addMarker(home_MO);
+                                        //Bitmap home_B = BitmapFactory.decodeResource(getResources(), R.drawable.home);
+                                        //Drawable d = new BitmapDrawablegit (getResources(), home_B);
 
-                                            home_M.setPoint(home);
-                                            mv.setCenter(home);
-                                        }
-                                        else{
 
-                                            Toast.makeText(getApplicationContext(),"Phone doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
-                                        }
+                                        mv.setLatLng(home);
                                     }
-                                })
-                                .setNegativeButton("Tablet", new DialogInterface.OnClickListener(){
-                                    public void onClick(DialogInterface dialog, int which){
+                                    else{
 
-                                            LatLng loc = mv.getUserLocation();
-                                            if(loc != null){
-                                                home = loc;
-                                                home_M = new Marker("Home", "", home);
-                                                mv.addMarker(home_M);
-                                                home_M.setIcon(new Icon(getResources().getDrawable(R.drawable.home1)));
-                                                home_M.setPoint(home);
-                                                mv.setCenter(home);
-
-                                            }
-                                            else{
-                                                Toast.makeText(getApplicationContext(),"Tablet doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
-                                            }
-
-
+                                        Toast.makeText(getApplicationContext(),"Phone doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
                                     }
-                                })
-                                .show();
-                    }
-                    else{
-                        new AlertDialog.Builder(context)
-                                .setTitle("Set Home")
-                                .setMessage("Do you want to remove the home?")
-                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        mv.removeMarker(home_M);
-                                        home = null;
-                                    }
-                                })
-                                .setNegativeButton("No",new DialogInterface.OnClickListener(){
-                                    public void onClick(DialogInterface dialog, int which) {
+                                }
+                            })
+                            .setNegativeButton("Tablet", new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int which){
+
+                                    LatLng loc = new LatLng(mv.getMyLocation()) ;
+
+                                    if(loc != null){
+                                        home = loc;
+                                        MarkerOptions home_MO = new MarkerOptions()
+                                                .position(home)
+                                                .title("Home")
+                                                .icon(Ihome);
+                                        home_M = mv.addMarker(home_MO);
+                                        mv.setLatLng(home);
+
 
                                     }
-                                })
-                                .show();
-                    }
+                                    else{
+                                        Toast.makeText(getApplicationContext(),"Tablet doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
+                                    }
 
 
-
-
-
+                                }
+                            })
+                            .show();
                 }
-            });
+                else{
+                    new AlertDialog.Builder(context)
+                            .setTitle("Set Home")
+                            .setMessage("Do you want to remove the home?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    mv.removeMarker(home_M);
+                                    home = null;
+                                }
+                            })
+                            .setNegativeButton("No",new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int which) {
+
+                                }
+                            })
+                            .show();
+                }
+
+
+
+
+
+            }
+        });
 
         goHome.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(home == null){
+            @Override
+            public void onClick(View v) {
+                if(home == null){
 
-                        Toast.makeText(getApplicationContext(), "Set home first!", Toast.LENGTH_LONG).show();
-                        //home = pHollowStartingPoint;
-                    }
-                    else{
-                        //stopWaypoints = true;
-
-                        //if(currentBoat.isConnected()){
-                        new AlertDialog.Builder(context)
-                                .setTitle("Go Home")
-                                .setMessage("Let the boat go home ?")
-                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        Thread threadhome = new Thread() {
-                                            public void run() {
-                                                if (currentBoat.isConnected()) {
-                                                    //                                    currentBoat.returnServer().stopWaypoints(null);
-                                                    //                                    checkAndSleepForCmd();
-                                                    if (!isAutonomous) {
-                                                        currentBoat.returnServer().setAutonomous(true, null);
-                                                        isAutonomous = true;
-                                                    }
-
-
-                                                    UtmPose homeUTM = convertLatLngUtm(home);
-                                                    currentBoat.addWaypoint(homeUTM.pose, homeUTM.origin);
-                                                    Log.i(logTag, "Go home");
-                                                }
-                                            }
-                                        };
-                                        threadhome.start();
-                                        Log.i(logTag, "Go home");
-                                    }
-                                })
-                                .setNegativeButton("No", new DialogInterface.OnClickListener(){
-                                    public void onClick(DialogInterface dialog, int which){
-                                            Log.i(logTag, "Nothing");
-                                    }
-                                })
-                                .show();
-
-                        //}
-
-                    }
+                    Toast.makeText(getApplicationContext(), "Set home first!", Toast.LENGTH_LONG).show();
+                    //home = pHollowStartingPoint;
                 }
-            });
+                else{
+                    //stopWaypoints = true;
+
+                    //if(currentBoat.isConnected()){
+                    new AlertDialog.Builder(context)
+                            .setTitle("Go Home")
+                            .setMessage("Let the boat go home ?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Thread threadhome = new Thread() {
+                                        public void run() {
+                                            if (currentBoat.isConnected()) {
+                                                //                                    currentBoat.returnServer().stopWaypoints(null);
+                                                //                                    checkAndSleepForCmd();
+                                                if (!isAutonomous) {
+                                                    currentBoat.returnServer().setAutonomous(true, null);
+                                                    isAutonomous = true;
+                                                }
+
+
+                                                UtmPose homeUTM = convertLatLngUtm(home);
+                                                currentBoat.addWaypoint(homeUTM.pose, homeUTM.origin);
+                                                Log.i(logTag, "Go home");
+                                            }
+                                        }
+                                    };
+                                    threadhome.start();
+                                    Log.i(logTag, "Go home");
+                                }
+                            })
+                            .setNegativeButton("No", new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int which){
+                                    Log.i(logTag, "Nothing");
+                                }
+                            })
+                            .show();
+
+                    //}
+
+                }
+            }
+        });
 
         drawPoly.setOnClickListener(new OnClickListener() {
             @Override
@@ -976,112 +995,148 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         });
     }
 
-    private void saveOfflineMap (LatLng Mapcenter){
-        mv.setDiskCacheEnabled(true);
-        offlineMapDownloader = OfflineMapDownloader.getOfflineMapDownloader(this);
-        // mv.setCenter(pHollowStartingPoint);
-        // mv.setZoom(17);
-
-        //BoundingBox boundingBox = new BoundingBox(new LatLng(40.435203, -79.951636), new LatLng(40.439345, -79.944796));
-
-        BoundingBox boundingBox = new BoundingBox(new LatLng(Mapcenter.getLatitude() - 0.0015,Mapcenter.getLongitude() - 0.0015), new LatLng(Mapcenter.getLatitude() +0.003,Mapcenter.getLongitude()+0.003));
-        CoordinateSpan span = new CoordinateSpan(boundingBox.getLatitudeSpan(), boundingBox.getLongitudeSpan());
-        CoordinateRegion coordinateRegion = new CoordinateRegion(Mapcenter, span);
-        offlineMapDownloader.beginDownloadingMapID(MapID, coordinateRegion, 17, 20);
-
-        OfflineMapDownloaderListener listener = new OfflineMapDownloaderListener() {
-                @Override
-                public void stateChanged(OfflineMapDownloader.MBXOfflineMapDownloaderState newState) {
-                    Log.i(logTag, String.format(MapboxConstants.MAPBOX_LOCALE, "stateChanged to %s", newState));
-                }
-
-                @Override
-                public void initialCountOfFiles(Integer numberOfFiles) {
-                    Log.i(logTag, String.format(MapboxConstants.MAPBOX_LOCALE, "File number = %d", numberOfFiles));
-                }
-
-                @Override
-                public void progressUpdate(final Integer numberOfFilesWritten, final Integer numberOfFilesExcepted) {
-                    runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(progressBar.getVisibility() == View.GONE){
-                                    progressBar.setVisibility(View.VISIBLE);
-                                }
-                                progressBar.setMax(numberOfFilesExcepted);
-                                progressBar.setProgress(numberOfFilesWritten);
-
-                                if(numberOfFilesExcepted == numberOfFilesWritten){
-                                    progressBar.setVisibility(View.GONE);
-                                }
-                            }
-                        });
-
-                }
-
-                @Override
-                public void networkConnectivityError(Throwable error) {
-
-                }
-
-                @Override
-                public void sqlLiteError(Throwable error) {
-
-                }
-
-                @Override
-                public void httpStatusError(Throwable error) {
-
-                }
-
-                @Override
-                public void completionOfOfflineDatabaseMap(OfflineMapDatabase offlineMapDatabase) {
-                    runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(), "Finish Saving Map", Toast.LENGTH_LONG).show();
-                                progressBar.setVisibility(View.GONE);
-                            }
-                        });
-
-
-                }
-            };
-        offlineMapDownloader.addOfflineMapDownloaderListener(listener);
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mv.onStart();
     }
 
-    private void loadOfflineMap(){
-        mv.setDiskCacheEnabled(true);
-        ArrayList<OfflineMapDatabase> offlineMapDatabases = offlineMapDownloader.getMutableOfflineMapDatabases();
-        if(offlineMapDatabases != null & offlineMapDatabases.size()>0) {
-
-            runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Marker marker = new Marker("Test", "", pHollowStartingPoint);
-                        String mapcenter = readFromFile();
-                        String[] mc  = mapcenter.split(",", 3);
-                        double lat = Double.parseDouble(mc[0]);
-                        double lon = Double.parseDouble(mc[1]);
-                        mv.setCenter(new LatLng(lat, lon));
-                        mv.setZoom(17);
-                        mv.setTileSource(new MBTilesLayer(getApplicationContext(), "shantanuv.nkob79p0.mblite"));
-
-                        mv.animate();
-                        Toast.makeText(getApplicationContext(), "Loading OfflineMap", Toast.LENGTH_SHORT).show();
-                    }
-                });
-        }
-        else{
-            runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "OfflineMap is Unavailable", Toast.LENGTH_LONG).show();
-                    }
-                });
-
-        }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mv.onStop();
     }
+
+    @Override
+    public void onPause()  {
+        super.onPause();
+        mv.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mv.onResume();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mv.onDestroy();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mv.onSaveInstanceState(outState);
+    }
+
+//    private void saveOfflineMap (LatLng Mapcenter){
+//        mv.setDiskCacheEnabled(true);
+//        offlineMapDownloader = OfflineMapDownloader.getOfflineMapDownloader(this);
+//        // mv.setCenter(pHollowStartingPoint);
+//        // mv.setZoom(17);
+//
+//        //BoundingBox boundingBox = new BoundingBox(new LatLng(40.435203, -79.951636), new LatLng(40.439345, -79.944796));
+//
+//        BoundingBox boundingBox = new BoundingBox(new LatLng(Mapcenter.getLatitude() - 0.0015,Mapcenter.getLongitude() - 0.0015), new LatLng(Mapcenter.getLatitude() +0.003,Mapcenter.getLongitude()+0.003));
+//        CoordinateSpan span = new CoordinateSpan(boundingBox.getLatitudeSpan(), boundingBox.getLongitudeSpan());
+//        CoordinateRegion coordinateRegion = new CoordinateRegion(Mapcenter, span);
+//        offlineMapDownloader.beginDownloadingMapID(MapID, coordinateRegion, 17, 20);
+//
+//        OfflineMapDownloaderListener listener = new OfflineMapDownloaderListener() {
+//                @Override
+//                public void stateChanged(OfflineMapDownloader.MBXOfflineMapDownloaderState newState) {
+//                    Log.i(logTag, String.format(MapboxConstants.MAPBOX_LOCALE, "stateChanged to %s", newState));
+//                }
+//
+//                @Override
+//                public void initialCountOfFiles(Integer numberOfFiles) {
+//                    Log.i(logTag, String.format(MapboxConstants.MAPBOX_LOCALE, "File number = %d", numberOfFiles));
+//                }
+//
+//                @Override
+//                public void progressUpdate(final Integer numberOfFilesWritten, final Integer numberOfFilesExcepted) {
+//                    runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                if(progressBar.getVisibility() == View.GONE){
+//                                    progressBar.setVisibility(View.VISIBLE);
+//                                }
+//                                progressBar.setMax(numberOfFilesExcepted);
+//                                progressBar.setProgress(numberOfFilesWritten);
+//
+//                                if(numberOfFilesExcepted == numberOfFilesWritten){
+//                                    progressBar.setVisibility(View.GONE);
+//                                }
+//                            }
+//                        });
+//
+//                }
+//
+//                @Override
+//                public void networkConnectivityError(Throwable error) {
+//
+//                }
+//
+//                @Override
+//                public void sqlLiteError(Throwable error) {
+//
+//                }
+//
+//                @Override
+//                public void httpStatusError(Throwable error) {
+//
+//                }
+//
+//                @Override
+//                public void completionOfOfflineDatabaseMap(OfflineMapDatabase offlineMapDatabase) {
+//                    runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                Toast.makeText(getApplicationContext(), "Finish Saving Map", Toast.LENGTH_LONG).show();
+//                                progressBar.setVisibility(View.GONE);
+//                            }
+//                        });
+//
+//
+//                }
+//            };
+//        offlineMapDownloader.addOfflineMapDownloaderListener(listener);
+//    }
+//
+//    private void loadOfflineMap(){
+//        mv.setDiskCacheEnabled(true);
+//        ArrayList<OfflineMapDatabase> offlineMapDatabases = offlineMapDownloader.getMutableOfflineMapDatabases();
+//        if(offlineMapDatabases != null & offlineMapDatabases.size()>0) {
+//
+//            runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Marker marker = new Marker("Test", "", pHollowStartingPoint);
+//                        String mapcenter = readFromFile();
+//                        String[] mc  = mapcenter.split(",", 3);
+//                        double lat = Double.parseDouble(mc[0]);
+//                        double lon = Double.parseDouble(mc[1]);
+//                        mv.setCenter(new LatLng(lat, lon));
+//                        mv.setZoom(17);
+//                        mv.setTileSource(new MBTilesLayer(getApplicationContext(), "shantanuv.nkob79p0.mblite"));
+//
+//                        mv.animate();
+//                        Toast.makeText(getApplicationContext(), "Loading OfflineMap", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//        }
+//        else{
+//            runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Toast.makeText(getApplicationContext(), "OfflineMap is Unavailable", Toast.LENGTH_LONG).show();
+//                    }
+//                });
+//
+//        }
+//    }
 
     private void writeToFile(String data) {
         try {
@@ -1179,28 +1234,34 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //  JoystickView listener
     // *******************************
     private JoystickMovedListener _listener = new JoystickMovedListener() {
-            @Override
-            public void OnMoved(int x, int y) {
-                thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
-                rudderTemp = fromProgressToRange(x, RUDDER_MIN,RUDDER_MAX);
-                Log.i(logTag,"Y:" + y + "\tX:" + x);
-                Log.i(logTag, "Thrust" + thrustTemp + "\t Rudder" + rudderTemp);
+        @Override
+        public void OnMoved(int x, int y) {
+            thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
+            rudderTemp = fromProgressToRange(x, RUDDER_MIN,RUDDER_MAX);
+            Log.i(logTag,"Y:" + y + "\tX:" + x);
+            Log.i(logTag, "Thrust" + thrustTemp + "\t Rudder" + rudderTemp);
 
-            }
+        }
 
-            @Override
-            public void OnReleased() {
+        @Override
+        public void OnReleased() {
 
-            }
+        }
 
-            @Override
-            public void OnReturnedToCenter() {
+        @Override
+        public void OnReturnedToCenter() {
 
-            }
-        };
+        }
+    };
 
     public void dialogClose()
     {
+        IconFactory mIconFactory = IconFactory.getInstance(this);
+        Drawable mboundry = ContextCompat.getDrawable(this, R.drawable.boundary);
+        final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
+        Drawable mboat = ContextCompat.getDrawable(this, R.drawable.pointarrow);
+        Icon Iboat = mIconFactory.fromDrawable(mboat);
+
         if (getBoatType() == true) {
             //
             //
@@ -1210,183 +1271,211 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             /*
              * if the add waypoint button is pressed and new marker where ever they click
              */
-        testWaypointListener();
+            testWaypointListener();
 
-        Thread thread = new Thread() {
-                        public void run() {
-                            while(true)
-                            {
+            Thread thread = new Thread() {
+                public void run() {
+                    while(true)
+                    {
 
-                            }
-                        }
-        };
+                    }
+                }
+            };
             //thread.start();
-            mv.setOnTouchListener(new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-
-//                            drawWaypointLines(waypointList, true);
-//
-//
-//                            drawPolygonline(touchpointList);
-
-                       // drawPolygonline();
-                        if(event.getAction() == MotionEvent.ACTION_DOWN){
-                            startTime = event.getEventTime();
-                            Log.d(logTag,"IN DOWN");
-                        }
-                        else if(event.getAction() == MotionEvent.ACTION_UP){
-                            endTime = event.getEventTime();
-                            Log.d(logTag, "IN UP");
-                        }
+            mv.setOnMapLongClickListener(new MapView.OnMapLongClickListener() {
+                @Override
+                public void onMapLongClick(LatLng point){
+                    if(waypointButton.isChecked()){
+                        LatLng wpLoc = point;
+                        WPnum += 1;
+                        waypointList.add(wpLoc);
+                        markerList.add(mv.addMarker(new MarkerOptions().position(wpLoc).title(Integer.toString(WPnum))));
+                        Waypath.add(mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5)));
 
 
-                        if (waypointButton.isChecked() && (endTime - startTime >800)) {
-                            longClick = false;
-                            //Projection proj = ((MapView) v).getProjection();
-                            //Projection proj = new Projection((MapView)v);
-                            MapProj = mv.getProjection();
-                            Rect RotatedScreen = GeometryMath.getBoundingBoxForRotatedRectangle(MapProj.getIntrinsicScreenRect(),MapProj.getCenterX(),
-                                                                                                MapProj.getCenterY(), MapProj.getMapOrientation(), null);
-
-
-                            //                        LatLng WorldCenter = ((MapView) v). getCenter();
-                            //                        double scale = 1; //Math.pow(2, ((MapView) v).getZoomLevel());
-                            //
-                            //                        PointF ScreenCenter = MapProj.toPixels(WorldCenter, null);
-                            //
-                            //                        //PointF Offset = new PointF((float)(event.getX() / scale), (float)(event.getY() / scale));
-                            //                        //PointF NewScreenCenter = new PointF (ScreenCenter.x - Offset.x, ScreenCenter.y + Offset.y);
-                            //
-                            //                        //ILatLng NewWorldCenter = MapProj.fromPixels(NewScreenCenter.x, NewScreenCenter.y);
-                            //                        ILatLng NewWorldCenter = MapProj.fromPixels(event.getX(), event.getY());
-                            //                        LatLng wpLoc = new LatLng(NewWorldCenter.getLatitude(), NewWorldCenter.getLongitude());
-
-
-                            // Matrix mRotate = MapProj.getRotationMatrix();
-                            if(!touchList.isEmpty() && touchList.get(touchList.size()-2) == event.getX() &&
-                              touchList.get(touchList.size()-1) == event.getY()){
-                                Log.i(logTag,"multi-touch");
-                            }
-                            else
-                                {
-                                    touchList.add(event.getX());
-                                    touchList.add(event.getY());
-                                    Matrix mRotate = new Matrix();
-                                    // mRotate = MapProj.getRotationMatrix();
-                                    mRotate.postRotate(((MapView) v).getMapOrientation());
-                                    //mRotate.setTranslate(v.getTranslationX(),v.getTranslationY());
-                                    Matrix invRotate = new Matrix();
-                                    mRotate.invert(invRotate);
-                                    float rX, rY, w;
-                                    float[] array = new float[9];
-                                    mRotate.getValues(array);
-                                    //                                rX = event.getX() * array[0] + event.getY() * array[1] + 1 * array[2];
-                                    //                                rY = event.getX() * array[3] + event.getY() * array[4] + 1 * array[5];
-                                    //                                w = event.getX() * array[6] + event.getY() * array[7] + 1 * array[8];
-                                    rX = event.getX();
-                                    rY = event.getY();
-                                    //event.transform(invRotate);
-                                    // ILatLng touchedloc = MapProj.pixelXYToLatLong(RotatedScreen.left + (int)rX + MapProj.getHalfWorldSize(),
-                                    //         RotatedScreen.top + (int)rY + MapProj.getHalfWorldSize(), MapProj.getZoomLevel());
-                                    ILatLng touchedloc = MapProj.fromPixels(rX,rY);
-
-                                    //                        LatLng wpLoc = new LatLng(rX, rY);
-                                    LatLng wpLoc = new LatLng(touchedloc.getLatitude(), touchedloc.getLongitude());
-                                    //                                double Lat, Lng;
-                                    //                            Lat = wpLoc.getLatitude() * array[0] + wpLoc.getLongitude() * array[1] + 1 * array[2];
-                                    //                            Lng = wpLoc.getLatitude() * array[3] + wpLoc.getLongitude() * array[4] + 1 * array[5];
-                                    //                            wpLoc = new LatLng(Lat, Lng);
-                                    WPnum += 1;
-                                    Marker WP = new Marker("","",wpLoc);
-//                                    Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.boundary);
-//                                    Drawable d = new BitmapDrawable(getResources(), b);
-//                                    WP.setIcon(new Icon(d));
-                                    WP.setDescription(Integer.toString(WPnum));
-                                    mv.addMarker(WP);
-                                    //mv.addMarker(new Marker(Integer.toString(WPnum), "", wpLoc));
-
-                                    waypointList.add(wpLoc);
-                                    wpstirng = wpLoc.toString();
-                                    //SendEmail();
-                                    markerList.add(new Marker(Integer.toString(WPnum), "", wpLoc));
-
-                                    Log.i(logTag, "Waypoint " + wpLoc);
-
-                                }
-
-                        }
-                        if(startDraw == true && endTime - startTime > 500){
-                            MapProj = mv.getProjection();
-                            if(!touchList.isEmpty() && touchList.get(touchList.size()-2) == event.getX() &&
-                                    touchList.get(touchList.size()-1) == event.getY()){
-                                Log.i(logTag,"multi-touch");
-                            }
-                            else{
-                                touchList.add(event.getX());
-                                touchList.add(event.getY());
-                                float rX, rY, w;
-                                rX = event.getX();
-                                rY = event.getY();
-                                ILatLng touchedloc = MapProj.fromPixels(rX,rY);
-
-
-                                LatLng wpLoc = new LatLng(touchedloc.getLatitude(), touchedloc.getLongitude());
-                                touchpointList.add(wpLoc);
-                                Marker boundary = new Marker("","",wpLoc);
-                                Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.boundary);
-                                Drawable d = new BitmapDrawable(getResources(), b);
-                                boundary.setIcon(new Icon(d));
-                                mv.addMarker(boundary);
-                            }
-
-                        }
-                        return false;
                     }
 
+                    if(startDraw == true){
+                        LatLng wpLoc = point;
+                        touchpointList.add(wpLoc);
+                        boundryList.add(mv.addMarker(new MarkerOptions().position(wpLoc).icon(Iboundry)));
+                        Boundry.add(mv.addPolygon(new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"))));
+                    }
+                }
 
-                });
+            });
+//                    @Override
+//                    public boolean onTouch(View v, MotionEvent even
+//
+////                            drawWaypointLines(waypointList, true);
+////
+////
+////                            drawPolygonline(touchpointList);
+//
+//                       // drawPolygonline();
+//                        if(event.getAction() == MotionEvent.ACTION_DOWN){
+//                            startTime = event.getEventTime();
+//                            Log.d(logTag,"IN DOWN");
+//                        }
+//                        else if(event.getAction() == MotionEvent.ACTION_UP){
+//                            endTime = event.getEventTime();
+//                            Log.d(logTag, "IN UP");
+//                        }
+//
+//
+//                        if (waypointButton.isChecked() && (endTime - startTime >800)) {
+//                            longClick = false;
+//                            //Projection proj = ((MapView) v).getProjection();
+//                            //Projection proj = new Projection((MapView)v);
+//                            MapProj = mv.getProjection();
+//                            Rect RotatedScreen = GeometryMath.getBoundingBoxForRotatedRectangle(MapProj.getIntrinsicScreenRect(),MapProj.getCenterX(),
+//                                                                                                MapProj.getCenterY(), MapProj.getMapOrientation(), null);
+//
+//
+//                            //                        LatLng WorldCenter = ((MapView) v). getCenter();
+//                            //                        double scale = 1; //Math.pow(2, ((MapView) v).getZoomLevel());
+//                            //
+//                            //                        PointF ScreenCenter = MapProj.toPixels(WorldCenter, null);
+//                            //
+//                            //                        //PointF Offset = new PointF((float)(event.getX() / scale), (float)(event.getY() / scale));
+//                            //                        //PointF NewScreenCenter = new PointF (ScreenCenter.x - Offset.x, ScreenCenter.y + Offset.y);
+//                            //
+//                            //                        //ILatLng NewWorldCenter = MapProj.fromPixels(NewScreenCenter.x, NewScreenCenter.y);
+//                            //                        ILatLng NewWorldCenter = MapProj.fromPixels(event.getX(), event.getY());
+//                            //                        LatLng wpLoc = new LatLng(NewWorldCenter.getLatitude(), NewWorldCenter.getLongitude());
+//
+//
+//                            // Matrix mRotate = MapProj.getRotationMatrix();
+//                            if(!touchList.isEmpty() && touchList.get(touchList.size()-2) == event.getX() &&
+//                              touchList.get(touchList.size()-1) == event.getY()){
+//                                Log.i(logTag,"multi-touch");
+//                            }
+//                            else
+//                                {
+//                                    touchList.add(event.getX());
+//                                    touchList.add(event.getY());
+//                                    Matrix mRotate = new Matrix();
+//                                    // mRotate = MapProj.getRotationMatrix();
+//                                    mRotate.postRotate(((MapView) v).getMapOrientation());
+//                                    //mRotate.setTranslate(v.getTranslationX(),v.getTranslationY());
+//                                    Matrix invRotate = new Matrix();
+//                                    mRotate.invert(invRotate);
+//                                    float rX, rY, w;
+//                                    float[] array = new float[9];
+//                                    mRotate.getValues(array);
+//                                    //                                rX = event.getX() * array[0] + event.getY() * array[1] + 1 * array[2];
+//                                    //                                rY = event.getX() * array[3] + event.getY() * array[4] + 1 * array[5];
+//                                    //                                w = event.getX() * array[6] + event.getY() * array[7] + 1 * array[8];
+//                                    rX = event.getX();
+//                                    rY = event.getY();
+//                                    //event.transform(invRotate);
+//                                    // ILatLng touchedloc = MapProj.pixelXYToLatLong(RotatedScreen.left + (int)rX + MapProj.getHalfWorldSize(),
+//                                    //         RotatedScreen.top + (int)rY + MapProj.getHalfWorldSize(), MapProj.getZoomLevel());
+//                                    ILatLng touchedloc = MapProj.fromPixels(rX,rY);
+//
+//                                    //                        LatLng wpLoc = new LatLng(rX, rY);
+//                                    LatLng wpLoc = new LatLng(touchedloc.getLatitude(), touchedloc.getLongitude());
+//                                    //                                double Lat, Lng;
+//                                    //                            Lat = wpLoc.getLatitude() * array[0] + wpLoc.getLongitude() * array[1] + 1 * array[2];
+//                                    //                            Lng = wpLoc.getLatitude() * array[3] + wpLoc.getLongitude() * array[4] + 1 * array[5];
+//                                    //                            wpLoc = new LatLng(Lat, Lng);
+//                                    WPnum += 1;
+//                                    Marker WP = new Marker("","",wpLoc);
+////                                    Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.boundary);
+////                                    Drawable d = new BitmapDrawable(getResources(), b);
+////                                    WP.setIcon(new Icon(d));
+//                                    WP.setDescription(Integer.toString(WPnum));
+//                                    mv.addMarker(WP);
+//                                    //mv.addMarker(new Marker(Integer.toString(WPnum), "", wpLoc));
+//
+//                                    waypointList.add(wpLoc);
+//                                    wpstirng = wpLoc.toString();
+//                                    //SendEmail();
+//                                    markerList.add(new Marker(Integer.toString(WPnum), "", wpLoc));
+//
+//                                    Log.i(logTag, "Waypoint " + wpLoc);
+//
+//                                }
+//
+//                        }
+//                        if(startDraw == true && endTime - startTime > 500){
+//                            MapProj = mv.getProjection();
+//                            if(!touchList.isEmpty() && touchList.get(touchList.size()-2) == event.getX() &&
+//                                    touchList.get(touchList.size()-1) == event.getY()){
+//                                Log.i(logTag,"multi-touch");
+//                            }
+//                            else{
+//                                touchList.add(event.getX());
+//                                touchList.add(event.getY());
+//                                float rX, rY, w;
+//                                rX = event.getX();
+//                                rY = event.getY();
+//                                ILatLng touchedloc = MapProj.fromPixels(rX,rY);
+//
+//
+//                                LatLng wpLoc = new LatLng(touchedloc.getLatitude(), touchedloc.getLongitude());
+//                                touchpointList.add(wpLoc);
+//                                Marker boundary = new Marker("","",wpLoc);
+//                                Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.boundary);
+//                                Drawable d = new BitmapDrawable(getResources(), b);
+//                                boundary.setIcon(new Icon(d));
+//                                mv.addMarker(boundary);
+//                            }
+//
+//                        }
+//                        return false;
+//                    }
+//
+//
+//                });
 
 
             /*
              * If they press delete wayponts delete all markers off the map and delete waypoints
              */
             deleteWaypoint.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View v) {
+                public void onClick(View v) {
 
-                        // ConnectScreen.boat.cancelWaypoint)
-                        stopWaypoints = true;
-                        //mv.clear();
-                        //mv.removeMarkers(markerList);
+                    // ConnectScreen.boat.cancelWaypoint)
+                    stopWaypoints = true;
+                    //mv.clear();
+                    //mv.removeMarkers(markerList);
 
-                        isCurrentWaypointDone = true;
+                    isCurrentWaypointDone = true;
 
-                        try {
-                            mv.clear();
-                            mv.animate();
-                            // mv.removeMarkers(markerList);
 
-                            waypointList.clear();
-                            markerList.clear();
-                            WPnum = 0;
-                            //                        LatLng curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-                            //                        boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", curLoc);
-                            //                        boat2.setIcon(new Icon(getResources().getDrawable(R.drawable.pointarrow)));
-                            //                        boat2.setPoint(curLoc);
-                            //                        mv.animate();
-                            mv.addMarker(boat2);
-                            if(home != null) {
-                                mv.addMarker(home_M);
-                            }
-                            N_waypoint = 0;
+                    try {
+                        for(Marker m: markerList){
+                            mv.removeMarker(m);
 
-                            drawWaypointLines(waypointList,false);
-                        } catch (Exception e) {
-                            //boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", new LatLng(pHollowStartingPoint.getLatitude(), pHollowStartingPoint.getLongitude()));
                         }
-                        System.out.println("called delete");
+                        for(Polyline p : Waypath){
+                            p.remove();
+                        }
+                        // mv.animate();
+                        // mv.removeMarkers(markerList);
+
+                        waypointList.clear();
+                        markerList.clear();
+                        WPnum = 0;
+                        //                        LatLng curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+                        //                        boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", curLoc);
+                        //                        boat2.setIcon(new Icon(getResources().getDrawable(R.drawable.pointarrow)));
+                        //                        boat2.setPoint(curLoc);
+                        //                        mv.animate();
+//                            mv.addMarker(boat2);
+//                            if(home != null) {
+//                                mv.addMarker(home_M);
+//                            }
+                        N_waypoint = 0;
+
+                        //drawWaypointLines(waypointList,false);
+                    } catch (Exception e) {
+                        //boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", new LatLng(pHollowStartingPoint.getLatitude(), pHollowStartingPoint.getLongitude()));
                     }
-                });
+                    System.out.println("called delete");
+                }
+            });
 
 
             networkThread = new NetworkAsync(this).execute(); //launch networking asnyc task
@@ -1398,45 +1487,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             simulatedBoat();
         }
         else
-            {
-                log.append("fail");
-            }
+        {
+            log.append("fail");
+        }
 
         try {
             //boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", new LatLng(pHollowStartingPoint.getLatitude(), pHollowStartingPoint.getLongitude()));
-            boat2 = new Marker("Boat", "Boat", new LatLng(pHollowStartingPoint.getLatitude(), pHollowStartingPoint.getLongitude()));
-            mv.addMarker(boat2);
-            mv.setCenter(new ILatLng() {
-                    @Override
-                    public double getLatitude() {
-                        return pHollowStartingPoint.getLatitude();
-                    }
+            boat2 = mv.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat").icon(Iboat));
 
-                    @Override
-                    public double getLongitude() {
-                        return pHollowStartingPoint.getLongitude();
-                    }
+            mv.setLatLng(pHollowStartingPoint);
 
-                    @Override
-                    public double getAltitude() {
-                        return 0;
-                    }
-                });
         }
         catch(Exception e)
-            {
+        {
 
-            }
+        }
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        // turns the thrust and rudder off when you pause the activity
-        // thrust.setProgress(0);
-        //rudder.setProgress(50);
-        //networkThread.cancel(true);
-    }
+
 
     //    @Override
     //    public void onResume() {
@@ -1458,7 +1526,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         try {
             Pattern pattern = Pattern
-                .compile("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+                    .compile("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
             Matcher matcher = pattern.matcher(ip);
             return matcher.matches();
         } catch (PatternSyntaxException ex) {
@@ -1475,7 +1543,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             if (Math.abs(rudderTemp - 0) < .05) {
                 tempThrustValue = 0;
                 twist.drz(fromProgressToRange((int) tempThrustValue, RUDDER_MIN,
-                                              RUDDER_MAX));
+                        RUDDER_MAX));
 
             } else {
                 twist.drz(rudderTemp >= -1 & rudderTemp <= 1 ? rudderTemp : 0);
@@ -1506,7 +1574,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         boolean connected = false;
         boolean firstTime = true;
         Context context;
-
+        IconFactory mIconFactory = IconFactory.getInstance(context);
 
         int tempnum = 100;
 
@@ -1545,7 +1613,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         @Override
         protected String doInBackground(String... arg0) {
-           // currentBoat.isConnected();
+            // currentBoat.isConnected();
             while (true) { //constantly looping
                 if (currentBoat != null) {
                     if (System.currentTimeMillis() % 100 == 0 && oldTime != System.currentTimeMillis())
@@ -1592,7 +1660,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             }
                         }
 
-                       // Log.i(logTag, "doInbackground "+ oldTime);
+                        // Log.i(logTag, "doInbackground "+ oldTime);
                         publishProgress();
                     }
                 }
@@ -1603,44 +1671,45 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         protected void onProgressUpdate(Integer... result) {
 
 
-            if(waypointList.size()>0) {
-                List<LatLng> P_waypoints; // previous waypoints
-                List<LatLng> N_waypoints; // next waypoints
+//            if(waypointList.size()>0) {
+//                List<LatLng> P_waypoints; // previous waypoints
+//                List<LatLng> N_waypoints; // next waypoints
+//
+//                P_waypoints = waypointList.subList(0,N_waypoint);
+//
+//
+//                N_waypoints = waypointList.subList(N_waypoint,waypointList.size());
+//                drawWaypointLines(P_waypoints, false); // solid line represents completed waypoints
+//                drawWaypointLines(N_waypoints, true); // dotted line represents incompleted waypoints
+//            }
+//            if(touchpointList.size()>0){
+//                drawPolygonline(touchpointList);
+//
+//            }
 
-                P_waypoints = waypointList.subList(0,N_waypoint);
+
+            LatLng curLoc;
+            if (latlongloc != null) {
+                curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+
+                float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
+                degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+
+                float bias = mv.getRotation(); // bias is the map orirentation
+                // Using bitmap to make marker rotatable.
+                Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
+                Drawable d = new BitmapDrawable(getResources(), boatarrow);
+                Icon Iboat2 = mIconFactory.fromDrawable(d);
+                mv.addMarker(new MarkerOptions().icon(Iboat2).position(curLoc).title("Boat").snippet(curLoc.toString()));
 
 
-                N_waypoints = waypointList.subList(N_waypoint,waypointList.size());
-                drawWaypointLines(P_waypoints, false); // solid line represents completed waypoints
-                drawWaypointLines(N_waypoints, true); // dotted line represents incompleted waypoints
             }
-            if(touchpointList.size()>0){
-                drawPolygonline(touchpointList);
+            //mvproj.toMapPixels(curLoc,null);
 
-            }
+            // boat2.setRelatedObject(mv);
+            //Log.i(logTag, "Compass " + comp);
 
-
-                    LatLng curLoc;
-                    if (latlongloc != null) {
-                        curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-
-                        float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
-                        degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
-
-                        float bias = mv.getMapOrientation(); // bias is the map orirentation
-                        // Using bitmap to make marker rotatable.
-                        Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
-                        Drawable d = new BitmapDrawable(getResources(), boatarrow);
-                        boat2.setDescription(curLoc.toString());
-                        boat2.setIcon(new Icon(d));
-                        boat2.setPoint(curLoc);
-                    }
-                    //mvproj.toMapPixels(curLoc,null);
-
-                    // boat2.setRelatedObject(mv);
-                    //Log.i(logTag, "Compass " + comp);
-
-                    mv.animate();
+            mv.animate();
 
 
 //
@@ -1672,7 +1741,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //                            System.out.println(e.toString());
 //                            firstTime = true; //for false/fake lat long values until the phone gets real location values
 //                        }
-                }
+            }
             if (connected == true) {
                 ipAddressBox.setBackgroundColor(Color.GREEN);
             }
@@ -1699,31 +1768,31 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     //  sensorValueBox.setBackgroundColor(Color.GREEN);
 
                     switch (Data.channel) {
-                    case 4:
-                        //                        String[] batteries = sensorV.split(",");
-                        //                        battery.setText(batteries[0]);
-                        break;
-                    case 1:
-                        sensorData1.setText(sensorV);
-                        sensorType1.setText(Data.type+"\n"+unit(Data.type));
+                        case 4:
+                            //                        String[] batteries = sensorV.split(",");
+                            //                        battery.setText(batteries[0]);
+                            break;
+                        case 1:
+                            sensorData1.setText(sensorV);
+                            sensorType1.setText(Data.type+"\n"+unit(Data.type));
 
-                        break;
-                    case 2:
-                        sensorData2.setText(sensorV);
-                        sensorType2.setText(Data.type+ "\n"+unit(Data.type));
+                            break;
+                        case 2:
+                            sensorData2.setText(sensorV);
+                            sensorType2.setText(Data.type+ "\n"+unit(Data.type));
 
-                        break;
-                    case 3:
-                        sensorData3.setText(sensorV);
-                        sensorType3.setText(Data.type+ "\n"+unit(Data.type));
+                            break;
+                        case 3:
+                            sensorData3.setText(sensorV);
+                            sensorType3.setText(Data.type+ "\n"+unit(Data.type));
 
-                        break;
-                    case 9:
-                        break;
-                    default:
-                        sensorData1.setText("Waiting");
-                        sensorData2.setText("Waiting");
-                        sensorData3.setText("Waiting");
+                            break;
+                        case 9:
+                            break;
+                        default:
+                            sensorData1.setText("Waiting");
+                            sensorData2.setText("Waiting");
+                            sensorData3.setText("Waiting");
                     }
 
                 }
@@ -1809,7 +1878,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         else if(Type.toString().equalsIgnoreCase("ES2")){
             unit = "EC(µS/cm)\n" +
-                "TE(°C)";
+                    "TE(°C)";
         }
         else if(Type.toString().equalsIgnoreCase("HDS_DEPTH")){
             unit = "m";
@@ -1824,14 +1893,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     public void setVelListener() {
         currentBoat.returnServer().addVelocityListener(
-                                                       new VelocityListener() {
-                                                           public void receivedVelocity(Twist twist) {
-                                                               thrust.setProgress(fromRangeToProgress(twist.dx(),
-                                                                                                      THRUST_MIN, THRUST_MAX));
-                                                               rudder.setProgress(fromRangeToProgress(twist.drz(),
-                                                                                                      RUDDER_MIN, RUDDER_MAX));
-                                                           }
-                                                       }, null);
+                new VelocityListener() {
+                    public void receivedVelocity(Twist twist) {
+                        thrust.setProgress(fromRangeToProgress(twist.dx(),
+                                THRUST_MIN, THRUST_MAX));
+                        rudder.setProgress(fromRangeToProgress(twist.drz(),
+                                RUDDER_MIN, RUDDER_MAX));
+                    }
+                }, null);
 
     }
 
@@ -1914,32 +1983,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         UtmPose[] wpPose = new UtmPose[1];
         wpPose[0] = new UtmPose(pose, origin);
         currentBoat.returnServer().startWaypoints(wpPose,
-                                                  "POINT_AND_SHOOT", new FunctionObserver<Void>() {
-                                                          public void completed(Void v) {
-                                                              //log.setText("completed"); UNCOMMENT THESE
-                                                          }
+                "POINT_AND_SHOOT", new FunctionObserver<Void>() {
+                    public void completed(Void v) {
+                        //log.setText("completed"); UNCOMMENT THESE
+                    }
 
-                                                          public void failed(FunctionError fe) {
-                                                              ///log.setText("failed");
-                                                          }
-                                                      });
+                    public void failed(FunctionError fe) {
+                        ///log.setText("failed");
+                    }
+                });
 
     }
 
     public LatLng convertUtmLatLng(Pose3D _pose, Utm _origin) {
         LatLong temp = UTM
-            .utmToLatLong(
-                          UTM.valueOf(_origin.zone, 'T', _pose.getX(),
-                                      _pose.getY(), SI.METER),
-                          ReferenceEllipsoid.WGS84);
+                .utmToLatLong(
+                        UTM.valueOf(_origin.zone, 'T', _pose.getX(),
+                                _pose.getY(), SI.METER),
+                        ReferenceEllipsoid.WGS84);
         return new LatLng(temp.latitudeValue(SI.RADIAN),
-                          temp.longitudeValue(SI.RADIAN));
+                temp.longitudeValue(SI.RADIAN));
     }
 
     public UtmPose convertLatLngUtm(ILatLng point) {
 
         UTM utmLoc = UTM.latLongToUtm(LatLong.valueOf(point.getLatitude(),
-                                                      point.getLongitude(), NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
+                point.getLongitude(), NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
 
         // Convert to UTM data structure
         Pose3D pose = new Pose3D(utmLoc.eastingValue(SI.METER), utmLoc.northingValue(SI.METER), 0.0, 0, 0, 0);
@@ -1952,24 +2021,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public void testCamera() {
         //log.setText("test camera");
         currentBoat.returnServer().addImageListener(new ImageListener() {
-                public void receivedImage(byte[] imageData) {
-                    // Take a picture, and put the resulting image into the panel
-                    //log.setText("image taken");
+            public void receivedImage(byte[] imageData) {
+                // Take a picture, and put the resulting image into the panel
+                //log.setText("image taken");
 
-                    try {
-                        Bitmap image1 = BitmapFactory.decodeByteArray(imageData, 0, 15);
-                        if (image1 != null) {
-                            // a++;
-                            //System.out.println("image made");
-                            currentImage = image1;
+                try {
+                    Bitmap image1 = BitmapFactory.decodeByteArray(imageData, 0, 15);
+                    if (image1 != null) {
+                        // a++;
+                        //System.out.println("image made");
+                        currentImage = image1;
 
-                        }
-                    } catch (Exception e) {
-                        //log.setText(e.toString()); uncomment this
-                        e.printStackTrace();
                     }
+                } catch (Exception e) {
+                    //log.setText(e.toString()); uncomment this
+                    e.printStackTrace();
                 }
-            }, null);
+            }
+        }, null);
     }
 
     public void connectBox()
@@ -1989,72 +2058,72 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         ipAddress.setText("192.168.1.20");
 
         direct.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(direct.isChecked()){
-                        ipAddress.setText("192.168.1.20");
-                    }
+            @Override
+            public void onClick(View v) {
+                if(direct.isChecked()){
+                    ipAddress.setText("192.168.1.20");
                 }
-            });
+            }
+        });
         reg.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (reg.isChecked())
-                        {
-                            ipAddress.setText("tunnel.senseplatypus.com");
-                        }
-                    else
-                        {
-                            ipAddress.setText("192.168.1.20");
-                        }
+            @Override
+            public void onClick(View v) {
+                if (reg.isChecked())
+                {
+                    ipAddress.setText("tunnel.senseplatypus.com");
                 }
-            });
+                else
+                {
+                    ipAddress.setText("192.168.1.20");
+                }
+            }
+        });
 
 
 
         submitButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // int selectedId = simvsact.getCheckedRadioButtonId();
-                    //int selectedOption = actvsim.getCheckedRadioButtonId();
-                    //log.append("asdf" + selectedOption);
-                    //                if (boat2 != null) {
-                    //boat2.remove();
-                    //                }
+            @Override
+            public void onClick(View v) {
+                // int selectedId = simvsact.getCheckedRadioButtonId();
+                //int selectedOption = actvsim.getCheckedRadioButtonId();
+                //log.append("asdf" + selectedOption);
+                //                if (boat2 != null) {
+                //boat2.remove();
+                //                }
 
-                    if (ipAddress.getText() == null || ipAddress.getText().equals("") || ipAddress.getText().length()==0)
-                    {
-                        ipAddressBox.setText("IP Address: 127.0.0.1 (localhost)");
-                    }
-                    else {
-                        ipAddressBox.setText("IP Address: " + ipAddress.getText());
-                    }
-                    markerList = new ArrayList<Marker>();
-                    actual = actualBoat.isChecked();
-
-                    textIpAddress = ipAddress.getText().toString();
-                    System.out.println("asdfasdfasdf");
-                    System.out.println("IP Address entered is: " + textIpAddress);
-                    if (direct.isChecked()) {
-                        if (ipAddress.getText() == null || ipAddress.getText().equals("")) {
-                            address = CrwNetworkUtils.toInetSocketAddress("127.0.0.1" + ":11411");
-                        }
-                        address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":11411");
-                        // address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
-                        //                    log.append("\n" + address.toString());
-                        //currentBoat = new Boat(address);
-                        currentBoat.setAddress(address);
-                    }
-                    else if(reg.isChecked())
-                        {
-                            Log.i(logTag,"finding ip");
-                            FindIP();
-                        }
-                    mv.clear();
-                    dialog.dismiss();
-                    dialogClose();
+                if (ipAddress.getText() == null || ipAddress.getText().equals("") || ipAddress.getText().length()==0)
+                {
+                    ipAddressBox.setText("IP Address: 127.0.0.1 (localhost)");
                 }
-            });
+                else {
+                    ipAddressBox.setText("IP Address: " + ipAddress.getText());
+                }
+                markerList = new ArrayList<Marker>();
+                actual = actualBoat.isChecked();
+
+                textIpAddress = ipAddress.getText().toString();
+                System.out.println("asdfasdfasdf");
+                System.out.println("IP Address entered is: " + textIpAddress);
+                if (direct.isChecked()) {
+                    if (ipAddress.getText() == null || ipAddress.getText().equals("")) {
+                        address = CrwNetworkUtils.toInetSocketAddress("127.0.0.1" + ":11411");
+                    }
+                    address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":11411");
+                    // address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
+                    //                    log.append("\n" + address.toString());
+                    //currentBoat = new Boat(address);
+                    currentBoat.setAddress(address);
+                }
+                else if(reg.isChecked())
+                {
+                    Log.i(logTag,"finding ip");
+                    FindIP();
+                }
+
+                dialog.dismiss();
+                dialogClose();
+            }
+        });
 
         dialog.show();
 
@@ -2074,33 +2143,33 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public void waypointListenerTest()
     {
         currentBoat.returnServer().addWaypointListener(new WaypointListener() {
-                @Override
-                public void waypointUpdate(WaypointState waypointState) {
-                    System.out.println("waypontstate: " + waypointState.toString());
-                }
-            },null);
+            @Override
+            public void waypointUpdate(WaypointState waypointState) {
+                System.out.println("waypontstate: " + waypointState.toString());
+            }
+        },null);
     }
     public void testWaypointListener()
     {
         //this gets called on doInBackground() in the async task
         currentBoat.returnServer().addWaypointListener(new WaypointListener() {
-                public void waypointUpdate(WaypointState ws) {
-                    boatwaypoint = ws.toString();
-                    //                currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
-                    //                    @Override
-                    //                    public void completed(Boolean aBoolean) {
-                    //                        isAutonomous = aBoolean;
-                    //                        Log.i(logTag, "isAutonomous: "+ isAutonomous);
-                    //                    }
-                    //
-                    //                    @Override
-                    //                    public void failed(FunctionError functionError) {
-                    //
-                    //                    }
-                    //});
-                    //System.out.println(boatwaypoint);
-                }
-            }, null);
+            public void waypointUpdate(WaypointState ws) {
+                boatwaypoint = ws.toString();
+                //                currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
+                //                    @Override
+                //                    public void completed(Boolean aBoolean) {
+                //                        isAutonomous = aBoolean;
+                //                        Log.i(logTag, "isAutonomous: "+ isAutonomous);
+                //                    }
+                //
+                //                    @Override
+                //                    public void failed(FunctionError functionError) {
+                //
+                //                    }
+                //});
+                //System.out.println(boatwaypoint);
+            }
+        }, null);
     }
     private void checkAndSleepForCmd() {
         if (lastTime >= 0) {
@@ -2131,9 +2200,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             wpFile = new File("./waypoints.txt");
         }
         catch(Exception e)
-            {
-                System.out.println(e.toString());
-            }
+        {
+            System.out.println(e.toString());
+        }
         Scanner fileScanner;
         int valueCounter = 0;
         //first make sure even number of elements
@@ -2142,35 +2211,35 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             fileScanner = new Scanner(wpFile);
             //first make sure even number of element
             while(fileScanner.hasNext())
+            {
+                try
                 {
-                    try
-                        {
-                            LatLng temp = new LatLng(Double.parseDouble(fileScanner.next()), Double.parseDouble(fileScanner.next()));
-                            waypointList.add(temp);
-                            Marker tempMarker = mv.addMarker(new Marker("","",temp));
-                            markerList.add(tempMarker);
-                        }
-                    catch(Exception e)
-                        {
-                            System.out.println("Invalid LAT/LNG in file");
-                        }
-                    System.out.println(fileScanner.next() + " " + fileScanner.next());
-                    valueCounter+=2;
+                    LatLng temp = new LatLng(Double.parseDouble(fileScanner.next()), Double.parseDouble(fileScanner.next()));
+                    waypointList.add(temp);
+                    Marker tempMarker = mv.addMarker(new MarkerOptions().position(temp));
+                    markerList.add(tempMarker);
                 }
+                catch(Exception e)
+                {
+                    System.out.println("Invalid LAT/LNG in file");
+                }
+                System.out.println(fileScanner.next() + " " + fileScanner.next());
+                valueCounter+=2;
+            }
             System.out.println("amount of elements: " + valueCounter);
             if ((valueCounter % 2) != 0)
-                {
-                    System.out.println("Mismatching lat long vals");
-                    return false;
-                }
-            else
-                {
-                    System.out.println("Valid");
-                }
-        } else
             {
-                System.out.println("File not found");
+                System.out.println("Mismatching lat long vals");
+                return false;
             }
+            else
+            {
+                System.out.println("Valid");
+            }
+        } else
+        {
+            System.out.println("File not found");
+        }
         return true;
     }
 
@@ -2227,47 +2296,47 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         Thread thread = new Thread() {
 
-                public void run() {
-                    address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
-                    //address = CrwNetworkUtils.toInetSocketAddress(textIpAddress);
-                    //currentBoat = new Boat(pl,null);
-                    // currentBoat = new Boat();
-                    // UdpVehicleServer tempserver = new UdpVehicleServer();
-                    currentBoat.returnServer().setRegistryService(address);
-                    currentBoat.returnServer().getVehicleServices(new FunctionObserver<Map<SocketAddress, String>>() {
-                            @Override
-                            public void completed(Map<SocketAddress, String> socketAddressStringMap) {
-                                Log.i(logTag, "Completed");
-                                for (Map.Entry<SocketAddress, String> entry : socketAddressStringMap.entrySet()) {
-                                    //newaddressstring = entry.getKey().toString();
-                                    //System.out.println(newaddressstring);
-                                    // currentBoat.returnServer().setVehicleService(entry.getKey());
-                                    //                        adapter.add(entry);
-                                    //                        adapter.notifyDataSetChanged();
+            public void run() {
+                address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
+                //address = CrwNetworkUtils.toInetSocketAddress(textIpAddress);
+                //currentBoat = new Boat(pl,null);
+                // currentBoat = new Boat();
+                // UdpVehicleServer tempserver = new UdpVehicleServer();
+                currentBoat.returnServer().setRegistryService(address);
+                currentBoat.returnServer().getVehicleServices(new FunctionObserver<Map<SocketAddress, String>>() {
+                    @Override
+                    public void completed(Map<SocketAddress, String> socketAddressStringMap) {
+                        Log.i(logTag, "Completed");
+                        for (Map.Entry<SocketAddress, String> entry : socketAddressStringMap.entrySet()) {
+                            //newaddressstring = entry.getKey().toString();
+                            //System.out.println(newaddressstring);
+                            // currentBoat.returnServer().setVehicleService(entry.getKey());
+                            //                        adapter.add(entry);
+                            //                        adapter.notifyDataSetChanged();
 
-                                    Log.i(logTag, entry.toString());
-                                    currentBoat.returnServer().setVehicleService(entry.getKey());
+                            Log.i(logTag, entry.toString());
+                            currentBoat.returnServer().setVehicleService(entry.getKey());
 
 
-                                    //
+                            //
 
-                                }
-                                //                    if(currentBoat.isConnected() == true){
-                                //                        Log.i(logTag, "Connected");
-                                //                    }
-                                //                    else{
-                                //                        Log.i(logTag, "Disconnected");
-                                //                    }
-                            }
+                        }
+                        //                    if(currentBoat.isConnected() == true){
+                        //                        Log.i(logTag, "Connected");
+                        //                    }
+                        //                    else{
+                        //                        Log.i(logTag, "Disconnected");
+                        //                    }
+                    }
 
-                            @Override
-                            public void failed(FunctionError functionError) {
-                                Log.i(logTag,"No Response");
-                            }
-                        });
+                    @Override
+                    public void failed(FunctionError functionError) {
+                        Log.i(logTag,"No Response");
+                    }
+                });
 
-                }
-            };
+            }
+        };
         thread.start();
 
     }
@@ -2275,19 +2344,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public void SendEmail()
     {
         Thread thread = new Thread() {
-                public void run() {
-                    Email mail = new Email("platypuslocation@gmail.com", "airboats");
-                    try {
-                        //   mail.sendMail("jeffboat", wpstirng, "shantanu@gmail.com", "platypuslocation@gmail.com");
-                    }
-                    catch(Exception e)
-                        {
-                            System.out.println(e.toString());
-                            //System.out.println("fucked up");
-                        }
-
+            public void run() {
+                Email mail = new Email("platypuslocation@gmail.com", "airboats");
+                try {
+                    //   mail.sendMail("jeffboat", wpstirng, "shantanu@gmail.com", "platypuslocation@gmail.com");
                 }
-            };
+                catch(Exception e)
+                {
+                    System.out.println(e.toString());
+                    //System.out.println("fucked up");
+                }
+
+            }
+        };
         thread.start();
     }
 
@@ -2296,22 +2365,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
 
         final SensorListener sensorListener = new SensorListener() {
-                @Override
-                public void receivedSensor(SensorData sensorData) {
+            @Override
+            public void receivedSensor(SensorData sensorData) {
 
-                    Data = sensorData;
-                    //data = Data.data;
-                    //channel = Data.channel;
-                    sensorV = Arrays.toString(Data.data);
-                    //sensorV = Integer.toString(Data.channel);
-                    //                if(Data.toString()==null){
-                    //                    sensorV = "No sensor value";
-                    //                }
-                    //                else {
-                    //                    sensorV = Data.toString();
-                    //                }
-                }
-            };
+                Data = sensorData;
+                //data = Data.data;
+                //channel = Data.channel;
+                sensorV = Arrays.toString(Data.data);
+                //sensorV = Integer.toString(Data.channel);
+                //                if(Data.toString()==null){
+                //                    sensorV = "No sensor value";
+                //                }
+                //                else {
+                //                    sensorV = Data.toString();
+                //                }
+            }
+        };
 
         //currentBoat.returnServer().getNumSensors(new FunctionObserver<Integer>() {
         // @Override
@@ -2319,16 +2388,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //    System.out.println("Sensor num:" + numSensors);
         //  for (int channel = 0; channel < numSensors; ++channel) {
         currentBoat.returnServer().addSensorListener(3, sensorListener, new FunctionObserver<Void>() {
-                @Override
-                public void completed(Void aVoid) {
-                    System.out.println("Add Sensorlistener");
-                }
+            @Override
+            public void completed(Void aVoid) {
+                System.out.println("Add Sensorlistener");
+            }
 
-                @Override
-                public void failed(FunctionError functionError) {
-                    sensorV = "Failed to get sensor value";
-                }
-            });
+            @Override
+            public void failed(FunctionError functionError) {
+                sensorV = "Failed to get sensor value";
+            }
+        });
     }
 
     //  Make return button same as home button
@@ -2351,9 +2420,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //nothing to
         // save if no waypoints
         if (waypointList.isEmpty() == true)
-            {
-                return;
-            }
+        {
+            return;
+        }
 
 
         final BufferedWriter writer;
@@ -2362,9 +2431,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             writer= new BufferedWriter(new FileWriter(waypointFile, true));
         }
         catch(Exception e)
-            {
-                return;
-            }
+        {
+            return;
+        }
 
         final Dialog dialog = new Dialog(context);
         dialog.setContentView(R.layout.wpsavedialog);
@@ -2372,45 +2441,45 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         final EditText input = (EditText) dialog.findViewById(R.id.newname);
         Button submit = (Button) dialog.findViewById(R.id.savebutton);
         submit.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
+            @Override
+            public void onClick(View v) {
 
 
-                    //NO NUMBERS OR SPACES LOL
-                    saveName = input.getText().toString();
+                //NO NUMBERS OR SPACES LOL
+                saveName = input.getText().toString();
 
-                    //if (!(saveName.contains(" ") || saveName.matches(".*\\d+.*"))) {
-                    if (!(saveName.contains("\"")))
-                        {
+                //if (!(saveName.contains(" ") || saveName.matches(".*\\d+.*"))) {
+                if (!(saveName.contains("\"")))
+                {
 
-                            //                if (!(saveName.contains(" ") || saveName.matches("^.*[^a-zA-Z0-9._-].*$"))) {
+                    //                if (!(saveName.contains(" ") || saveName.matches("^.*[^a-zA-Z0-9._-].*$"))) {
 
-                            try {
-                                writer.append("\n\" " + input.getText() + " \"");
-                                writer.flush();
-                                //writer.append(input.getText());
-                                for (ILatLng i : waypointList) {
-                                    writer.append(" " + i.getLatitude() + " " + i.getLongitude());
-                                    writer.flush();
-                                }
-                                //writer.write("\n");
-
-                                writer.close();
-                            } catch (Exception e) {
-                            }
-                            dialog.dismiss();
+                    try {
+                        writer.append("\n\" " + input.getText() + " \"");
+                        writer.flush();
+                        //writer.append(input.getText());
+                        for (ILatLng i : waypointList) {
+                            writer.append(" " + i.getLatitude() + " " + i.getLongitude());
+                            writer.flush();
                         }
-                    else
-                        {
-                            final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
-                            alertDialog.setTitle("No Quotation Marks in Title");
-                            alertDialog.show();
-                            alertDialog.setCancelable(true);
-                            alertDialog.setCanceledOnTouchOutside(true);
-                        }
+                        //writer.write("\n");
 
+                        writer.close();
+                    } catch (Exception e) {
+                    }
+                    dialog.dismiss();
                 }
-            });
+                else
+                {
+                    final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+                    alertDialog.setTitle("No Quotation Marks in Title");
+                    alertDialog.show();
+                    alertDialog.setCancelable(true);
+                    alertDialog.setCanceledOnTouchOutside(true);
+                }
+
+            }
+        });
         dialog.show();
         File waypointFile = new File(getFilesDir() + "/waypoints.txt");
         //if (waypointFile.exists())
@@ -2464,22 +2533,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     final double templat = Double.parseDouble(stringScanner.next());
                     final double templon = Double.parseDouble(stringScanner.next());
                     ILatLng temp = new ILatLng() {
-                            @Override
-                            public double getLatitude() {
-                                return templat;
+                        @Override
+                        public double getLatitude() {
+                            return templat;
 
-                            }
+                        }
 
-                            @Override
-                            public double getLongitude() {
-                                return templon;
-                            }
+                        @Override
+                        public double getLongitude() {
+                            return templon;
+                        }
 
-                            @Override
-                            public double getAltitude() {
-                                return 0;
-                            }
-                        };
+                        @Override
+                        public double getAltitude() {
+                            return 0;
+                        }
+                    };
 
                     currentSave.add(temp);
 
@@ -2499,8 +2568,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
             final ArrayAdapter<String> adapter = new ArrayAdapter<String>(
-                                                                          TeleOpPanel.this,
-                                                                          android.R.layout.select_dialog_singlechoice);
+                    TeleOpPanel.this,
+                    android.R.layout.select_dialog_singlechoice);
             wpsaves.setAdapter(adapter);
             for (String s : saveName) {
                 adapter.add(s);
@@ -2508,104 +2577,104 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
             final int chosensave;
             wpsaves.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                    @Override
-                    public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
-                        System.out.println("on long click");
-                        final Dialog confirmdialog = new Dialog(context);
-                        confirmdialog.setContentView(R.layout.confirmdeletewaypoints);
-                        confirmdialog.setTitle("Delete This Waypoint Path?");
-                        Button deletebutton = (Button) confirmdialog.findViewById(R.id.yesbutton);
-                        Button cancel = (Button) confirmdialog.findViewById(R.id.nobutton);
-                        deletebutton.setOnClickListener(new OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    //delete line from file
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+                    System.out.println("on long click");
+                    final Dialog confirmdialog = new Dialog(context);
+                    confirmdialog.setContentView(R.layout.confirmdeletewaypoints);
+                    confirmdialog.setTitle("Delete This Waypoint Path?");
+                    Button deletebutton = (Button) confirmdialog.findViewById(R.id.yesbutton);
+                    Button cancel = (Button) confirmdialog.findViewById(R.id.nobutton);
+                    deletebutton.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            //delete line from file
 
-                                    //delete object from list since update wont occur until you press load wp again
-                                    adapter.remove(adapter.getItem(position));
-                                    try
-                                        {
-                                            File inputFile = new File(getFilesDir() + "/waypoints.txt");
-                                            File tempFile = new File(getFilesDir() + "/tempwaypoints.txt");
-
-                                            BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-                                            BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
-
-                                            String lineToRemove = "\" " +saveName.get(position) + " \"";
-                                            String currentLine;
-
-                                            while((currentLine = reader.readLine()) != null)
-                                                {
-                                                    int index = currentLine.indexOf(' ');
-                                                    System.out.println(index);
-                                                    String tempasdf = currentLine;
-
-                                                    String trimmedLine = currentLine.trim();
-                                                    if(trimmedLine.contains(lineToRemove))
-                                                        {
-                                                            System.out.println(lineToRemove);
-                                                            System.out.println("found");
-                                                            continue;
-                                                        }
-                                                    writer.write(currentLine + System.getProperty("line.separator"));
-                                                }
-                                            writer.close();
-                                            reader.close();
-                                            tempFile.renameTo(inputFile);
-                                        }
-                                    catch(Exception e)
-                                        {
-                                        }
-                                    confirmdialog.dismiss();
-                                }
-                            });
-                        cancel.setOnClickListener(new OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    confirmdialog.dismiss();
-                                }
-                            });
-                        confirmdialog.show();
-
-                        return false;
-                    }
-                });
-            wpsaves.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        currentselected = position;
-                    }
-                });
-            submitButton.setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        //Object checkedItem = wpsaves.getAdapter().getItem(wpsaves.getCheckedItemPosition());
-                        //System.out.println(chosensave);
-
-                        if (currentselected == -1) {
-                            dialog.dismiss();
-                            //write no selected box
-                        }
-                        waypointList.clear();
-                        markerList.clear();
-                        //System.out.println(currentselected);
-                        for (ArrayList<ILatLng> i : waypointsaves)
+                            //delete object from list since update wont occur until you press load wp again
+                            adapter.remove(adapter.getItem(position));
+                            try
                             {
-                                System.out.println(i.size());
+                                File inputFile = new File(getFilesDir() + "/waypoints.txt");
+                                File tempFile = new File(getFilesDir() + "/tempwaypoints.txt");
+
+                                BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+                                BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+                                String lineToRemove = "\" " +saveName.get(position) + " \"";
+                                String currentLine;
+
+                                while((currentLine = reader.readLine()) != null)
+                                {
+                                    int index = currentLine.indexOf(' ');
+                                    System.out.println(index);
+                                    String tempasdf = currentLine;
+
+                                    String trimmedLine = currentLine.trim();
+                                    if(trimmedLine.contains(lineToRemove))
+                                    {
+                                        System.out.println(lineToRemove);
+                                        System.out.println("found");
+                                        continue;
+                                    }
+                                    writer.write(currentLine + System.getProperty("line.separator"));
+                                }
+                                writer.close();
+                                reader.close();
+                                tempFile.renameTo(inputFile);
                             }
+                            catch(Exception e)
+                            {
+                            }
+                            confirmdialog.dismiss();
+                        }
+                    });
+                    cancel.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            confirmdialog.dismiss();
+                        }
+                    });
+                    confirmdialog.show();
 
-                                    int num = 1;
-                                    for (ILatLng i : waypointsaves.get(currentselected)) //tbh not sure why there is a 1 offset but there is
-                                        {
-                                            //System.out.println(i.getLatitude() + " " + i.getLongitude());
-                                            mv.addMarker(new Marker(Integer.toString(num), "Waypoint", new LatLng(i.getLatitude(), i.getLongitude())));
-                                            waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
-                                            num ++;
-                                        }
+                    return false;
+                }
+            });
+            wpsaves.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    currentselected = position;
+                }
+            });
+            submitButton.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //Object checkedItem = wpsaves.getAdapter().getItem(wpsaves.getCheckedItemPosition());
+                    //System.out.println(chosensave);
 
-                                                dialog.dismiss();
+                    if (currentselected == -1) {
+                        dialog.dismiss();
+                        //write no selected box
                     }
-                });
+                    waypointList.clear();
+                    markerList.clear();
+                    //System.out.println(currentselected);
+                    for (ArrayList<ILatLng> i : waypointsaves)
+                    {
+                        System.out.println(i.size());
+                    }
+
+                    int num = 1;
+                    for (ILatLng i : waypointsaves.get(currentselected)) //tbh not sure why there is a 1 offset but there is
+                    {
+                        //System.out.println(i.getLatitude() + " " + i.getLongitude());
+                        mv.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude())).title(Integer.toString(num)));
+                        waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
+                        num ++;
+                    }
+
+                    dialog.dismiss();
+                }
+            });
             dialog.show();
         }
     }
@@ -2659,42 +2728,42 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         Log.i(logTag, "Drawing...");
         canvas.drawRGB(255, 128, 128);
     }
-    public void drawWaypointLines(List<LatLng> loc, boolean dotted)
-    {
-        Projection proj = mv.getProjection();
-        ArrayList<PointF> points = new ArrayList<PointF>();
-        for (LatLng i : loc) {
-
-            PointF temppoint = proj.toPixels(i, null);
-
+//    public void drawWaypointLines(List<LatLng> loc, boolean dotted)
+//    {
+//        Projection proj = mv.getProjection();
+//        ArrayList<PointF> points = new ArrayList<PointF>();
+//        for (LatLng i : loc) {
 //
-            points.add(temppoint);
+//            PointF temppoint = proj.toPixels(i, null);
+//
+////
+//            points.add(temppoint);
+//
+//        }
+//
+//        drawview.setPaint("green", 6, dotted);
+//        drawview.setClose(false);
+//        drawview.points = points;
+//        drawview.invalidate();
+//
+//    }
+//
+//    public void drawPolygonline(List<LatLng> loc){
+//        Projection proj = mv.getProjection();
+//        ArrayList<PointF> points = new ArrayList<PointF>();
+//        for (LatLng i : loc) {
+//
+//            PointF temppoint = proj.toPixels(i, null);
+//
+//            points.add(temppoint);
+//
+//        }
 
-        }
-
-        drawview.setPaint("green", 6, dotted);
-        drawview.setClose(false);
-        drawview.points = points;
-        drawview.invalidate();
-
-    }
-
-    public void drawPolygonline(List<LatLng> loc){
-        Projection proj = mv.getProjection();
-        ArrayList<PointF> points = new ArrayList<PointF>();
-        for (LatLng i : loc) {
-
-            PointF temppoint = proj.toPixels(i, null);
-
-            points.add(temppoint);
-
-        }
-
-        drawview2.setPaint("blue", 8, false);
-        drawview2.setClose(true);
-        drawview2.points = points;
-        drawview2.invalidate();
-    }
+//        drawview2.setPaint("blue", 8, false);
+//        drawview2.setClose(true);
+//        drawview2.points = points;
+//        drawview2.invalidate();
+//    }
 
     public static double planarDistanceSq(Pose3D a, Pose3D b) {
         double dx = a.getX() - b.getX();
