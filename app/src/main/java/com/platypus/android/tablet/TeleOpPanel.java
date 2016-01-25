@@ -436,27 +436,27 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         // Initialize save and load waypoint buttons
         // **********************************************************************
 //
-//        saveWaypoints.setOnClickListener(new OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    try {
-//                        SaveWaypointsToFile();
-//                    }
-//                    catch(Exception e)
-//                        {}
-//                }
-//            });
-//
-//        loadWaypoints.setOnClickListener(new OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    try {
-//                        LoadWaypointsFromFile();
-//                    }
-//                    catch (Exception e)
-//                        {}
-//                }
-//            });
+        saveWaypoints.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        SaveWaypointsToFile();
+                    }
+                    catch(Exception e)
+                        {}
+                }
+            });
+
+        loadWaypoints.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        LoadWaypointsFromFile();
+                    }
+                    catch (Exception e)
+                        {}
+                }
+            });
 
 
 
@@ -2667,10 +2667,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     for (ILatLng i : waypointsaves.get(currentselected)) //tbh not sure why there is a 1 offset but there is
                     {
                         //System.out.println(i.getLatitude() + " " + i.getLongitude());
-                        mv.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude())).title(Integer.toString(num)));
+                        markerList.add(mv.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude())).title(Integer.toString(num))));
                         waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
+                        Waypath.add(mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5)));
+
                         num ++;
                     }
+
 
                     dialog.dismiss();
                 }
