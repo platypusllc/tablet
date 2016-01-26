@@ -1299,7 +1299,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         LatLng wpLoc = point;
                         touchpointList.add(wpLoc);
                         boundryList.add(mv.addMarker(new MarkerOptions().position(wpLoc).icon(Iboundry)));
-                        Boundry.add(mv.addPolygon(new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"))));
+                        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
+                        poly.alpha((float).6);
+                        Boundry.add(mv.addPolygon(poly));
+                        //Boundry.add(mv.addPolygon(new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"))));
+
                     }
                 }
 

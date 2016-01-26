@@ -88,6 +88,7 @@ public class DrawPath extends SurfaceView {
         // paint
         Paint polyPaint = new Paint();
         polyPaint.setColor(color);
+        polyPaint.setAlpha(100);
         polyPaint.setStyle(Paint.Style.FILL);
 
         // path
