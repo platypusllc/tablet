@@ -280,6 +280,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Dialog connectDialog;
     private PoseListener pl;
     private SensorListener sl;
+    private WaypointListener wl;
     private int WPnum = 0;
     private boolean longClick = false;
     private long startTime, endTime;
@@ -430,6 +431,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
             };
 
+        //*******************************************************************************
+        //  Initialize Waypointlistener
+        //*******************************************************************************
+
+        wl = new WaypointListener() {
+            @Override
+            public void waypointUpdate(WaypointState waypointState) {
+                boatwaypoint = waypointState.toString();
+            }
+        };
+
         //***********************************************************************
         // Initialize save and load waypoint buttons
         // **********************************************************************
@@ -462,7 +474,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //  Initialize the Boat
         // ****************************************************************************
         currentBoat = new Boat(pl, sl);
-
+        currentBoat.returnServer().addWaypointListener(wl,null);
 
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager
@@ -1210,7 +1222,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             /*
              * if the add waypoint button is pressed and new marker where ever they click
              */
-        testWaypointListener();
+
 
         Thread thread = new Thread() {
                         public void run() {
@@ -1553,7 +1565,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         counter++; // if counter == 10 (1000ms), update sensor value
 
                         long tempconn = System.currentTimeMillis();
-                        if (currentBoat.getConnected() == true)
+                        if (currentBoat.isConnected() == true)
                         {
                             connected = true;
                             //sensorReady = true;
@@ -1592,7 +1604,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             }
                         }
 
-                       // Log.i(logTag, "doInbackground "+ oldTime);
+                       //Log.i(logTag, "doInbackground "+ oldTime);
                         publishProgress();
                     }
                 }
