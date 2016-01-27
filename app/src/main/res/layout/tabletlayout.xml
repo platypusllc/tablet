@@ -14,7 +14,9 @@
         android:gravity="center_horizontal|center_vertical"
         android:text="TeleOp Panel"
         android:textSize="25dp"
-    android:layout_alignParentTop="true"/>
+    android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/refreshMap"
+        android:layout_toStartOf="@+id/refreshMap" />
 
 
 
@@ -430,6 +432,17 @@
         android:id="@+id/drawPolygon"
         android:layout_alignBottom="@+id/gohome"
         android:layout_toLeftOf="@+id/gohome" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Advanced Options"
+        android:id="@+id/advopt"
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/saveMap"
+        android:layout_above="@+id/printIpAddress"
+        android:layout_toRightOf="@+id/saveMap" />
 
 
     <!--     <Button
