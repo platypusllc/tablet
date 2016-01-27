@@ -1238,6 +1238,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         Waypath = mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
 
 
+
                     }
 
                     if(startDraw == true){
@@ -1250,136 +1251,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
                         poly.alpha((float).6);
                         Boundry = mv.addPolygon(poly);
+
                         //Boundry.add(mv.addPolygon(new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"))));
 
                     }
                 }
 
             });
-//                    @Override
-//                    public boolean onTouch(View v, MotionEvent even
 //
-////                            drawWaypointLines(waypointList, true);
-////
-////
-////                            drawPolygonline(touchpointList);
-//
-//                       // drawPolygonline();
-//                        if(event.getAction() == MotionEvent.ACTION_DOWN){
-//                            startTime = event.getEventTime();
-//                            Log.d(logTag,"IN DOWN");
-//                        }
-//                        else if(event.getAction() == MotionEvent.ACTION_UP){
-//                            endTime = event.getEventTime();
-//                            Log.d(logTag, "IN UP");
-//                        }
-//
-//
-//                        if (waypointButton.isChecked() && (endTime - startTime >800)) {
-//                            longClick = false;
-//                            //Projection proj = ((MapView) v).getProjection();
-//                            //Projection proj = new Projection((MapView)v);
-//                            MapProj = mv.getProjection();
-//                            Rect RotatedScreen = GeometryMath.getBoundingBoxForRotatedRectangle(MapProj.getIntrinsicScreenRect(),MapProj.getCenterX(),
-//                                                                                                MapProj.getCenterY(), MapProj.getMapOrientation(), null);
-//
-//
-//                            //                        LatLng WorldCenter = ((MapView) v). getCenter();
-//                            //                        double scale = 1; //Math.pow(2, ((MapView) v).getZoomLevel());
-//                            //
-//                            //                        PointF ScreenCenter = MapProj.toPixels(WorldCenter, null);
-//                            //
-//                            //                        //PointF Offset = new PointF((float)(event.getX() / scale), (float)(event.getY() / scale));
-//                            //                        //PointF NewScreenCenter = new PointF (ScreenCenter.x - Offset.x, ScreenCenter.y + Offset.y);
-//                            //
-//                            //                        //ILatLng NewWorldCenter = MapProj.fromPixels(NewScreenCenter.x, NewScreenCenter.y);
-//                            //                        ILatLng NewWorldCenter = MapProj.fromPixels(event.getX(), event.getY());
-//                            //                        LatLng wpLoc = new LatLng(NewWorldCenter.getLatitude(), NewWorldCenter.getLongitude());
-//
-//
-//                            // Matrix mRotate = MapProj.getRotationMatrix();
-//                            if(!touchList.isEmpty() && touchList.get(touchList.size()-2) == event.getX() &&
-//                              touchList.get(touchList.size()-1) == event.getY()){
-//                                Log.i(logTag,"multi-touch");
-//                            }
-//                            else
-//                                {
-//                                    touchList.add(event.getX());
-//                                    touchList.add(event.getY());
-//                                    Matrix mRotate = new Matrix();
-//                                    // mRotate = MapProj.getRotationMatrix();
-//                                    mRotate.postRotate(((MapView) v).getMapOrientation());
-//                                    //mRotate.setTranslate(v.getTranslationX(),v.getTranslationY());
-//                                    Matrix invRotate = new Matrix();
-//                                    mRotate.invert(invRotate);
-//                                    float rX, rY, w;
-//                                    float[] array = new float[9];
-//                                    mRotate.getValues(array);
-//                                    //                                rX = event.getX() * array[0] + event.getY() * array[1] + 1 * array[2];
-//                                    //                                rY = event.getX() * array[3] + event.getY() * array[4] + 1 * array[5];
-//                                    //                                w = event.getX() * array[6] + event.getY() * array[7] + 1 * array[8];
-//                                    rX = event.getX();
-//                                    rY = event.getY();
-//                                    //event.transform(invRotate);
-//                                    // ILatLng touchedloc = MapProj.pixelXYToLatLong(RotatedScreen.left + (int)rX + MapProj.getHalfWorldSize(),
-//                                    //         RotatedScreen.top + (int)rY + MapProj.getHalfWorldSize(), MapProj.getZoomLevel());
-//                                    ILatLng touchedloc = MapProj.fromPixels(rX,rY);
-//
-//                                    //                        LatLng wpLoc = new LatLng(rX, rY);
-//                                    LatLng wpLoc = new LatLng(touchedloc.getLatitude(), touchedloc.getLongitude());
-//                                    //                                double Lat, Lng;
-//                                    //                            Lat = wpLoc.getLatitude() * array[0] + wpLoc.getLongitude() * array[1] + 1 * array[2];
-//                                    //                            Lng = wpLoc.getLatitude() * array[3] + wpLoc.getLongitude() * array[4] + 1 * array[5];
-//                                    //                            wpLoc = new LatLng(Lat, Lng);
-//                                    WPnum += 1;
-//                                    Marker WP = new Marker("","",wpLoc);
-////                                    Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.boundary);
-////                                    Drawable d = new BitmapDrawable(getResources(), b);
-////                                    WP.setIcon(new Icon(d));
-//                                    WP.setDescription(Integer.toString(WPnum));
-//                                    mv.addMarker(WP);
-//                                    //mv.addMarker(new Marker(Integer.toString(WPnum), "", wpLoc));
-//
-//                                    waypointList.add(wpLoc);
-//                                    wpstirng = wpLoc.toString();
-//                                    //SendEmail();
-//                                    markerList.add(new Marker(Integer.toString(WPnum), "", wpLoc));
-//
-//                                    Log.i(logTag, "Waypoint " + wpLoc);
-//
-//                                }
-//
-//                        }
-//                        if(startDraw == true && endTime - startTime > 500){
-//                            MapProj = mv.getProjection();
-//                            if(!touchList.isEmpty() && touchList.get(touchList.size()-2) == event.getX() &&
-//                                    touchList.get(touchList.size()-1) == event.getY()){
-//                                Log.i(logTag,"multi-touch");
-//                            }
-//                            else{
-//                                touchList.add(event.getX());
-//                                touchList.add(event.getY());
-//                                float rX, rY, w;
-//                                rX = event.getX();
-//                                rY = event.getY();
-//                                ILatLng touchedloc = MapProj.fromPixels(rX,rY);
-//
-//
-//                                LatLng wpLoc = new LatLng(touchedloc.getLatitude(), touchedloc.getLongitude());
-//                                touchpointList.add(wpLoc);
-//                                Marker boundary = new Marker("","",wpLoc);
-//                                Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.boundary);
-//                                Drawable d = new BitmapDrawable(getResources(), b);
-//                                boundary.setIcon(new Icon(d));
-//                                mv.addMarker(boundary);
-//                            }
-//
-//                        }
-//                        return false;
-//                    }
-//
-//
-//                });
 
 
             /*
@@ -1427,6 +1306,25 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
             });
 
+            removeMap.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try{
+                        touchpointList.remove(touchpointList.size()-1);
+                        Boundry.remove();
+                        boundryList.get(boundryList.size()-1).remove();
+                        boundryList.remove(boundryList.size()-1);
+                        if(touchpointList.size()>2) {
+                            PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
+                            poly.alpha((float) .6);
+                            Boundry = mv.addPolygon(poly);
+                        }
+
+                    }catch (Exception e){
+
+                    }
+                }
+            });
 
             networkThread = new NetworkAsync().execute(); //launch networking asnyc task
 
@@ -1603,6 +1501,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
             LatLng curLoc;
             if (latlongloc != null) {
+
                 curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
 
                 float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
@@ -1613,7 +1512,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
                 Drawable d = new BitmapDrawable(getResources(), boatarrow);
                 Icon Iboat2 = mIconFactory.fromDrawable(d);
-                //mv.addMarker(new MarkerOptions().icon(Iboat2).position(curLoc).title("Boat").snippet(curLoc.toString()));
+                //boat2.remove();
+                //boat2 = mv.addMarker(new MarkerOptions().icon(Iboat2).position(curLoc).title("Boat").snippet(curLoc.toString()));
 
 
             }
@@ -1624,7 +1524,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 //
             if (firstTime == true) {
-//                       
+//
             }
             if (connected == true) {
                 ipAddressBox.setBackgroundColor(Color.GREEN);
