@@ -190,7 +190,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     double zValue;
     LatLong latlongloc;
     LatLng boatLocation;
-    DrawView drawview, drawview2;
+
 
     MapView mv;
     String zone;
@@ -277,10 +277,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     boolean sensorReady =false;
     public static TextView log;
     public boolean Auto = false;
-    private String MapID = "shantanuv.nkob79p0";
+
     Dialog connectDialog;
     private PoseListener pl;
     private SensorListener sl;
+    private WaypointListener wl;
     private int WPnum = 0;
     private boolean longClick = false;
     private long startTime, endTime;
@@ -305,8 +306,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     List<LatLng> waypointList = new ArrayList<LatLng>();
     List<Marker> markerList = new ArrayList(); //List of all the
     List<Marker> boundryList = new ArrayList();
-    List<Polyline> Waypath = new ArrayList();
-    List<Polygon> Boundry = new ArrayList();
+    private Polyline Waypath;
+    private Polygon Boundry;
 
 
 
@@ -480,6 +481,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 //Log.i("Platypus","Get sensor Data");
             }
         };
+        //*******************************************************************************
+        //  Initialize Waypointlistener
+        //*******************************************************************************
+        wl = new WaypointListener() {
+            @Override
+            public void waypointUpdate(WaypointState waypointState) {
+                boatwaypoint = waypointState.toString();
+            }
+        };
 
         //***********************************************************************
         // Initialize save and load waypoint buttons
@@ -513,6 +523,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //  Initialize the Boat
         // ****************************************************************************
         currentBoat = new Boat(pl, sl);
+        currentBoat.returnServer().addWaypointListener(wl,null);
 
 
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -520,17 +531,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         senSensorManager.registerListener(this, senAccelerometer,
                 SensorManager.SENSOR_DELAY_NORMAL);
-        //
-        //        //cameraStream.setImageResource(R.drawable.streamnotfound);
-        //File file = new File("/Android/data/com.example.platypuscontrolapp/cache/mapbox_tiles_cache");
-        //final MBTilesLayer mbTilesLayer = new MBTilesLayer(file);
-        mv = (MapView) findViewById(R.id.mapview);
-//        mv.setAccessToken(ApiAccess.getToken(this));
 
-        // offlineMapDownloader = OfflineMapDownloader.getOfflineMapDownloader(this);
-        // mv.setDiskCacheEnabled(false);
-        //mv.setMapRotationEnabled(true);
-        //mv.setMapOrientation(90f);
+        mv = (MapView) findViewById(R.id.mapview);
+
         mv.setMyLocationEnabled(true);
         mv.setCompassEnabled(true);
         mv.setLatLng(pHollowStartingPoint);
@@ -548,68 +551,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
 
-        //System.out.println("x"+ compass.getPosition().toString());
-//        System.out.println(point.toString() + " " + temppoint.toString());
 
-        // If has Internet connection, using online map, else using offline map
-
-//        Thread thread = new Thread() {
-//                public void run() {
-//                    if (isInternetAvailable()) {
-//                        try {
-//
-////                            mv.setAccessToken("pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
-////                            // AccessToken "pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0NTMzZzh4YTJyeWx4azhiZ2toMzUifQ.juDMFHzZybMwwO1C4DUN1A"
-////                            //mv.setTileSource(new MapboxTileLayer("mapbox.streets"));
-////                            mv.setTileSource(new MapboxTileLayer(MapID));
-////                            // mv.loadFromGeoJSONURL("https://www.mapbox.com/studio/styles/zeshengx/cihxtezs800nxaikon74h4v4l/");
-////                            // mv.setTileSource(mbTilesLayer);
-////
-////                            mv.setCenter(new ILatLng() {
-////                                    @Override
-////                                    public double getLatitude() {
-////                                        return pHollowStartingPoint.getLatitude();
-////                                    }
-////
-////                                    @Override
-////                                    public double getLongitude() {
-////
-////                                        return pHollowStartingPoint.getLongitude();
-////                                    }
-////
-////                                    @Override
-////                                    public double getAltitude() {
-////                                        return 0;
-////                                    }
-////                                });
-//
-//
-//
-//                            //
-//
-//                        }catch(Exception e){
-//                            System.err.println(e);
-//                        }
-//                    }
-////                    else{
-////                        if(offlineMapDownloader.getMutableOfflineMapDatabases() != null & offlineMapDownloader.getMutableOfflineMapDatabases().size()>0){
-////
-////                            loadOfflineMap();
-////
-////                        }
-////                        else{
-////                            runOnUiThread(new Runnable() {
-////                                    @Override
-////                                    public void run() {
-////                                        Toast.makeText(getApplicationContext(), "No OfflineMap available, Connect to Internet", Toast.LENGTH_LONG).show();
-////                                    }
-////                                });
-////
-////                        }
-////                    }
-//                }
-//            };
-//        thread.start();
 
 
 
@@ -1129,7 +1071,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             /*
              * if the add waypoint button is pressed and new marker where ever they click
              */
-            testWaypointListener();
+
 
             Thread thread = new Thread() {
                 public void run() {
@@ -1145,151 +1087,36 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 public void onMapLongClick(LatLng point){
                     if(waypointButton.isChecked()){
                         LatLng wpLoc = point;
+                        if(Waypath != null){
+                            Waypath.remove();
+                        }
                         WPnum += 1;
                         waypointList.add(wpLoc);
                         markerList.add(mv.addMarker(new MarkerOptions().position(wpLoc).title(Integer.toString(WPnum))));
-                        Waypath.add(mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5)));
+                        Waypath = mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+
 
 
                     }
 
                     if(startDraw == true){
                         LatLng wpLoc = point;
+                        if(Boundry != null){
+                            Boundry.remove();
+                        }
                         touchpointList.add(wpLoc);
                         boundryList.add(mv.addMarker(new MarkerOptions().position(wpLoc).icon(Iboundry)));
                         PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
-                        poly.alpha((float) .6);
-                        Boundry.add(mv.addPolygon(poly));
+                        poly.alpha((float).6);
+                        Boundry = mv.addPolygon(poly);
+
                         //Boundry.add(mv.addPolygon(new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"))));
 
                     }
                 }
 
             });
-//                    @Override
-//                    public boolean onTouch(View v, MotionEvent even
 //
-////                            drawWaypointLines(waypointList, true);
-////
-////
-////                            drawPolygonline(touchpointList);
-//
-//                       // drawPolygonline();
-//                        if(event.getAction() == MotionEvent.ACTION_DOWN){
-//                            startTime = event.getEventTime();
-//                            Log.d(logTag,"IN DOWN");
-//                        }
-//                        else if(event.getAction() == MotionEvent.ACTION_UP){
-//                            endTime = event.getEventTime();
-//                            Log.d(logTag, "IN UP");
-//                        }
-//
-//
-//                        if (waypointButton.isChecked() && (endTime - startTime >800)) {
-//                            longClick = false;
-//                            //Projection proj = ((MapView) v).getProjection();
-//                            //Projection proj = new Projection((MapView)v);
-//                            MapProj = mv.getProjection();
-//                            Rect RotatedScreen = GeometryMath.getBoundingBoxForRotatedRectangle(MapProj.getIntrinsicScreenRect(),MapProj.getCenterX(),
-//                                                                                                MapProj.getCenterY(), MapProj.getMapOrientation(), null);
-//
-//
-//                            //                        LatLng WorldCenter = ((MapView) v). getCenter();
-//                            //                        double scale = 1; //Math.pow(2, ((MapView) v).getZoomLevel());
-//                            //
-//                            //                        PointF ScreenCenter = MapProj.toPixels(WorldCenter, null);
-//                            //
-//                            //                        //PointF Offset = new PointF((float)(event.getX() / scale), (float)(event.getY() / scale));
-//                            //                        //PointF NewScreenCenter = new PointF (ScreenCenter.x - Offset.x, ScreenCenter.y + Offset.y);
-//                            //
-//                            //                        //ILatLng NewWorldCenter = MapProj.fromPixels(NewScreenCenter.x, NewScreenCenter.y);
-//                            //                        ILatLng NewWorldCenter = MapProj.fromPixels(event.getX(), event.getY());
-//                            //                        LatLng wpLoc = new LatLng(NewWorldCenter.getLatitude(), NewWorldCenter.getLongitude());
-//
-//
-//                            // Matrix mRotate = MapProj.getRotationMatrix();
-//                            if(!touchList.isEmpty() && touchList.get(touchList.size()-2) == event.getX() &&
-//                              touchList.get(touchList.size()-1) == event.getY()){
-//                                Log.i(logTag,"multi-touch");
-//                            }
-//                            else
-//                                {
-//                                    touchList.add(event.getX());
-//                                    touchList.add(event.getY());
-//                                    Matrix mRotate = new Matrix();
-//                                    // mRotate = MapProj.getRotationMatrix();
-//                                    mRotate.postRotate(((MapView) v).getMapOrientation());
-//                                    //mRotate.setTranslate(v.getTranslationX(),v.getTranslationY());
-//                                    Matrix invRotate = new Matrix();
-//                                    mRotate.invert(invRotate);
-//                                    float rX, rY, w;
-//                                    float[] array = new float[9];
-//                                    mRotate.getValues(array);
-//                                    //                                rX = event.getX() * array[0] + event.getY() * array[1] + 1 * array[2];
-//                                    //                                rY = event.getX() * array[3] + event.getY() * array[4] + 1 * array[5];
-//                                    //                                w = event.getX() * array[6] + event.getY() * array[7] + 1 * array[8];
-//                                    rX = event.getX();
-//                                    rY = event.getY();
-//                                    //event.transform(invRotate);
-//                                    // ILatLng touchedloc = MapProj.pixelXYToLatLong(RotatedScreen.left + (int)rX + MapProj.getHalfWorldSize(),
-//                                    //         RotatedScreen.top + (int)rY + MapProj.getHalfWorldSize(), MapProj.getZoomLevel());
-//                                    ILatLng touchedloc = MapProj.fromPixels(rX,rY);
-//
-//                                    //                        LatLng wpLoc = new LatLng(rX, rY);
-//                                    LatLng wpLoc = new LatLng(touchedloc.getLatitude(), touchedloc.getLongitude());
-//                                    //                                double Lat, Lng;
-//                                    //                            Lat = wpLoc.getLatitude() * array[0] + wpLoc.getLongitude() * array[1] + 1 * array[2];
-//                                    //                            Lng = wpLoc.getLatitude() * array[3] + wpLoc.getLongitude() * array[4] + 1 * array[5];
-//                                    //                            wpLoc = new LatLng(Lat, Lng);
-//                                    WPnum += 1;
-//                                    Marker WP = new Marker("","",wpLoc);
-////                                    Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.boundary);
-////                                    Drawable d = new BitmapDrawable(getResources(), b);
-////                                    WP.setIcon(new Icon(d));
-//                                    WP.setDescription(Integer.toString(WPnum));
-//                                    mv.addMarker(WP);
-//                                    //mv.addMarker(new Marker(Integer.toString(WPnum), "", wpLoc));
-//
-//                                    waypointList.add(wpLoc);
-//                                    wpstirng = wpLoc.toString();
-//                                    //SendEmail();
-//                                    markerList.add(new Marker(Integer.toString(WPnum), "", wpLoc));
-//
-//                                    Log.i(logTag, "Waypoint " + wpLoc);
-//
-//                                }
-//
-//                        }
-//                        if(startDraw == true && endTime - startTime > 500){
-//                            MapProj = mv.getProjection();
-//                            if(!touchList.isEmpty() && touchList.get(touchList.size()-2) == event.getX() &&
-//                                    touchList.get(touchList.size()-1) == event.getY()){
-//                                Log.i(logTag,"multi-touch");
-//                            }
-//                            else{
-//                                touchList.add(event.getX());
-//                                touchList.add(event.getY());
-//                                float rX, rY, w;
-//                                rX = event.getX();
-//                                rY = event.getY();
-//                                ILatLng touchedloc = MapProj.fromPixels(rX,rY);
-//
-//
-//                                LatLng wpLoc = new LatLng(touchedloc.getLatitude(), touchedloc.getLongitude());
-//                                touchpointList.add(wpLoc);
-//                                Marker boundary = new Marker("","",wpLoc);
-//                                Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.boundary);
-//                                Drawable d = new BitmapDrawable(getResources(), b);
-//                                boundary.setIcon(new Icon(d));
-//                                mv.addMarker(boundary);
-//                            }
-//
-//                        }
-//                        return false;
-//                    }
-//
-//
-//                });
 
 
             /*
@@ -1311,9 +1138,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             mv.removeMarker(m);
 
                         }
-                        for(Polyline p : Waypath){
-                            p.remove();
-                        }
+                        Waypath.remove();
                         // mv.animate();
                         // mv.removeMarkers(markerList);
 
@@ -1339,8 +1164,27 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
             });
 
+            removeMap.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try{
+                        touchpointList.remove(touchpointList.size()-1);
+                        Boundry.remove();
+                        boundryList.get(boundryList.size()-1).remove();
+                        boundryList.remove(boundryList.size()-1);
+                        if(touchpointList.size()>2) {
+                            PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
+                            poly.alpha((float) .6);
+                            Boundry = mv.addPolygon(poly);
+                        }
 
-            networkThread = new NetworkAsync(this).execute(); //launch networking asnyc task
+                    }catch (Exception e){
+
+                    }
+                }
+            });
+
+            networkThread = new NetworkAsync().execute(); //launch networking asnyc task
 
         }
         else if (getBoatType() == false) {
@@ -1443,30 +1287,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
 
-        public NetworkAsync(Context t)
-        {
-            context = t;
-            drawview = new DrawView(context);//, new ViewGroup.LayoutParams(1000,1000));
-            ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(mv.getWidth(),mv.getHeight());
-            TeleOpPanel.this.addContentView(drawview, lp);
-            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) drawview.getLayoutParams();
 
-            int[] mvabscoord = new int[2];
-            mv.getLocationOnScreen(mvabscoord);
-
-            //using 50 because mvabscoord contains titlebar and
-            int margin = 0;
-            margin = ipAddressBox.getHeight() + Title.getHeight();
-            p.setMargins(mvabscoord[0], margin, 0, 0);
-            drawview.requestLayout();
-
-            drawview2 = new DrawView(context);
-            TeleOpPanel.this.addContentView(drawview2, lp);
-            ViewGroup.MarginLayoutParams p2 = (ViewGroup.MarginLayoutParams) drawview2.getLayoutParams();
-            p2.setMargins(mvabscoord[0], margin, 0, 0);
-            drawview2.requestLayout();
-
-        }
 
         @Override
         protected void onPreExecute()
@@ -1483,7 +1304,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         counter++; // if counter == 10 (1000ms), update sensor value
 
                         long tempconn = System.currentTimeMillis();
-                        if (currentBoat.getConnected() == true)
+                        if (currentBoat.isConnected() == true)
                         {
                             connected = true;
                             //sensorReady = true;
@@ -1533,25 +1354,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         protected void onProgressUpdate(Integer... result) {
 
 
-//            if(waypointList.size()>0) {
-//                List<LatLng> P_waypoints; // previous waypoints
-//                List<LatLng> N_waypoints; // next waypoints
-//
-//                P_waypoints = waypointList.subList(0,N_waypoint);
-//
-//
-//                N_waypoints = waypointList.subList(N_waypoint,waypointList.size());
-//                drawWaypointLines(P_waypoints, false); // solid line represents completed waypoints
-//                drawWaypointLines(N_waypoints, true); // dotted line represents incompleted waypoints
-//            }
-//            if(touchpointList.size()>0){
-//                drawPolygonline(touchpointList);
-//
-//            }
+
 
 
             LatLng curLoc;
             if (latlongloc != null) {
+
                 curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
 
                 float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
@@ -1562,47 +1370,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
                 Drawable d = new BitmapDrawable(getResources(), boatarrow);
                 Icon Iboat2 = mIconFactory.fromDrawable(d);
-                mv.addMarker(new MarkerOptions().icon(Iboat2).position(curLoc).title("Boat").snippet(curLoc.toString()));
+                //boat2.remove();
+                //boat2 = mv.addMarker(new MarkerOptions().icon(Iboat2).position(curLoc).title("Boat").snippet(curLoc.toString()));
 
 
             }
-            //mvproj.toMapPixels(curLoc,null);
 
-            // boat2.setRelatedObject(mv);
-            //Log.i(logTag, "Compass " + comp);
 
             mv.animate();
 
 
 //
             if (firstTime == true) {
-//                        try {
-//                            mv.getController().setCenter(new ILatLng() {
-//                                    @Override
-//                                    public double getLatitude() {
-//                                        return latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI;
 //
-//                                    }
-//
-//                                    @Override
-//                                    public double getLongitude() {
-//                                        return latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI;
-//
-//                                    }
-//
-//                                    @Override
-//                                    public double getAltitude() {
-//                                        return 0;
-//                                    }
-//                                });
-//                            //mv.addMarker(compass);
-//                            mv.animate();
-//                            firstTime = false;
-//
-//                        } catch (Exception e) {
-//                            System.out.println(e.toString());
-//                            firstTime = true; //for false/fake lat long values until the phone gets real location values
-//                        }
             }
             if (connected == true) {
                 ipAddressBox.setBackgroundColor(Color.GREEN);
@@ -1794,26 +1574,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
             long curTime = System.currentTimeMillis();
 
-            //            if (tiltButton.isChecked()) {
-            //                if ((curTime - lastUpdate) > 100) {
-            //                    long diffTime = (curTime - lastUpdate);
-            //                    lastUpdate = curTime;
-            //                    float speed = Math
-            //                            .abs(x + y + z - last_x - last_y - last_z)
-            //                            / diffTime * 10000;
-            //
-            //                    if (speed > SHAKE_THRESHOLD) {
-            //                    }
-            //
-            //                    last_x = y; // rudder switching x and z for tesing orientation
-            //                    last_y = x;
-            //                    last_z = z; // thrust
-            //                    // test.setText("x: " + last_x + "y: " + last_y + "z: "
-            //                    // + last_z);
-            //
-            //                    //updateViaAcceleration(last_x, last_y, last_z);
-            //                }
-            //            }
         }
     }
 
@@ -2531,11 +2291,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         //System.out.println(i.getLatitude() + " " + i.getLongitude());
                         markerList.add(mv.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude())).title(Integer.toString(num))));
                         waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
-                        Waypath.add(mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5)));
+
 
                         num ++;
                     }
-
+                    Waypath = mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
 
                     dialog.dismiss();
                 }
@@ -2545,90 +2305,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
 
 
-    public class Point{
-
-        public float x = 0;
-        public float y = 0;
-
-        public Point(float x, float y){
-            this.x = x;
-            this.y = y;
-        }
-    }
-
-    /**
-     * Draw polygon
-     *
-     * @param canvas The canvas to draw on
-     * @param color  Integer representing a fill color (see http://developer.android.com/reference/android/graphics/Color.html)
-     * @param points Polygon corner points
-     */
-    private void drawPoly(Canvas canvas, int color, Point[] points) {
-        // line at minimum...
-        if (points.length < 2) {
-            return;
-        }
-
-        // paint
-        Paint polyPaint = new Paint();
-        polyPaint.setColor(color);
-        polyPaint.setStyle(Paint.Style.STROKE);
-
-        // path
-        Path polyPath = new Path();
-        polyPath.moveTo(points[0].x, points[0].y);
-        int i, len;
-        len = points.length;
-        for (i = 0; i < len; i++) {
-            polyPath.lineTo(points[i].x, points[i].y);
-        }
-        polyPath.lineTo(points[0].x, points[0].y);
-
-        // draw
-        canvas.drawPath(polyPath, polyPaint);
-    }
-
-    private void drawMyStuff(final Canvas canvas) {
-        // Random random = new Random();
-        Log.i(logTag, "Drawing...");
-        canvas.drawRGB(255, 128, 128);
-    }
-//    public void drawWaypointLines(List<LatLng> loc, boolean dotted)
-//    {
-//        Projection proj = mv.getProjection();
-//        ArrayList<PointF> points = new ArrayList<PointF>();
-//        for (LatLng i : loc) {
-//
-//            PointF temppoint = proj.toPixels(i, null);
-//
-////
-//            points.add(temppoint);
-//
-//        }
-//
-//        drawview.setPaint("green", 6, dotted);
-//        drawview.setClose(false);
-//        drawview.points = points;
-//        drawview.invalidate();
-//
-//    }
-//
-//    public void drawPolygonline(List<LatLng> loc){
-//        Projection proj = mv.getProjection();
-//        ArrayList<PointF> points = new ArrayList<PointF>();
-//        for (LatLng i : loc) {
-//
-//            PointF temppoint = proj.toPixels(i, null);
-//
-//            points.add(temppoint);
-//
-//        }
-
-//        drawview2.setPaint("blue", 8, false);
-//        drawview2.setClose(true);
-//        drawview2.points = points;
-//        drawview2.invalidate();
-//    }
 
     public static double planarDistanceSq(Pose3D a, Pose3D b) {
         double dx = a.getX() - b.getX();
