@@ -25,5 +25,7 @@
     <item
         android:id="@+id/four"
         android:title="Go Home"/>
-
+    <item
+        android:id="@+id/pid"
+        android:title="Set PID" />
 </menu>

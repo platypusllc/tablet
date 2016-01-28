@@ -429,6 +429,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 goHome();
                                 break;
                             }
+                            case "Set PID":
+                            {
+                                setPID();
+                                break;
+                            }
                         }
                         return true;
                     }
@@ -2508,6 +2513,31 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     //}
 
                 }
+    }
+    public void setPID()
+    {
+        final Dialog piddialog = new Dialog(context);
+        piddialog.setContentView(R.layout.setpid);
+        piddialog.setTitle("Set PID Gains");
+
+        Button setPID = (Button)piddialog.findViewById(R.id.pidsubmit);
+
+        EditText thrust1 = (EditText) piddialog.findViewById(R.id.thrustfirst);
+        EditText thrust2 = (EditText) piddialog.findViewById(R.id.thrustsecond);
+        EditText thrust3 = (EditText) piddialog.findViewById(R.id.thrustthird);
+
+        EditText rudder1 = (EditText) piddialog.findViewById(R.id.rudderfirst);
+        EditText rudder2 = (EditText) piddialog.findViewById(R.id.ruddersecond);
+        EditText rudder3 = (EditText) piddialog.findViewById(R.id.rudderthird);
+
+
+        setPID.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                piddialog.dismiss();
+            }
+        });
+        piddialog.show();
     }
 
 }
