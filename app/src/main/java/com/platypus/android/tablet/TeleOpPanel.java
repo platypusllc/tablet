@@ -1471,17 +1471,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         old_rudder = rudderTemp;
                         oldTime = System.currentTimeMillis();
 
-                        if(tempPose != null){
-                            Pose3D waypoint = tempPose[0].pose;
-                            double distanceSq = planarDistanceSq(_pose.pose, waypoint);
+                        if(tempPose != null ){
+                            try {
+                                Pose3D waypoint = tempPose[0].pose;
+                                double distanceSq = planarDistanceSq(_pose.pose, waypoint);
 
-                            if(distanceSq <= 25){
-                                //UtmPose[] queuedWaypoints = new UtmPose[tempPose.length - 1];
-                                tempPose = Arrays.copyOfRange(tempPose,1,tempPose.length);
-                                if(N_waypoint < waypointList.size()){
-                                    N_waypoint += 1;
+                                if (distanceSq <= 25) {
+                                    //UtmPose[] queuedWaypoints = new UtmPose[tempPose.length - 1];
+                                    tempPose = Arrays.copyOfRange(tempPose, 1, tempPose.length);
+                                    if (N_waypoint < waypointList.size()) {
+                                        N_waypoint += 1;
+                                    }
+
                                 }
-
+                            }
+                            catch(Exception e){
+                                Log.i(logTag,"PlanarDistanceSq Error");
                             }
                         }
 
