@@ -1396,7 +1396,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             } else {
                 twist.drz(rudderTemp >= -1 & rudderTemp <= 1 ? rudderTemp : 0);
             }
-            a.returnServer().setVelocity(twist, null);
+            a.returnServer().setVelocity(twist, new FunctionObserver<Void>() {
+                @Override
+                public void completed(Void aVoid) {
+
+                }
+
+                @Override
+                public void failed(FunctionError functionError) {
+                    Log.w(logTag, "failed to update velocity");
+                }
+            });
         }
     }
 
