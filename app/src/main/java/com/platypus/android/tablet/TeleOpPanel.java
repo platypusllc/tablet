@@ -362,17 +362,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         sensorvalueButton.setTextColor(Color.GRAY);
         battery = (TextView)this.findViewById(R.id.batteryVoltage);
 
-        saveMap = (Button) this.findViewById(R.id.saveMap);
-        loadMap = (Button) this.findViewById(R.id.loadMap);
+      //  saveMap = (Button) this.findViewById(R.id.saveMap);
+        //loadMap = (Button) this.findViewById(R.id.loadMap);
         removeMap = (Button) this.findViewById(R.id.removeMap);
-        refreshMap = (Button) this.findViewById(R.id.refreshMap);
+      //  refreshMap = (Button) this.findViewById(R.id.refreshMap);
         progressBar = (ProgressBar) this.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
         joystick = (JoystickView) findViewById(R.id.joystickView);
 
-        setHome = (ToggleButton) this.findViewById(R.id.sethome);
+       // setHome = (ToggleButton) this.findViewById(R.id.sethome);
         speed = (Switch) this.findViewById(R.id.Sswitch);
-        goHome = (ImageButton) this.findViewById(R.id.gohome);
+       // goHome = (ImageButton) this.findViewById(R.id.gohome);
         drawPoly = (ImageButton) this.findViewById(R.id.drawPolygon);
         Title = (TextView) this.findViewById(R.id.controlScreenEnter);
         advancedOptions = (Button) this.findViewById(R.id.advopt);
