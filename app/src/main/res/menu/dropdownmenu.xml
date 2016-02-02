@@ -1,0 +1,31 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent">
+
+    <item
+        android:id="@+id/one"
+        android:title="Save Map"/>
+
+    <item
+        android:id="@+id/two"
+        android:title="Load Map"/>
+
+    <item
+        android:id="@+id/refresh"
+        android:title="Refresh Map"/>
+
+    <item
+        android:id="@+id/reload"
+        android:title="Reload Map"/>
+
+    <item
+        android:id="@+id/three"
+        android:title="Set Home"/>
+
+    <item
+        android:id="@+id/four"
+        android:title="Go Home"/>
+    <item
+        android:id="@+id/pid"
+        android:title="Set PID" />
+</menu>

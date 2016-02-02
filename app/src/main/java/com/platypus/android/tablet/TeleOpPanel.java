@@ -64,6 +64,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.graphics.Matrix;
@@ -101,6 +102,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
@@ -154,8 +156,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Button loadMap = null;
     Button removeMap = null;
     Button refreshMap = null;
-    Button saveWaypoints;
-    Button loadWaypoints;
+    Button saveWaypoints = null;
+    Button loadWaypoints = null;
+    Button advancedOptions = null;
 
     //TextView log = null;
     Handler network = new Handler();
@@ -294,6 +297,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     private UtmPose[] wpPose = null , tempPose = null;
     private int N_waypoint = 0;
 
+    Icon Ihome;
 
 
 
@@ -371,7 +375,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         goHome = (ImageButton) this.findViewById(R.id.gohome);
         drawPoly = (ImageButton) this.findViewById(R.id.drawPolygon);
         Title = (TextView) this.findViewById(R.id.controlScreenEnter);
-
+        advancedOptions = (Button) this.findViewById(R.id.advopt);
 
         drawPoly.setBackgroundResource(R.drawable.draw_icon);
 
@@ -388,6 +392,56 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         // *****************//
         //      Joystick   //
         // ****************//
+
+        advancedOptions.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PopupMenu popup = new PopupMenu(TeleOpPanel.this, advancedOptions);
+                popup.getMenuInflater().inflate(R.menu.dropdownmenu, popup.getMenu());
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch(item.toString())
+                        {
+                            case "Save Map":
+                            {
+                                saveMap();
+                                break;
+                            }
+                            case "Load Map":
+                            {
+                                loadMap();
+                                break;
+                            }
+                            case "Refresh Map":
+                            {
+                                refreshMap();
+                                break;
+                            }
+                            case "Reload Map": {
+                                reloadMap();
+                                break;
+                            }
+                            case "Set Home": {
+                                setHome();
+                                break;
+                            }
+                            case "Go Home": {
+                                goHome();
+                                break;
+                            }
+                            case "Set PID":
+                            {
+                                setPID();
+                                break;
+                            }
+                        }
+                        return true;
+                    }
+                });
+                popup.show(); //showing popup menu
+            }
+        });
+
 
         joystick.setYAxisInverted(false);
 
@@ -491,7 +545,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         mv.setStyleUrl(Style.SATELLITE_STREETS);
         IconFactory mIconFactory = IconFactory.getInstance(this);
         Drawable mhome = ContextCompat.getDrawable(this, R.drawable.home1);
-        final Icon Ihome = mIconFactory.fromDrawable(mhome);
+        Ihome = mIconFactory.fromDrawable(mhome);
 
 
 
@@ -729,198 +783,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //        });
 
         // download offline map
-//        saveMap.setOnClickListener(new OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    if(offlineMapDownloader.isMapIdAlreadyAnOfflineMapDatabase(MapID)){
-//                        Toast.makeText(getApplicationContext(), "MapID has already been downloaded.\n" +
-//                                       "Please remove it before trying to download again", Toast.LENGTH_SHORT).show();
-//                    }
-//                    // mv.setDiskCacheEnabled(true);
-//                    Mapcenter = mv.getCenter();
-//                    writeToFile(Mapcenter.toString());
-//                    Thread thread = new Thread(){
-//                            public void run(){
-//                                saveOfflineMap(Mapcenter);
-//                            }
-//                        };
-//                    thread.start();
-//                }
-//            });
-//        // display offline map
-//        loadMap.setOnClickListener(new OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    //loadOfflineMap();
-//
-//                    Thread thread = new Thread(){
-//                            public void run(){
-//                                loadOfflineMap();
-//                            }
-//                        };
-//                    thread.start();
-//                }
-//            });
-//        // switch to online map
-//        refreshMap.setOnClickListener(new OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//
-//                    if(isInternetAvailable()){
-//                        mv.setAccessToken("pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
-//                        //mv.setTileSource(new MapboxTileLayer("mapbox.streets"));
-//                       // mv.setTileSource(new MapboxTileLayer(MapID));
-//                    }
-//                    else{
-//                        Toast.makeText(getApplicationContext(),"Need Internet Connection", Toast.LENGTH_LONG).show();
-//                    }
-//
-//
-//                }
-//            });
-//        // remove offline map database
-//        removeMap.setOnClickListener(new OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    offlineMapDownloader.removeOfflineMapDatabaseWithID(MapID);
-//                    Toast.makeText(getApplicationContext(), "Removed OfflineMap", Toast.LENGTH_SHORT).show();
-//                    progressBar.setProgress(0);
-//                    String dir = getFilesDir().getAbsolutePath();
-//                    File file = new File(dir, "Mapcenter.txt");
-//                    file.delete();
-//
-//
-//                }
-//            });
 
-        setHome.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(setHome.isChecked()){
-                    new AlertDialog.Builder(context)
-                            .setTitle("Set Home")
-                            .setMessage("Which position do you want to use?")
-                            .setPositiveButton("Phone", new DialogInterface.OnClickListener(){
-                                public void onClick(DialogInterface dialog, int which){
-                                    if( latlongloc != null) {
-                                        home = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-                                        MarkerOptions home_MO = new MarkerOptions()
-                                                .position(home)
-                                                .title("Home")
-                                                .icon(Ihome);
-                                        home_M =mv.addMarker(home_MO);
-                                        //Bitmap home_B = BitmapFactory.decodeResource(getResources(), R.drawable.home);
-                                        //Drawable d = new BitmapDrawablegit (getResources(), home_B);
-
-
-                                        mv.setLatLng(home);
-                                    }
-                                    else{
-
-                                        Toast.makeText(getApplicationContext(),"Phone doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            })
-                            .setNegativeButton("Tablet", new DialogInterface.OnClickListener(){
-                                public void onClick(DialogInterface dialog, int which){
-
-                                    LatLng loc = new LatLng(mv.getMyLocation()) ;
-
-                                    if(loc != null){
-                                        home = loc;
-                                        MarkerOptions home_MO = new MarkerOptions()
-                                                .position(home)
-                                                .title("Home")
-                                                .icon(Ihome);
-                                        home_M = mv.addMarker(home_MO);
-                                        mv.setLatLng(home);
-
-
-                                    }
-                                    else{
-                                        Toast.makeText(getApplicationContext(),"Tablet doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
-                                    }
-
-
-                                }
-                            })
-                            .show();
-                }
-                else{
-                    new AlertDialog.Builder(context)
-                            .setTitle("Set Home")
-                            .setMessage("Do you want to remove the home?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    mv.removeMarker(home_M);
-                                    home = null;
-                                }
-                            })
-                            .setNegativeButton("No",new DialogInterface.OnClickListener(){
-                                public void onClick(DialogInterface dialog, int which) {
-
-                                }
-                            })
-                            .show();
-                }
-
-
-
-
-
-            }
-        });
-
-        goHome.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(home == null){
-
-                    Toast.makeText(getApplicationContext(), "Set home first!", Toast.LENGTH_LONG).show();
-                    //home = pHollowStartingPoint;
-                }
-                else{
-                    //stopWaypoints = true;
-
-                    //if(currentBoat.isConnected()){
-                    new AlertDialog.Builder(context)
-                            .setTitle("Go Home")
-                            .setMessage("Let the boat go home ?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    Thread threadhome = new Thread() {
-                                        public void run() {
-                                            if (currentBoat.isConnected()) {
-                                                //                                    currentBoat.returnServer().stopWaypoints(null);
-                                                //                                    checkAndSleepForCmd();
-                                                if (!isAutonomous) {
-                                                    currentBoat.returnServer().setAutonomous(true, null);
-                                                    isAutonomous = true;
-                                                }
-
-
-                                                UtmPose homeUTM = convertLatLngUtm(home);
-                                                currentBoat.addWaypoint(homeUTM.pose, homeUTM.origin);
-                                                Log.i(logTag, "Go home");
-                                            }
-                                        }
-                                    };
-                                    threadhome.start();
-                                    Log.i(logTag, "Go home");
-                                }
-                            })
-                            .setNegativeButton("No", new DialogInterface.OnClickListener(){
-                                public void onClick(DialogInterface dialog, int which){
-                                    Log.i(logTag, "Nothing");
-                                }
-                            })
-                            .show();
-
-                    //}
-
-                }
-            }
-        });
 
         drawPoly.setOnClickListener(new OnClickListener() {
             @Override
@@ -2468,7 +2331,229 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         double dy = a.getY() - b.getY();
         return dx * dx + dy * dy;
     }
+    public void saveMap()
+    {
+        Toast.makeText(getApplicationContext(), "Currently Unavailable", Toast.LENGTH_SHORT).show();
+//        saveMap.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    if(offlineMapDownloader.isMapIdAlreadyAnOfflineMapDatabase(MapID)){
+//                        Toast.makeText(getApplicationContext(), "MapID has already been downloaded.\n" +
+//                                       "Please remove it before trying to download again", Toast.LENGTH_SHORT).show();
+//                    }
+//                    // mv.setDiskCacheEnabled(true);
+//                    Mapcenter = mv.getCenter();
+//                    writeToFile(Mapcenter.toString());
+//                    Thread thread = new Thread(){
+//                            public void run(){
+//                                saveOfflineMap(Mapcenter);
+//                            }
+//                        };
+//                    thread.start();
+//                }
+//            });
+    }
+    public void loadMap()
+    {
+        Toast.makeText(getApplicationContext(), "Currently Unavailable", Toast.LENGTH_SHORT).show();
+        //        // display offline map
+//        loadMap.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    //loadOfflineMap();
+//
+//                    Thread thread = new Thread(){
+//                            public void run(){
+//                                loadOfflineMap();
+//                            }
+//                        };
+//                    thread.start();
+//                }
+//            });
 
+    }
+    public void refreshMap()
+    {
+        Toast.makeText(getApplicationContext(), "Currently Unavailable", Toast.LENGTH_SHORT).show();
+        //        // switch to online map
+//        refreshMap.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//
+//                    if(isInternetAvailable()){
+//                        mv.setAccessToken("pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
+//                        //mv.setTileSource(new MapboxTileLayer("mapbox.streets"));
+//                       // mv.setTileSource(new MapboxTileLayer(MapID));
+//                    }
+//                    else{
+//                        Toast.makeText(getApplicationContext(),"Need Internet Connection", Toast.LENGTH_LONG).show();
+//                    }
+//
+//
+//                }
+//            });
+
+    }
+    public void reloadMap()
+    {
+        Toast.makeText(getApplicationContext(), "Currently Unavailable", Toast.LENGTH_SHORT).show();
+//        // remove offline map database
+//        removeMap.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    offlineMapDownloader.removeOfflineMapDatabaseWithID(MapID);
+//                    Toast.makeText(getApplicationContext(), "Removed OfflineMap", Toast.LENGTH_SHORT).show();
+//                    progressBar.setProgress(0);
+//                    String dir = getFilesDir().getAbsolutePath();
+//                    File file = new File(dir, "Mapcenter.txt");
+//                    file.delete();
+//
+//
+//                }
+//            });
+
+    }
+    public void setHome()
+    {
+        if(home == null){
+                    new AlertDialog.Builder(context)
+                            .setTitle("Set Home")
+                            .setMessage("Which position do you want to use?")
+                            .setPositiveButton("Phone", new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int which){
+                                    if( latlongloc != null) {
+                                        home = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+                                        MarkerOptions home_MO = new MarkerOptions()
+                                                .position(home)
+                                                .title("Home")
+                                                .icon(Ihome);
+                                        home_M =mv.addMarker(home_MO);
+                                        //Bitmap home_B = BitmapFactory.decodeResource(getResources(), R.drawable.home);
+                                        //Drawable d = new BitmapDrawablegit (getResources(), home_B);
+
+
+                                        mv.setLatLng(home);
+                                    }
+                                    else{
+
+                                        Toast.makeText(getApplicationContext(),"Phone doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            })
+                            .setNegativeButton("Tablet", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+
+                                    LatLng loc = new LatLng(mv.getMyLocation());
+
+                                    if (loc != null) {
+                                        home = loc;
+                                        MarkerOptions home_MO = new MarkerOptions()
+                                                .position(home)
+                                                .title("Home")
+                                                .icon(Ihome);
+                                        home_M = mv.addMarker(home_MO);
+                                        mv.setLatLng(home);
+
+
+                                    } else {
+                                        Toast.makeText(getApplicationContext(), "Tablet doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
+                                    }
+
+
+                                }
+                            })
+                            .show();
+                }
+                else{
+                    new AlertDialog.Builder(context)
+                            .setTitle("Set Home")
+                            .setMessage("Do you want to remove the home?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    mv.removeMarker(home_M);
+                                    home = null;
+                                }
+                            })
+                            .setNegativeButton("No",new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int which) {
+
+                                }
+                            })
+                            .show();
+                }
+    }
+    public void goHome()
+    {
+                if(home == null){
+                    Toast.makeText(getApplicationContext(), "Set home first!", Toast.LENGTH_LONG).show();
+                    //home = pHollowStartingPoint;
+                }
+                else{
+                    //stopWaypoints = true;
+
+                    //if(currentBoat.isConnected()){
+                    new AlertDialog.Builder(context)
+                            .setTitle("Go Home")
+                            .setMessage("Let the boat go home ?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Thread threadhome = new Thread() {
+                                        public void run() {
+                                            if (currentBoat.isConnected()) {
+                                                //                                    currentBoat.returnServer().stopWaypoints(null);
+                                                //                                    checkAndSleepForCmd();
+                                                if (!isAutonomous) {
+                                                    currentBoat.returnServer().setAutonomous(true, null);
+                                                    isAutonomous = true;
+                                                }
+
+
+                                                UtmPose homeUTM = convertLatLngUtm(home);
+                                                currentBoat.addWaypoint(homeUTM.pose, homeUTM.origin);
+                                                Log.i(logTag, "Go home");
+                                            }
+                                        }
+                                    };
+                                    threadhome.start();
+                                    Log.i(logTag, "Go home");
+                                }
+                            })
+                            .setNegativeButton("No", new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int which){
+                                    Log.i(logTag, "Nothing");
+                                }
+                            })
+                            .show();
+
+                    //}
+
+                }
+    }
+    public void setPID()
+    {
+        final Dialog piddialog = new Dialog(context);
+        piddialog.setContentView(R.layout.setpid);
+        piddialog.setTitle("Set PID Gains");
+
+        Button setPID = (Button)piddialog.findViewById(R.id.pidsubmit);
+
+        EditText thrust1 = (EditText) piddialog.findViewById(R.id.thrustfirst);
+        EditText thrust2 = (EditText) piddialog.findViewById(R.id.thrustsecond);
+        EditText thrust3 = (EditText) piddialog.findViewById(R.id.thrustthird);
+
+        EditText rudder1 = (EditText) piddialog.findViewById(R.id.rudderfirst);
+        EditText rudder2 = (EditText) piddialog.findViewById(R.id.ruddersecond);
+        EditText rudder3 = (EditText) piddialog.findViewById(R.id.rudderthird);
+
+
+        setPID.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                piddialog.dismiss();
+            }
+        });
+        piddialog.show();
+    }
 
 }
 //
