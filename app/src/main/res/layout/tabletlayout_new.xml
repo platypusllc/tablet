@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:mapbox="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/printIpAddress">
+
+        <com.mapbox.mapboxsdk.views.MapView
+            android:id="@+id/mapview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            mapbox:access_token="pk.eyJ1IjoiemVzaGVuZ3giLCJhIjoiY2loeHRjb3J2MDNleHQ1a2hpaHNpdWg4biJ9._iGMxo0BrVJc39brlkzOew"
+
+            />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right|top"
+            android:text="Sensors"
+            android:padding="10dp"
+            android:layout_marginTop="30dp"
+            android:paddingRight="10dp"
+            android:layout_marginLeft="5dp"
+            android:id="@+id/button" />
+
+        <fragment
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:name="com.platypus.android.tablet.fragment_sensor"
+            android:id="@+id/fragment"
+            android:layout_below="@+id/button"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/printIpAddress"
+        android:layout_width="match_parent"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:gravity="center_horizontal|center_vertical"
+        android:text="IP Address:"
+        android:textColor="@color/green"
+        android:background="@color/cyan" />
+
+</RelativeLayout>

@@ -362,17 +362,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         sensorvalueButton.setTextColor(Color.GRAY);
         battery = (TextView)this.findViewById(R.id.batteryVoltage);
 
-        saveMap = (Button) this.findViewById(R.id.saveMap);
-        loadMap = (Button) this.findViewById(R.id.loadMap);
+      //  saveMap = (Button) this.findViewById(R.id.saveMap);
+        //loadMap = (Button) this.findViewById(R.id.loadMap);
         removeMap = (Button) this.findViewById(R.id.removeMap);
-        refreshMap = (Button) this.findViewById(R.id.refreshMap);
+      //  refreshMap = (Button) this.findViewById(R.id.refreshMap);
         progressBar = (ProgressBar) this.findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
         joystick = (JoystickView) findViewById(R.id.joystickView);
 
-        setHome = (ToggleButton) this.findViewById(R.id.sethome);
+       // setHome = (ToggleButton) this.findViewById(R.id.sethome);
         speed = (Switch) this.findViewById(R.id.Sswitch);
-        goHome = (ImageButton) this.findViewById(R.id.gohome);
+       // goHome = (ImageButton) this.findViewById(R.id.gohome);
         drawPoly = (ImageButton) this.findViewById(R.id.drawPolygon);
         Title = (TextView) this.findViewById(R.id.controlScreenEnter);
         advancedOptions = (Button) this.findViewById(R.id.advopt);
@@ -1259,7 +1259,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             } else {
                 twist.drz(rudderTemp >= -1 & rudderTemp <= 1 ? rudderTemp : 0);
             }
-            a.returnServer().setVelocity(twist, null);
+            a.returnServer().setVelocity(twist, new FunctionObserver<Void>() {
+                @Override
+                public void completed(Void aVoid) {
+
+                }
+
+                @Override
+                public void failed(FunctionError functionError) {
+                    Log.w(logTag, "failed to update velocity");
+                }
+            });
         }
     }
 
@@ -1334,17 +1344,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         old_rudder = rudderTemp;
                         oldTime = System.currentTimeMillis();
 
-                        if(tempPose != null){
-                            Pose3D waypoint = tempPose[0].pose;
-                            double distanceSq = planarDistanceSq(_pose.pose, waypoint);
+                        if(tempPose != null ){
+                            try {
+                                Pose3D waypoint = tempPose[0].pose;
+                                double distanceSq = planarDistanceSq(_pose.pose, waypoint);
 
-                            if(distanceSq <= 25){
-                                //UtmPose[] queuedWaypoints = new UtmPose[tempPose.length - 1];
-                                tempPose = Arrays.copyOfRange(tempPose,1,tempPose.length);
-                                if(N_waypoint < waypointList.size()){
-                                    N_waypoint += 1;
+                                if (distanceSq <= 25) {
+                                    //UtmPose[] queuedWaypoints = new UtmPose[tempPose.length - 1];
+                                    tempPose = Arrays.copyOfRange(tempPose, 1, tempPose.length);
+                                    if (N_waypoint < waypointList.size()) {
+                                        N_waypoint += 1;
+                                    }
+
                                 }
-
+                            }
+                            catch(Exception e){
+                                Log.i(logTag,"PlanarDistanceSq Error");
                             }
                         }
 
