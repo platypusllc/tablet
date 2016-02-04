@@ -47,11 +47,31 @@ public class Boat
 		server = new UdpVehicleServer();
 		try {
 			if(pl != null) {
-				server.addPoseListener(pl, null);
+				server.addPoseListener(pl, new FunctionObserver<Void>() {
+					@Override
+					public void completed(Void aVoid) {
+
+					}
+
+					@Override
+					public void failed(FunctionError functionError) {
+
+					}
+				});
 			}
 			if(sl != null) {
 				for (int channel = 0; channel < 5; channel++) {
-					server.addSensorListener(channel, sl, null);
+					server.addSensorListener(channel, sl, new FunctionObserver<Void>() {
+						@Override
+						public void completed(Void aVoid) {
+
+						}
+
+						@Override
+						public void failed(FunctionError functionError) {
+
+						}
+					});
 				}
 			}
 		}
