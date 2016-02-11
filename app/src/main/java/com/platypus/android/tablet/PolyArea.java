@@ -6,6 +6,9 @@ package com.platypus.android.tablet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
 /* note
@@ -18,12 +21,13 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 
 public class PolyArea
 {
-    ArrayList<LatLng> vertices; //vertex
-    ArrayList<LatLng> vectors;  //lines (vectors)
-    boolean convex;
-    LatLng centroid;
+    private List<LatLng> vertices; //vertex
+    private List<LatLng> vectors;  //lines (vectors)
+    private boolean convex;
+    private LatLng centroid;
+    private boolean cw;
 
-    public PolyArea(ArrayList<LatLng> polyPointList)
+    public PolyArea(List<LatLng> polyPointList)
     {
         vertices = polyPointList;
         vectors = generateVectors(vertices); //compute vectors
@@ -83,6 +87,7 @@ public class PolyArea
             convex = false;
             return false;
         }
+        cw = neg;
         convex = true;
         return true;
     }
@@ -90,7 +95,12 @@ public class PolyArea
     //if all in clockwise order all cross product signs should be negative
     public boolean isConcaveAngle (LatLng vector1, LatLng vector2)
     {
-        if (crossZ(vector1,vector2) > 0)
+
+        if (cw == true && crossZ(vector1,vector2) > 0)
+        {
+            return true;
+        }
+        if (cw == false && crossZ(vector1,vector2) < 0)
         {
             return true;
         }
@@ -105,10 +115,9 @@ public class PolyArea
 
     public void makeConvex()
     {
+        orderCW();
         while(isConvex(vectors) == false)
         {
-            // System.out.println("");
-            // printVertices();
 
             for (int i = 0; i < vectors.size()-1; i++)
             {
@@ -116,23 +125,30 @@ public class PolyArea
                 {
                     if(isConcaveAngle(vectors.get(vectors.size()-1),vectors.get(0)) == true)
                     {
+                        System.out.println("Removing vector between" + vectors.get(0) + " " + vectors.get(7));
                         vertices.remove(0);
                         vectors = generateVectors(vertices);
                         break;
                     }
                 }
 
-                else if(isConcaveAngle(vectors.get(i),vectors.get(i+1)) == true)
+                if(isConcaveAngle(vectors.get(i),vectors.get(i+1)) == true)
                 {
+                    System.out.println("Removing point between" + vertices.get(i+1));
                     vertices.remove(i+1); //remove vertex
                     vectors = generateVectors(vertices); //recreate
                     //new vectors
                     break;
                 }
+
             }
         }
         convex = isConvex(vectors);
+
     }
+
+
+
     public void printVertices()
     {
         for (LatLng i : vertices)
@@ -152,5 +168,54 @@ public class PolyArea
         }
         return new LatLng(tempLat/vertices.size(),tempLon/vertices.size());
     }
+
+    public boolean less(LatLng point1, LatLng point2)
+    {
+        centroid = computeCentroid();
+        double det = (point1.getLatitude() - centroid.getLatitude()) * (point2.getLongitude() - centroid.getLongitude()) - (point2.getLatitude() - centroid.getLatitude()) * (point1.getLongitude() - centroid.getLongitude());
+        if (det < 0)
+            return true;
+        else
+            return false;
+    }
+    public void orderCW()
+    {
+        Map<Double,Integer> map = new TreeMap<Double,Integer>();
+        for (int j = 0; j < vertices.size(); j++)
+        {
+            LatLng i = vertices.get(j);
+            Double polar = Math.atan2(i.getLatitude()-centroid.getLatitude(),i.getLongitude()-centroid.getLongitude());
+            map.put(polar,j);
+        }
+
+        List<LatLng> ordered = new ArrayList<LatLng>(vertices.size());
+        for (Double key : map.keySet())
+        {
+            ordered.add(vertices.get(map.get(key)));
+        }
+        vertices = new ArrayList(ordered);
+        vectors = generateVectors(vertices);
+    }
+    public void printPolar()
+    {
+        centroid = computeCentroid();
+        for (LatLng i : vertices)
+        {
+            System.out.println(Math.atan2(i.getLatitude()-centroid.getLatitude(),i.getLongitude()-centroid.getLongitude()));
+        }
+    }
+    public List<LatLng> getVertices()
+    {
+        return vertices;
+    }
+    public List<LatLng> getVectors()
+    {
+        return vectors;
+    }
+    public LatLng getCentroid()
+    {
+        return centroid;
+    }
+
 }
 
