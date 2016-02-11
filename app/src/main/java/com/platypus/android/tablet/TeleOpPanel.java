@@ -160,6 +160,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Button saveWaypoints = null;
     Button loadWaypoints = null;
     Button advancedOptions = null;
+    Button makeConvex = null; //for testing remove later
 
     //TextView log = null;
     Handler network = new Handler();
@@ -349,6 +350,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         // loadWPFile = (Button)this.findViewById(R.id.loadFileButton);
         autoBox = (CheckBox) this.findViewById(R.id.autonomousBox);
         startWaypoints = (Button) this.findViewById(R.id.waypointStartButton);
+        makeConvex = (Button) this.findViewById(R.id.makeconvex);
 
         saveWaypoints = (Button) this.findViewById(R.id.savewpbutton);
         loadWaypoints = (Button) this.findViewById(R.id.loadwpbutton);
@@ -443,7 +445,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         });
 
-
+        makeConvex.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (touchpointList.size() > 0)
+                {
+                    PolyArea area = new PolyArea(touchpointList);
+                    area.makeConvex();
+                    touchpointList = area.getVertices();
+                }
+            }
+        });
         joystick.setYAxisInverted(false);
 
         //*****************************************************************************
@@ -1110,20 +1122,29 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         waypointList.add(wpLoc);
                         markerList.add(mv.addMarker(new MarkerOptions().position(wpLoc).title(Integer.toString(WPnum))));
                         Waypath = mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-
-
-
                     }
 
-                    if(startDraw == true){
+                    if(startDraw == true) {
                         LatLng wpLoc = point;
-                        if(Boundry != null){
+                        if (Boundry != null) {
                             Boundry.remove();
                         }
+                        for (Marker t : boundryList)
+                        {
+                            t.remove();
+                        }
+                        boundryList.clear();
                         touchpointList.add(wpLoc);
-                        boundryList.add(mv.addMarker(new MarkerOptions().position(wpLoc).icon(Iboundry)));
-                        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
-                        poly.alpha((float).6);
+                        PolyArea area = new PolyArea(touchpointList);
+                        area.makeConvex(); //makes convex polygon
+                        touchpointList = area.getVertices(); //touchedpoints should be just vertices in polygon
+
+                        for (LatLng i : touchpointList)
+                        {
+                            boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
+                        }
+                        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy")); //draw polygon
+                        poly.alpha((float).6); //set interior opacity
                         Boundry = mv.addPolygon(poly);
 
                         //Boundry.add(mv.addPolygon(new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"))));
