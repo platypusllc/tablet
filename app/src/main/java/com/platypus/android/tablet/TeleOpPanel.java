@@ -1111,9 +1111,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         waypointList.add(wpLoc);
                         markerList.add(mv.addMarker(new MarkerOptions().position(wpLoc).title(Integer.toString(WPnum))));
                         Waypath = mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-
-
-
                     }
 
                     if(startDraw == true) {

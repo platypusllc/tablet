@@ -4,12 +4,14 @@ package com.platypus.android.tablet;
  * Created by shenty on 2/3/16.
  */
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLngZoom;
 
 /* note
 * Should not use yet for following reasons
@@ -113,6 +115,9 @@ public class PolyArea
         return u.getLatitude()*v.getLongitude() - v.getLatitude()*u.getLongitude();
     }
 
+
+    //Doesnt always remove the wanted point since it always orders them first
+    //Find last point in the list that was added before organizing, shift all elements over then run
     public void makeConvex()
     {
         orderCW();
@@ -217,5 +222,37 @@ public class PolyArea
         return centroid;
     }
 
+    /* Returns a list of paths that reduce in size by 10% each iteration */
+    /* example on how to use
+
+
+        Polygon poly = new Polygon(points);
+		poly.orderCW();
+		poly.makeConvex();
+		for (ArrayList<LatLng> i : poly.createSmallerPolygons())
+		{
+			System.out.println(i);
+		}
+
+     */
+    public ArrayList<ArrayList<LatLng>> createSmallerPolygons()
+    {
+        centroid = computeCentroid();
+        List<LatLng> pointToCenter = new ArrayList<LatLng>();
+        for (LatLng i : vertices)
+        {
+            pointToCenter.add(new LatLng(i.getLatitude()-centroid.getLatitude(),i.getLongitude()-centroid.getLongitude()));
+        }
+        ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
+        for (double i = .1; i <= 1; i+=.1)
+        {
+            ArrayList<LatLng> points = new ArrayList<LatLng>();
+            for (LatLng p : pointToCenter)
+            {
+                points.add(new LatLng(p.getLatitude()*i,p.getLongitude()*i));
+            }
+        }
+        return spirals;
+    }
 }
 
