@@ -479,7 +479,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                     _pose.origin.zone, 'T', _pose.pose.getX(),
                                     _pose.pose.getY(), SI.METER),
                             ReferenceEllipsoid.WGS84);
-
+                  // Log.i(logTag, "Pose listener called");
                     //Log.i(logTag, "rot:" + rot);
                 }
             }
@@ -497,6 +497,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 sensorV = sensorV.substring(1, sensorV.length()-1);
                 sensorReady = true;
                 //Log.i("Platypus","Get sensor Data");
+                //Log.i(logTag, "Sensor listener called");
             }
         };
         //*******************************************************************************
@@ -506,6 +507,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             @Override
             public void waypointUpdate(WaypointState waypointState) {
                 boatwaypoint = waypointState.toString();
+              //  Log.i(logTag, "Waypoint listener called");
             }
         };
 
@@ -1207,8 +1209,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     try{
                         touchpointList.remove(touchpointList.size()-1);
                         Boundry.remove();
-                        boundryList.get(boundryList.size()-1).remove();
-                        boundryList.remove(boundryList.size()-1);
+                        boundryList.get(boundryList.size()-1).remove(); // remove the Marker
+                        boundryList.remove(boundryList.size()-1);// remove the last element in the Marker list.
                         if(touchpointList.size()>2) {
                             PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
                             poly.alpha((float) .6);
@@ -1384,15 +1386,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                                 if (distanceSq <= 25) {
                                     //UtmPose[] queuedWaypoints = new UtmPose[tempPose.length - 1];
-                                    tempPose = Arrays.copyOfRange(tempPose, 1, tempPose.length);
+
                                     if (N_waypoint < waypointList.size()) {
                                         N_waypoint += 1;
+                                        tempPose = Arrays.copyOfRange(tempPose, 1, tempPose.length);
                                     }
 
                                 }
                             }
                             catch(Exception e){
-                                Log.i(logTag, "PlanarDistanceSq Error");
+                               // Log.i(logTag, "PlanarDistanceSq Error");
                             }
                         }
 

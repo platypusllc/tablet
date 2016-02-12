@@ -50,7 +50,7 @@ public class Boat
 				server.addPoseListener(pl, new FunctionObserver<Void>() {
 					@Override
 					public void completed(Void aVoid) {
-
+						Log.i("Boat", "addPoseListener");
 					}
 
 					@Override
