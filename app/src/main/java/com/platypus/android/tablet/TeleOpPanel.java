@@ -53,6 +53,7 @@ import com.mapbox.mapboxsdk.utils.ApiAccess;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -310,6 +311,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     ArrayList<Marker> boundryList = new ArrayList();
     private Polyline Waypath;
     private Polygon Boundry;
+
+    public static final String PREF_NAME = "DataFile";
 
 
 
@@ -1147,6 +1150,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         poly.alpha((float).6); //set interior opacity
                         Boundry = mv.addPolygon(poly);
 
+
+
+
+
                         //Boundry.add(mv.addPolygon(new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"))));
 
                     }
@@ -1453,12 +1460,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 sensorvalueButton.setClickable(sensorReady);
                 sensorvalueButton.setTextColor(Color.BLACK);
                 sensorvalueButton.setText("Show SensorData");
+                SharedPreferences settings = getSharedPreferences(PREF_NAME,0);
+                SharedPreferences.Editor editor = settings.edit();
 
 
 
                 if(Data.channel == 4){
                     String[] batteries = sensorV.split(",");
                     battery.setText(batteries[0]);
+                    battery.setTextColor(isAverage(Data, batteries[0]));
+                    double value = (Double.parseDouble(batteries[0]) + getAverage(Data))/2;
+
+                    editor.putString(Data.type.toString(), Double.toString(value));
+                    editor.commit();
 
                 }
 
@@ -1472,7 +1486,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             break;
                         case 1:
                             sensorData1.setText(sensorV);
-                            sensorType1.setText(Data.type+"\n"+unit(Data.type));
+                            sensorType1.setText(Data.type + "\n" + unit(Data.type));
+                            sensorData1.setTextColor(isAverage(Data,sensorV));
+                            double value = (Double.parseDouble(sensorV) + getAverage(Data))/2;
+
+                            editor.putString(Data.type.toString(), Double.toString(value));
+                            editor.commit();
 
                             break;
                         case 2:
@@ -2629,6 +2648,29 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         return true;
     }
+
+    public int isAverage(SensorData data, String value){
+        double v = Double.parseDouble(value);
+        double average = getAverage(data);
+        if(average > v){
+            return Color.RED;
+        }
+        else if(average < v){
+            return Color.GREEN;
+        }
+        else{
+            return Color.GRAY;
+        }
+    }
+
+    public double getAverage(SensorData data){
+        double average;
+        SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
+        String v = settings.getString(data.type.toString(),"0");
+        average = Double.parseDouble(v);
+        return average;
+    }
+
 
 
 }
