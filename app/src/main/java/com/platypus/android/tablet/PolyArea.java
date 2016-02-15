@@ -1,167 +1,146 @@
 package com.platypus.android.tablet;
 
 /**
- * Created by shenty on 2/3/16.
+ * Created by shenty on 2/13/16.
  */
+import com.mapbox.mapboxsdk.geometry.LatLng;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.geometry.LatLngZoom;
-
-/* note
-* Should not use yet for following reasons
-* Points have to be in CLOCKWISE order (TODO)
-* If polygon intersects itself wont work
-* */
-
-
+import java.util.Scanner;
 
 public class PolyArea
 {
-    private List<LatLng> vertices; //vertex
-    private List<LatLng> vectors;  //lines (vectors)
-    private boolean convex;
     private LatLng centroid;
-    private boolean cw;
 
-    public PolyArea(List<LatLng> polyPointList)
+    public ArrayList<LatLng> quickHull(ArrayList<LatLng> points)
     {
-        vertices = polyPointList;
-        vectors = generateVectors(vertices); //compute vectors
-        convex = isConvex(vectors); //cross each vector check sign,
-        centroid = computeCentroid();
-        //determine if convex or not
-
-    }
-    public ArrayList<LatLng> generateVectors(List<LatLng> polyPointList)
-    {
-        ArrayList<LatLng> temp = new ArrayList<LatLng>();
-        //point = {x,y}
-        for (int i = 0; i < polyPointList.size()-1; i++)
-        {
-            double pointx = -polyPointList.get(i).getLatitude() + polyPointList.get(i+1).getLatitude();
-            double pointy = -polyPointList.get(i).getLongitude() + polyPointList.get(i+1).getLongitude() ;
-            temp.add(new LatLng(pointx,pointy));
+        ArrayList<LatLng> convexHull = new ArrayList<LatLng>();
+        if (points.size() < 3) {
+            return points;
         }
-        double pointx =  polyPointList.get(0).getLatitude()- polyPointList.get(polyPointList.size()-1).getLatitude();
-        double pointy =  polyPointList.get(0).getLongitude() - polyPointList.get(polyPointList.size()-1).getLongitude();
-        temp.add(new LatLng(pointx,pointy));
-        return temp;
-    }
 
-    //POINTS HAVE TO BE IN ORDER (clockwise) :|
-    public boolean isConvex(List<LatLng> vectors)
-    {
-        boolean neg = false;
-        boolean pos = false;;
-        for (int i = 0; i < vectors.size()-1; i++)
+        int minLatLng = -1, maxLatLng = -1;
+        double minX = Double.MAX_VALUE;
+        double maxX = Double.MIN_VALUE;
+        for (int i = 0; i < points.size(); i++)
         {
-            LatLng vector1 = vectors.get(i);
-            LatLng vector2 = vectors.get(i+1);
-            double tempcross = crossZ(vector1,vector2);
-            if (tempcross > 0)
+            System.out.println(minLatLng);
+            System.out.println(maxLatLng);
+            if (points.get(i).getLatitude() < minX)
             {
-                pos = true;
+                minX = points.get(i).getLatitude();
+                minLatLng = i;
             }
-            else
+            if (points.get(i).getLatitude() > maxX)
             {
-                neg = true;
+                maxX = points.get(i).getLatitude();
+                maxLatLng = i;
             }
         }
-        LatLng vector1 = vectors.get(0);
-        LatLng vector2 = vectors.get(vectors.size()-1);
-        double tempcross = crossZ(vector2,vector1);
-        if (tempcross > 0)
+
+        LatLng A = points.get(minLatLng);
+        LatLng B = points.get(maxLatLng);
+        convexHull.add(A);
+        convexHull.add(B);
+        points.remove(A);
+        points.remove(B);
+
+        ArrayList<LatLng> leftSet = new ArrayList<LatLng>();
+        ArrayList<LatLng> rightSet = new ArrayList<LatLng>();
+
+        for (int i = 0; i < points.size(); i++)
         {
-            pos = true;
+            LatLng p = points.get(i);
+            if (pointLocation(A, B, p) == -1)
+                leftSet.add(p);
+            else if (pointLocation(A, B, p) == 1)
+                rightSet.add(p);
         }
+        hullSet(A, B, rightSet, convexHull);
+        hullSet(B, A, leftSet, convexHull);
+        return convexHull;
+    }
+
+    public double distance(LatLng A, LatLng B, LatLng C)
+    {
+        double ABx = B.getLongitude() - A.getLongitude();
+        double ABy = B.getLatitude() - A.getLatitude();
+        double num = ABx * (A.getLatitude() - C.getLatitude()) - ABy * (A.getLongitude() - C.getLongitude());
+        if (num < 0)
+            num = -num;
+        return num;
+    }
+
+    public void hullSet(LatLng A, LatLng B, ArrayList<LatLng> set,
+                        ArrayList<LatLng> hull)
+    {
+        int insertPosition = hull.indexOf(B);
+        if (set.size() == 0)
+            return;
+        if (set.size() == 1)
+        {
+            LatLng p = set.get(0);
+            set.remove(p);
+            hull.add(insertPosition, p);
+            return;
+        }
+        double dist = Double.MIN_VALUE;
+        int furthestLatLng = -1;
+        for (int i = 0; i < set.size(); i++)
+        {
+            LatLng p = set.get(i);
+            double distance = distance(A, B, p);
+            if (distance > dist)
+            {
+                dist = distance;
+                furthestLatLng = i;
+            }
+        }
+        LatLng P = set.get(furthestLatLng);
+        set.remove(furthestLatLng);
+        hull.add(insertPosition, P);
+        // Determine who's to the left of AP
+
+        ArrayList<LatLng> leftSetAP = new ArrayList<LatLng>();
+        for (int i = 0; i < set.size(); i++)
+        {
+            LatLng M = set.get(i);
+            if (pointLocation(A, P, M) == 1)
+            {
+                leftSetAP.add(M);
+            }
+        }
+
+        // Determine who's to the left of PB
+
+        ArrayList<LatLng> leftSetPB = new ArrayList<LatLng>();
+        for (int i = 0; i < set.size(); i++)
+        {
+            LatLng M = set.get(i);
+            if (pointLocation(P, B, M) == 1)
+            {
+                leftSetPB.add(M);
+            }
+        }
+        hullSet(A, P, leftSetAP, hull);
+        hullSet(P, B, leftSetPB, hull);
+    }
+
+    public double pointLocation(LatLng A, LatLng B, LatLng P)
+    {
+        double cp1 = (B.getLongitude() - A.getLongitude()) * (P.getLatitude() - A.getLatitude()) - (B.getLatitude() - A.getLatitude()) * (P.getLongitude() - A.getLongitude());
+        if (cp1 > 0)
+            return 1;
+        else if (cp1 == 0)
+            return 0;
         else
-        {
-            neg = true;
-        }
-        if (pos  == true && neg == true)
-        {
-            convex = false;
-            return false;
-        }
-        cw = neg;
-        convex = true;
-        return true;
-    }
-
-    //if all in clockwise order all cross product signs should be negative
-    public boolean isConcaveAngle (LatLng vector1, LatLng vector2)
-    {
-
-        if (cw == true && crossZ(vector1,vector2) > 0)
-        {
-            return true;
-        }
-        if (cw == false && crossZ(vector1,vector2) < 0)
-        {
-            return true;
-        }
-        return false;
-    }
-
-    /* get z component of cross product */
-    public static double crossZ(LatLng u, LatLng v)
-    {
-        return u.getLatitude()*v.getLongitude() - v.getLatitude()*u.getLongitude();
-    }
-
-
-    //Doesnt always remove the wanted point since it always orders them first
-    //Find last point in the list that was added before organizing, shift all elements over then run
-    public void makeConvex()
-    {
-        orderCW();
-        while(isConvex(vectors) == false)
-        {
-
-            for (int i = 0; i < vectors.size()-1; i++)
-            {
-                if (i == vectors.size()-2)
-                {
-                    if(isConcaveAngle(vectors.get(vectors.size()-1),vectors.get(0)) == true)
-                    {
-                        System.out.println("Removing vector between" + vectors.get(0) + " " + vectors.get(7));
-                        vertices.remove(0);
-                        vectors = generateVectors(vertices);
-                        break;
-                    }
-                }
-
-                if(isConcaveAngle(vectors.get(i),vectors.get(i+1)) == true)
-                {
-                    System.out.println("Removing point between" + vertices.get(i+1));
-                    vertices.remove(i+1); //remove vertex
-                    vectors = generateVectors(vertices); //recreate
-                    //new vectors
-                    break;
-                }
-
-            }
-        }
-        convex = isConvex(vectors);
-
+            return -1;
     }
 
 
 
-    public void printVertices()
-    {
-        for (LatLng i : vertices)
-        {
-            System.out.println(i.getLatitude() + " " + i.getLongitude());
-        }
-    }
-    public LatLng computeCentroid()
+    public LatLng computeCentroid(ArrayList<LatLng> vertices)
     {
         double tempLat = 0;
         double tempLon = 0;
@@ -174,85 +153,76 @@ public class PolyArea
         return new LatLng(tempLat/vertices.size(),tempLon/vertices.size());
     }
 
-    public boolean less(LatLng point1, LatLng point2)
-    {
-        centroid = computeCentroid();
-        double det = (point1.getLatitude() - centroid.getLatitude()) * (point2.getLongitude() - centroid.getLongitude()) - (point2.getLatitude() - centroid.getLatitude()) * (point1.getLongitude() - centroid.getLongitude());
-        if (det < 0)
-            return true;
-        else
-            return false;
-    }
-    public void orderCW()
-    {
-        Map<Double,Integer> map = new TreeMap<Double,Integer>();
-        for (int j = 0; j < vertices.size(); j++)
-        {
-            LatLng i = vertices.get(j);
-            Double polar = Math.atan2(i.getLatitude()-centroid.getLatitude(),i.getLongitude()-centroid.getLongitude());
-            map.put(polar,j);
-        }
 
-        List<LatLng> ordered = new ArrayList<LatLng>(vertices.size());
-        for (Double key : map.keySet())
-        {
-            ordered.add(vertices.get(map.get(key)));
-        }
-        vertices = new ArrayList(ordered);
-        vectors = generateVectors(vertices);
-    }
-    public void printPolar()
+    public ArrayList<ArrayList<LatLng>> createSmallerPolygons(ArrayList<LatLng> vertices)
     {
-        centroid = computeCentroid();
-        for (LatLng i : vertices)
-        {
-            System.out.println(Math.atan2(i.getLatitude()-centroid.getLatitude(),i.getLongitude()-centroid.getLongitude()));
-        }
-    }
-    public List<LatLng> getVertices()
-    {
-        return vertices;
-    }
-    public List<LatLng> getVectors()
-    {
-        return vectors;
-    }
-    public LatLng getCentroid()
-    {
-        return centroid;
-    }
-
-    /* Returns a list of paths that reduce in size by 10% each iteration */
-    /* example on how to use
-
-
-        Polygon poly = new Polygon(points);
-		poly.orderCW();
-		poly.makeConvex();
-		for (ArrayList<LatLng> i : poly.createSmallerPolygons())
-		{
-			System.out.println(i);
-		}
-
-     */
-    public ArrayList<ArrayList<LatLng>> createSmallerPolygons()
-    {
-        centroid = computeCentroid();
-        List<LatLng> pointToCenter = new ArrayList<LatLng>();
+        centroid = computeCentroid(vertices);
+        ArrayList<LatLng> pointToCenter = new ArrayList<LatLng>();
         for (LatLng i : vertices)
         {
             pointToCenter.add(new LatLng(i.getLatitude()-centroid.getLatitude(),i.getLongitude()-centroid.getLongitude()));
         }
         ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
-        for (double i = .1; i <= 1; i+=.1)
+        for (double i = 1; i >= 0; i-=.1)
         {
             ArrayList<LatLng> points = new ArrayList<LatLng>();
             for (LatLng p : pointToCenter)
             {
                 points.add(new LatLng(p.getLatitude()*i,p.getLongitude()*i));
             }
+            spirals.add(points);
         }
         return spirals;
     }
-}
 
+
+    public static void main(String args[])
+    {
+        System.out.println("Quick Hull Test");
+        //Scanner sc = new Scanner(System.in);
+        //      System.out.println("Enter the number of points");
+        //double N = sc.nextInt();
+
+        ArrayList<LatLng> points = new ArrayList<LatLng>();
+//        System.out.println("Enter the coordinates of each points: <x> <y>");
+        // for (int i = 0; i < N; i++)
+        // {
+        //     double x = sc.nextInt();
+        //     double y = sc.nextInt();
+        //     LatLng e = new LatLng(x, y);
+        //     points.add(i, e);
+        // }
+        LatLng point1 = new LatLng(-2,-2);
+        LatLng point3 = new LatLng(-1,0);
+        LatLng point2 = new LatLng(-2,2);
+        LatLng point5 = new LatLng(0,1);
+        LatLng point4 = new LatLng(2,2);
+        LatLng point6 = new LatLng(1,0);
+        LatLng point7 = new LatLng(2,-2);
+        LatLng point8 = new LatLng(0,-1);
+
+        points.add(point1);
+        points.add(point2);
+        points.add(point3);
+        points.add(point4);
+        points.add(point5);
+        points.add(point6);
+        points.add(point7);
+        points.add(point8);
+
+
+        PolyArea qh = new PolyArea();
+        ArrayList<LatLng> p = qh.quickHull(points);
+        System.out.println("The points in the Convex hull using Quick Hull are: ");
+
+        //ArrayList<LatLng> spirals = qh.createSmallerPolygons();
+        //for (ArrayList<LatLng> i : spirals)
+        {
+//            for (LatLng t : i)
+            {
+//                System.out.println(t + " " );
+            }
+            System.out.println("");
+        }
+    }
+}

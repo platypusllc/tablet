@@ -304,10 +304,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
 
-    List<LatLng>touchpointList = new ArrayList<LatLng>();
-    List<LatLng> waypointList = new ArrayList<LatLng>();
-    List<Marker> markerList = new ArrayList(); //List of all the
-    List<Marker> boundryList = new ArrayList();
+    ArrayList<LatLng>touchpointList = new ArrayList<LatLng>();
+    ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
+    ArrayList<Marker> markerList = new ArrayList(); //List of all the
+    ArrayList<Marker> boundryList = new ArrayList();
     private Polyline Waypath;
     private Polygon Boundry;
 
@@ -450,9 +450,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             public void onClick(View view) {
                 if (touchpointList.size() > 0)
                 {
-                    PolyArea area = new PolyArea(touchpointList);
-                    area.makeConvex();
-                    touchpointList = area.getVertices();
+//                    PolyArea area = new PolyArea(touchpointList);
+//                    area.makeConvex();
+//                    touchpointList = area.getVertices();
                 }
             }
         });
@@ -1137,10 +1137,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         }
                         boundryList.clear();
                         touchpointList.add(wpLoc);
-                        PolyArea area = new PolyArea(touchpointList);
-                        area.makeConvex(); //makes convex polygon
-                        touchpointList = area.getVertices(); //touchedpoints should be just vertices in polygon
-
+                        PolyArea area = new PolyArea();
+                        touchpointList = area.quickHull(touchpointList);
                         for (LatLng i : touchpointList)
                         {
                             boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
@@ -2589,10 +2587,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         setPID.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
+                //currentBoat.returnServer().set
                 piddialog.dismiss();
             }
         });
         piddialog.show();
+    }
+
+    public void SpiralFill(ArrayList<ArrayList<LatLng>> spiralList)
+    {
+        for (ArrayList i : spiralList)
+        {
+            for (Object t : i) //wat is this right? 
+            {
+                waypointList.add((LatLng)t);
+            }
+        }
     }
 
     public boolean isConvex(){
@@ -2619,6 +2629,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         return true;
     }
+
 
 }
 //
