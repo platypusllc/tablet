@@ -45,6 +45,7 @@ import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.geometry.ProjectedMeters;
 import com.mapbox.mapboxsdk.views.MapView;
 import com.mapbox.mapboxsdk.utils.ApiAccess;
 
@@ -478,7 +479,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                     _pose.origin.zone, 'T', _pose.pose.getX(),
                                     _pose.pose.getY(), SI.METER),
                             ReferenceEllipsoid.WGS84);
-
+                  // Log.i(logTag, "Pose listener called");
                     //Log.i(logTag, "rot:" + rot);
                 }
             }
@@ -496,6 +497,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 sensorV = sensorV.substring(1, sensorV.length()-1);
                 sensorReady = true;
                 //Log.i("Platypus","Get sensor Data");
+                //Log.i(logTag, "Sensor listener called");
             }
         };
         //*******************************************************************************
@@ -505,6 +507,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             @Override
             public void waypointUpdate(WaypointState waypointState) {
                 boatwaypoint = waypointState.toString();
+              //  Log.i(logTag, "Waypoint listener called");
             }
         };
 
@@ -540,7 +543,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //  Initialize the Boat
         // ****************************************************************************
         currentBoat = new Boat(pl, sl);
-        currentBoat.returnServer().addWaypointListener(wl,null);
+        currentBoat.returnServer().addWaypointListener(wl, new FunctionObserver<Void>() {
+            @Override
+            public void completed(Void aVoid) {
+
+            }
+
+            @Override
+            public void failed(FunctionError functionError) {
+
+            }
+        });
 
 
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -1194,8 +1207,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     try{
                         touchpointList.remove(touchpointList.size()-1);
                         Boundry.remove();
-                        boundryList.get(boundryList.size()-1).remove();
-                        boundryList.remove(boundryList.size()-1);
+                        boundryList.get(boundryList.size()-1).remove(); // remove the Marker
+                        boundryList.remove(boundryList.size()-1);// remove the last element in the Marker list.
                         if(touchpointList.size()>2) {
                             PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
                             poly.alpha((float) .6);
@@ -1313,6 +1326,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         String tester = "done";
         boolean connected = false;
         boolean firstTime = true;
+        boolean isconvex = true;
         Context context;
         IconFactory mIconFactory = IconFactory.getInstance(context);
 
@@ -1370,17 +1384,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                                 if (distanceSq <= 25) {
                                     //UtmPose[] queuedWaypoints = new UtmPose[tempPose.length - 1];
-                                    tempPose = Arrays.copyOfRange(tempPose, 1, tempPose.length);
+
                                     if (N_waypoint < waypointList.size()) {
                                         N_waypoint += 1;
+                                        tempPose = Arrays.copyOfRange(tempPose, 1, tempPose.length);
                                     }
 
                                 }
                             }
                             catch(Exception e){
-                                Log.i(logTag,"PlanarDistanceSq Error");
+                               // Log.i(logTag, "PlanarDistanceSq Error");
                             }
                         }
+
+                        isconvex = isConvex();
 
                         // Log.i(logTag, "doInbackground "+ oldTime);
                         publishProgress();
@@ -1512,6 +1529,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             else{
                 Mapping_S = false;
             }
+
+
         }
     }
 
@@ -2574,6 +2593,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         });
         piddialog.show();
     }
+
     public void SpiralFill(ArrayList<ArrayList<LatLng>> spiralList)
     {
         for (ArrayList i : spiralList)
@@ -2584,6 +2604,33 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         }
     }
+
+    public boolean isConvex(){
+        if(waypointList.size()<4){
+            return true;
+        }
+        boolean sign = false;
+        int n = waypointList.size();
+        for(int i = 0; i < n; i++){
+            double dx1 = waypointList.get((i+1)%n).getLatitude() - waypointList.get((i)%n).getLatitude();
+            double dy1 = waypointList.get((i+1)%n).getLongitude()- waypointList.get((i)%n).getLongitude();
+            double dx2 = waypointList.get((i+2)%n).getLatitude() - waypointList.get((i+1)%n).getLatitude();
+            double dy2 = waypointList.get((i+2)%n).getLongitude() - waypointList.get((i+1)%n).getLongitude();
+
+            double crossproduct = dx1 * dy2 - dx2 * dy1;
+            if(i == 0){
+                sign = crossproduct > 0;
+            }
+            else{
+                if(sign != (crossproduct > 0)){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+
 }
 //
 //class
