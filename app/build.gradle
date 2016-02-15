@@ -25,7 +25,7 @@ android {
                     def date = new Date();
                     //def formattedDate = date.format('yyyyMMddHHmmss')
                     output.outputFile = new File(output.outputFile.parent,
-                            output.outputFile.name.replace("-release", "-Tablet")
+                            output.outputFile.name.replace("app-release", "platypus-Tablet")
                             //for Debug use output.outputFile = new File(output.outputFile.parent,
                             //                             output.outputFile.name.replace("-debug", "-" + formattedDate)
                     )
