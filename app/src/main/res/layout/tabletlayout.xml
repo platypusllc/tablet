@@ -394,15 +394,6 @@
         android:layout_toEndOf="@+id/autonomousBox"
         android:layout_toRightOf="@+id/autonomousBox" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="makeconvex"
-        android:id="@+id/makeconvex"
-        android:layout_alignBottom="@+id/drawPolygon"
-        android:layout_toRightOf="@+id/drawPolygon"
-        android:layout_toEndOf="@+id/drawPolygon" />
-
 
     <!--     <Button
         android:id="@+id/mapButton"
