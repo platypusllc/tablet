@@ -18,8 +18,10 @@ public class PolyArea
 {
     private LatLng centroid;
     ArrayList<LatLng> vertices;
+    ArrayList<LatLng> originalVerts;
     public ArrayList<LatLng> quickHull(ArrayList<LatLng> points)
     {
+        originalVerts = new ArrayList<LatLng>(points);
         ArrayList<LatLng> convexHull = new ArrayList<LatLng>();
         if (points.size() < 3) {
             return points;
@@ -30,8 +32,6 @@ public class PolyArea
         double maxX = Double.MIN_VALUE;
         for (int i = 0; i < points.size(); i++)
         {
-            System.out.println(minLatLng);
-            System.out.println(maxLatLng);
             if (points.get(i).getLatitude() < minX)
             {
                 minX = points.get(i).getLatitude();
@@ -50,6 +50,8 @@ public class PolyArea
         convexHull.add(B);
         points.remove(A);
         points.remove(B);
+        originalVerts.remove(A);
+        originalVerts.remove(B);
 
         ArrayList<LatLng> leftSet = new ArrayList<LatLng>();
         ArrayList<LatLng> rightSet = new ArrayList<LatLng>();
@@ -65,6 +67,7 @@ public class PolyArea
         hullSet(A, B, rightSet, convexHull);
         hullSet(B, A, leftSet, convexHull);
         vertices = new ArrayList<LatLng>(convexHull);
+
         return convexHull;
     }
 

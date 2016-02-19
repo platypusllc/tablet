@@ -308,7 +308,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
     ArrayList<Marker> markerList = new ArrayList(); //List of all the
     ArrayList<Marker> boundryList = new ArrayList();
-
+    ArrayList<LatLng> lastAdded = new ArrayList<LatLng>();
     ArrayList<Polygon> spiralList = new ArrayList<Polygon>();
     private Polyline Waypath;
     private Polygon Boundry;
@@ -1120,15 +1120,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         touchpointList.add(wpLoc);
                         PolyArea area = new PolyArea();
                         touchpointList = area.quickHull(touchpointList);
-                        spirals = area.createSmallerPolygons(touchpointList);
 
-                        drawSmallerPolys(spirals);
+                        if (touchpointList.contains(wpLoc))
+                        {
+                            lastAdded.add(wpLoc);
+                        }
+
+                        if (lastAdded.size() != touchpointList.size())
+                        {
+                            ArrayList<LatLng> tempLastAdded = new ArrayList<LatLng>(lastAdded);
+                            tempLastAdded.remove(touchpointList); //remove all similar items to find
+                            //item that should be ommited
+                            lastAdded.remove(tempLastAdded.get(0));
+                        }
+
+                        spirals = area.createSmallerPolygons(touchpointList);
+                            drawSmallerPolys(spirals);
 
                         for (LatLng i : touchpointList)
                         {
                             boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
                         }
 
+
+                        //System.out.println(lastAdded.size() + " " + touchpointList.size());
+                        //System.out.println(lastAdded);
+                        //System.out.println(touchpointList);
                         PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy")); //draw polygon
                         //border gets aa'd better than the fill causing gaps between border and fill...
                         poly.alpha((float).6); //set interior opacity
@@ -1185,28 +1202,39 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             removeMap.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    try{
+                    try
+                    {
+                        System.out.println(touchpointList.size() + " "+ lastAdded.size());
+                        touchpointList.remove(touchpointList.indexOf(lastAdded.get(lastAdded.size() - 1)));
+                        lastAdded.remove(lastAdded.size() - 1);
 
-                        touchpointList.remove(touchpointList.size()-1);
                         Boundry.remove();
-                        boundryList.get(boundryList.size()-1).remove(); // remove the Marker
-                        boundryList.remove(boundryList.size()-1);// remove the last element in the Marker list.
-
-                        for (Polygon a : spiralList)
-                        {
-                            a.remove();
+                        for (Marker a : boundryList) {
+                            a.remove(); //remove all markers in boundry list from map
                         }
-                        PolyArea area = new PolyArea();
-                        touchpointList = area.quickHull(touchpointList);
-                        drawSmallerPolys(area.createSmallerPolygons(touchpointList));
-                        if(touchpointList.size()>2) {
+                        boundryList.clear();
+                        for (LatLng i : touchpointList) {
+                            boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
+                        }
+
+                        if (touchpointList.size() > 2) {
                             PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
                             poly.alpha((float) .6);
                             Boundry = mv.addPolygon(poly);
                         }
+                        PolyArea area = new PolyArea();
 
-                    }catch (Exception e){
+                        System.out.println(touchpointList.size());
 
+                        /* If tpl size =< 0 mapbox segfaults (submitted bug report) */
+                        if (touchpointList.size()>0) {
+                            ArrayList<ArrayList<LatLng>> spirals = area.createSmallerPolygons(touchpointList);
+                            drawSmallerPolys(spirals);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        System.out.println(e.toString());
                     }
                 }
             });
@@ -2016,7 +2044,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             public void run() {
                 Email mail = new Email("platypuslocation@gmail.com", "airboats");
                 try {
-                    //   mail.sendMail("jeffboat", wpstirng, "shantanu@gmail.com", "platypuslocation@gmail.com");
+                    //   mail.sendMail("nameboat", wpstirng, "shantanu@gmail.com", "platypuslocation@gmail.com");
                 }
                 catch(Exception e)
                 {
@@ -2576,16 +2604,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         piddialog.show();
     }
 
-    public void SpiralFill(ArrayList<ArrayList<LatLng>> spiralList)
-    {
-        for (ArrayList i : spiralList)
-        {
-            for (Object t : i) //wat is this right? 
-            {
-                waypointList.add((LatLng)t);
-            }
-        }
-    }
     public void GetTabletHeading()
     {
         float[] r;
@@ -2596,8 +2614,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         for (Polygon t : spiralList) {
             t.remove();
         }
+        spiralList.clear();
         for (ArrayList<LatLng> a : spirals) {
+            System.out.println(a);
             spiralList.add(mv.addPolygon(new PolygonOptions().addAll(a).strokeColor(Color.BLUE).fillColor(Color.TRANSPARENT))); //draw polygon
+
 //                            for (LatLng i : a)
 //                            {
 //                                System.out.print(i.toString() + " ");
