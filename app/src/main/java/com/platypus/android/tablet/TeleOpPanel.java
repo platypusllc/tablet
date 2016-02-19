@@ -16,9 +16,11 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
@@ -33,6 +35,9 @@ import javax.measure.unit.SI;
 import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.mapbox.mapboxsdk.annotations.Polygon;
 import com.mapbox.mapboxsdk.annotations.PolygonOptions;
@@ -53,6 +58,7 @@ import com.mapbox.mapboxsdk.utils.ApiAccess;
 import android.app.AlertDialog;
 import android.app.Notification;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -313,6 +319,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     private Polyline Waypath;
     private Polygon Boundry;
 
+    public static final String PREF_NAME = "DataFile";
+    private TabletLogger mlogger;
+
 
     List<Float>touchList = new ArrayList<Float>();
     //markers on the map
@@ -351,6 +360,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         // loadWPFile = (Button)this.findViewById(R.id.loadFileButton);
         autoBox = (CheckBox) this.findViewById(R.id.autonomousBox);
         startWaypoints = (Button) this.findViewById(R.id.waypointStartButton);
+        makeConvex = (Button) this.findViewById(R.id.makeconvex);
 
         saveWaypoints = (Button) this.findViewById(R.id.savewpbutton);
         loadWaypoints = (Button) this.findViewById(R.id.loadwpbutton);
@@ -381,6 +391,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         advancedOptions = (Button) this.findViewById(R.id.advopt);
 
         drawPoly.setBackgroundResource(R.drawable.draw_icon);
+
+        if(mlogger != null){
+            mlogger.close();
+        }
+        mlogger = new TabletLogger();
+
 
         //**********************************************************************
         //  faked sensor data
@@ -446,6 +462,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         });
 
 
+        makeConvex.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+               SharedPreferences settings = getSharedPreferences(PREF_NAME,0);
+                settings.edit().clear().commit();
+            }
+        });
 
         joystick.setYAxisInverted(false);
 
@@ -639,6 +662,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     public void run(){
                         if (currentBoat.isConnected() == true) {
                             checktest = true;
+                            JSONObject JPose = new JSONObject();
                             if (waypointList.size() > 0) {
                                 UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
 
@@ -651,8 +675,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                     //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
                                     for (int i = 0; i < waypointList.size(); i++) {
                                         wpPose[i] = convertLatLngUtm(waypointList.get(i));
+
+
                                     }
                                     tempPose = wpPose;
+
+
                                 }
 
                                 checkAndSleepForCmd();
@@ -692,6 +720,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                         Toast.makeText(getApplicationContext(), "Please Select Waypoints", Toast.LENGTH_LONG).show();
                                     }
                                 });
+                            }
+                            try{
+                                Date d = new Date();
+                                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+                                mlogger.info(new JSONObject()
+                                        .put("Time", sdf.format(d))
+                                        .put("startWP", new JSONObject()
+                                        .put("WP_num", wpPose.length)
+                                        .put("AddWaypoint", Auto)));
+                            }catch (JSONException e){
+                                Log.w(logTag, "Failed to log startwaypoint");
                             }
                         }
 
@@ -1150,7 +1189,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         //border gets aa'd better than the fill causing gaps between border and fill...
                         poly.alpha((float).6); //set interior opacity
                         Boundry = mv.addPolygon(poly);
-
                     }
                 }
             });
@@ -1204,7 +1242,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 public void onClick(View v) {
                     try
                     {
-                        System.out.println(touchpointList.size() + " "+ lastAdded.size());
                         touchpointList.remove(touchpointList.indexOf(lastAdded.get(lastAdded.size() - 1)));
                         lastAdded.remove(lastAdded.size() - 1);
 
@@ -1224,7 +1261,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         }
                         PolyArea area = new PolyArea();
 
-                        System.out.println(touchpointList.size());
+
 
                         /* If tpl size =< 0 mapbox segfaults (submitted bug report) */
                         if (touchpointList.size()>0) {
@@ -1234,7 +1271,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
                     catch (Exception e)
                     {
-                        System.out.println(e.toString());
+                        //System.out.println(e.toString());
                     }
                 }
             });
@@ -1471,12 +1508,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 sensorvalueButton.setClickable(sensorReady);
                 sensorvalueButton.setTextColor(Color.BLACK);
                 sensorvalueButton.setText("Show SensorData");
+                SharedPreferences settings = getSharedPreferences(PREF_NAME,0);
+                SharedPreferences.Editor editor = settings.edit();
 
 
 
                 if(Data.channel == 4){
                     String[] batteries = sensorV.split(",");
                     battery.setText(batteries[0]);
+                    battery.setTextColor(isAverage(Data, batteries[0]));
+                    double value = (Double.parseDouble(batteries[0]) + getAverage(Data))/2;
+
+                    editor.putString(Data.type.toString(), Double.toString(value));
+                    editor.commit();
 
                 }
 
@@ -1490,7 +1534,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             break;
                         case 1:
                             sensorData1.setText(sensorV);
-                            sensorType1.setText(Data.type+"\n"+unit(Data.type));
+                            sensorType1.setText(Data.type + "\n" + unit(Data.type));
+                            sensorData1.setTextColor(isAverage(Data, sensorV));
+                            double value = (Double.parseDouble(sensorV) + getAverage(Data))/2;
+
+                            editor.putString(Data.type.toString(), Double.toString(value));
+                            editor.commit();
 
                             break;
                         case 2:
@@ -2616,7 +2665,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         spiralList.clear();
         for (ArrayList<LatLng> a : spirals) {
-            System.out.println(a);
             spiralList.add(mv.addPolygon(new PolygonOptions().addAll(a).strokeColor(Color.BLUE).fillColor(Color.TRANSPARENT))); //draw polygon
 
 //                            for (LatLng i : a)
@@ -2625,6 +2673,30 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //                            }
         }
     }
+
+    public int isAverage(SensorData data, String value){
+        double v = Double.parseDouble(value);
+        double average = getAverage(data);
+        if(average > v){
+            return Color.RED;
+        }
+        else if(average < v){
+            return Color.GREEN;
+        }
+        else{
+            return Color.GRAY;
+        }
+    }
+
+    public double getAverage(SensorData data){
+        double average;
+        SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
+        String v = settings.getString(data.type.toString(),"0");
+        average = Double.parseDouble(v);
+        return average;
+    }
+
+
 }
 //
 //class

@@ -14,7 +14,7 @@
         android:gravity="center_horizontal|center_vertical"
         android:text="TeleOp Panel"
         android:textSize="25dp"
-    android:layout_alignParentTop="true" />
+        android:layout_alignParentTop="true" />
 
 
 
@@ -393,6 +393,15 @@
         android:layout_above="@+id/printIpAddress"
         android:layout_toEndOf="@+id/autonomousBox"
         android:layout_toRightOf="@+id/autonomousBox" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="clear"
+        android:id="@+id/makeconvex"
+        android:layout_alignBottom="@+id/drawPolygon"
+        android:layout_toRightOf="@+id/drawPolygon"
+        android:layout_toEndOf="@+id/drawPolygon" />
 
 
     <!--     <Button
