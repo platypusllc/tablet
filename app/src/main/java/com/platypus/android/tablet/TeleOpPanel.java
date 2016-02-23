@@ -344,7 +344,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     protected void onCreate(final Bundle savedInstanceState)   {
         super.onCreate(savedInstanceState);
 
-        //this.setContentView(R.layout.tabletlayout_lg8);  // layout for LG GpadF 8
+       // this.setContentView(R.layout.tabletlayout_nexus7);  // layout for LG GpadF 8
         //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
 
@@ -382,8 +382,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //loadMap = (Button) this.findViewById(R.id.loadMap);
         removeMap = (Button) this.findViewById(R.id.removeMap);
       //  refreshMap = (Button) this.findViewById(R.id.refreshMap);
-        progressBar = (ProgressBar) this.findViewById(R.id.progressBar);
-        progressBar.setVisibility(View.GONE);
+//        progressBar = (ProgressBar) this.findViewById(R.id.progressBar);
+//        progressBar.setVisibility(View.GONE);
         joystick = (JoystickView) findViewById(R.id.joystickView);
 
        // setHome = (ToggleButton) this.findViewById(R.id.sethome);
@@ -735,7 +735,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                                 .put("AddWaypoint", Auto)));
                             }catch (JSONException e){
                                 Log.w(logTag, "Failed to log startwaypoint");
+                            }catch(Exception e){
+
                             }
+
                         }
 
 
@@ -1196,7 +1199,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         if (lastAdded.size() != touchpointList.size())
                         {
                             ArrayList<LatLng> tempLastAdded = new ArrayList<LatLng>(lastAdded);
-                            tempLastAdded.remove(touchpointList); //remove all similar items to find
+                            tempLastAdded.removeAll(touchpointList);
                             //item that should be ommited
                             lastAdded.remove(tempLastAdded.get(0));
                         }
