@@ -315,12 +315,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
     ArrayList<Marker> markerList = new ArrayList(); //List of all the
     ArrayList<Marker> boundryList = new ArrayList();
+    ArrayList<LatLng> lastAdded = new ArrayList<LatLng>();
+    ArrayList<Polygon> spiralList = new ArrayList<Polygon>();
     private Polyline Waypath;
     private Polygon Boundry;
 
     public static final String PREF_NAME = "DataFile";
     private TabletLogger mlogger;
-
 
 
     List<Float>touchList = new ArrayList<Float>();
@@ -464,6 +465,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         });
 
+
         makeConvex.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -471,6 +473,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 settings.edit().clear().commit();
             }
         });
+
         joystick.setYAxisInverted(false);
 
         //*****************************************************************************
@@ -577,6 +580,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         senSensorManager.registerListener(this, senAccelerometer,
                 SensorManager.SENSOR_DELAY_NORMAL);
 
+
         mv = (MapView) findViewById(R.id.mapview);
 
         mv.setMyLocationEnabled(true);
@@ -588,17 +592,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         Ihome = mIconFactory.fromDrawable(mhome);
 
 
-
         mv.setZoom(16);
         mv.onCreate(savedInstanceState);
-
-
-
-
-
-
-
-
 
 
         connectButton.setOnClickListener(new OnClickListener() {
@@ -671,8 +666,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 Thread thread = new Thread(){
                     public void run(){
                         if (currentBoat.isConnected() == true) {
-                            System.out.println("called");
-                            // System.out.println("waypointList > 0");
                             checktest = true;
                             JSONObject JPose = new JSONObject();
                             if (waypointList.size() > 0) {
@@ -699,13 +692,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 currentBoat.returnServer().startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>() {
                                     @Override
                                     public void completed(Void aVoid) {
-                                        System.out.println("completed");
+                                        System.out.println("startwaypoints - completed");
                                     }
 
                                     @Override
                                     public void failed(FunctionError functionError) {
                                         isCurrentWaypointDone = false;
-                                        System.out.println("asdf");
+                                        System.out.println("startwaypoints - failed");
                                         // = waypointStatus + "\n" + functionError.toString();
                                         // System.out.println(waypointStatus);
                                     }
@@ -721,7 +714,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                                     @Override
                                     public void failed(FunctionError functionError) {
-                                        System.out.println("shit");
+
                                     }
                                 });
                             }
@@ -1167,6 +1160,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
             };
             //thread.start();
+
             mv.setOnMapLongClickListener(new MapView.OnMapLongClickListener() {
                 @Override
                 public void onMapLongClick(LatLng point){
@@ -1180,7 +1174,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         markerList.add(mv.addMarker(new MarkerOptions().position(wpLoc).title(Integer.toString(WPnum))));
                         Waypath = mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
                     }
-
+                    ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
                     if(startDraw == true) {
                         LatLng wpLoc = point;
                         if (Boundry != null) {
@@ -1190,30 +1184,42 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         {
                             t.remove();
                         }
-                        boundryList.clear();
                         touchpointList.add(wpLoc);
                         PolyArea area = new PolyArea();
                         touchpointList = area.quickHull(touchpointList);
+
+                        if (touchpointList.contains(wpLoc))
+                        {
+                            lastAdded.add(wpLoc);
+                        }
+
+                        if (lastAdded.size() != touchpointList.size())
+                        {
+                            ArrayList<LatLng> tempLastAdded = new ArrayList<LatLng>(lastAdded);
+                            tempLastAdded.remove(touchpointList); //remove all similar items to find
+                            //item that should be ommited
+                            lastAdded.remove(tempLastAdded.get(0));
+                        }
+
+                        spirals = area.createSmallerPolygons(touchpointList);
+                            drawSmallerPolys(spirals);
+
                         for (LatLng i : touchpointList)
                         {
                             boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
                         }
+
+
+                        //System.out.println(lastAdded.size() + " " + touchpointList.size());
+                        //System.out.println(lastAdded);
+                        //System.out.println(touchpointList);
                         PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy")); //draw polygon
+                        //border gets aa'd better than the fill causing gaps between border and fill...
                         poly.alpha((float).6); //set interior opacity
                         Boundry = mv.addPolygon(poly);
-
-
-
-
-
-                        //Boundry.add(mv.addPolygon(new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"))));
-
                     }
                 }
-
             });
-//
-
 
             /*
              * If they press delete wayponts delete all markers off the map and delete waypoints
@@ -1262,26 +1268,44 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     } catch (Exception e) {
                         //boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", new LatLng(pHollowStartingPoint.getLatitude(), pHollowStartingPoint.getLongitude()));
                     }
-                    System.out.println("called delete");
                 }
             });
 
             removeMap.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    try{
-                        touchpointList.remove(touchpointList.size()-1);
+                    try
+                    {
+                        touchpointList.remove(touchpointList.indexOf(lastAdded.get(lastAdded.size() - 1)));
+                        lastAdded.remove(lastAdded.size() - 1);
+
                         Boundry.remove();
-                        boundryList.get(boundryList.size()-1).remove(); // remove the Marker
-                        boundryList.remove(boundryList.size()-1);// remove the last element in the Marker list.
-                        if(touchpointList.size()>2) {
+                        for (Marker a : boundryList) {
+                            a.remove(); //remove all markers in boundry list from map
+                        }
+                        boundryList.clear();
+                        for (LatLng i : touchpointList) {
+                            boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
+                        }
+
+                        if (touchpointList.size() > 2) {
                             PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
                             poly.alpha((float) .6);
                             Boundry = mv.addPolygon(poly);
                         }
+                        PolyArea area = new PolyArea();
 
-                    }catch (Exception e){
 
+
+                        /* If tpl size =< 0 mapbox segfaults (submitted bug report) */
+                        if (touchpointList.size()>0) {
+                            ArrayList<ArrayList<LatLng>> spirals = area.createSmallerPolygons(touchpointList);
+                            drawSmallerPolys(spirals);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        //System.out.println(e.toString());
                     }
                 }
             });
@@ -1462,7 +1486,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             }
                         }
 
-                        isconvex = isConvex();
+                        //isconvex = isConvex();
 
                         // Log.i(logTag, "doInbackground "+ oldTime);
                         publishProgress();
@@ -1859,7 +1883,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 actual = actualBoat.isChecked();
 
                 textIpAddress = ipAddress.getText().toString();
-                System.out.println("asdfasdfasdf");
                 System.out.println("IP Address entered is: " + textIpAddress);
                 if (direct.isChecked()) {
                     if (ipAddress.getText() == null || ipAddress.getText().equals("")) {
@@ -2104,12 +2127,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             public void run() {
                 Email mail = new Email("platypuslocation@gmail.com", "airboats");
                 try {
-                    //   mail.sendMail("jeffboat", wpstirng, "shantanu@gmail.com", "platypuslocation@gmail.com");
+                    //   mail.sendMail("nameboat", wpstirng, "shantanu@gmail.com", "platypuslocation@gmail.com");
                 }
                 catch(Exception e)
                 {
                     System.out.println(e.toString());
-                    //System.out.println("fucked up");
                 }
 
             }
@@ -2268,14 +2290,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 //get save name
                 if (stringScanner.hasNext()) {
                     if (stringScanner.next().equals("\"")) { //found first "
-                        System.out.println("found first");
                         String currentdata = stringScanner.next();
-                        System.out.println("cur"+currentdata);
                         String name = currentdata;
                         while(!currentdata.equals("\"")) {
                             currentdata = stringScanner.next();
                             if (!currentdata.equals("\"")) {
-                                System.out.println("cur data" + currentdata);
                                 name = name + " " + currentdata;
                             }
                         }
@@ -2363,14 +2382,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 while((currentLine = reader.readLine()) != null)
                                 {
                                     int index = currentLine.indexOf(' ');
-                                    System.out.println(index);
                                     String tempasdf = currentLine;
 
                                     String trimmedLine = currentLine.trim();
                                     if(trimmedLine.contains(lineToRemove))
                                     {
-                                        System.out.println(lineToRemove);
-                                        System.out.println("found");
                                         continue;
                                     }
                                     writer.write(currentLine + System.getProperty("line.separator"));
@@ -2415,9 +2431,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     waypointList.clear();
                     markerList.clear();
                     //System.out.println(currentselected);
-                    for (ArrayList<ILatLng> i : waypointsaves)
+                    //for (ArrayList<ILatLng> i : waypointsaves)
                     {
-                        System.out.println(i.size());
+                        //System.out.println(i.size());
                     }
 
                     int num = 1;
@@ -2712,40 +2728,25 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         piddialog.show();
     }
 
-    public void SpiralFill(ArrayList<ArrayList<LatLng>> spiralList)
+    public void GetTabletHeading()
     {
-        for (ArrayList i : spiralList)
-        {
-            for (Object t : i) //wat is this right? 
-            {
-                waypointList.add((LatLng)t);
-            }
-        }
+        float[] r;
+        float[] values;
+        //SensorManager.getOrientation(r,values);
     }
-
-    public boolean isConvex(){
-        if(waypointList.size()<4){
-            return true;
+    public void drawSmallerPolys(ArrayList<ArrayList<LatLng>> spirals) {
+        for (Polygon t : spiralList) {
+            t.remove();
         }
-        boolean sign = false;
-        int n = waypointList.size();
-        for(int i = 0; i < n; i++){
-            double dx1 = waypointList.get((i+1)%n).getLatitude() - waypointList.get((i)%n).getLatitude();
-            double dy1 = waypointList.get((i+1)%n).getLongitude()- waypointList.get((i)%n).getLongitude();
-            double dx2 = waypointList.get((i+2)%n).getLatitude() - waypointList.get((i+1)%n).getLatitude();
-            double dy2 = waypointList.get((i+2)%n).getLongitude() - waypointList.get((i+1)%n).getLongitude();
+        spiralList.clear();
+        for (ArrayList<LatLng> a : spirals) {
+            spiralList.add(mv.addPolygon(new PolygonOptions().addAll(a).strokeColor(Color.BLUE).fillColor(Color.TRANSPARENT))); //draw polygon
 
-            double crossproduct = dx1 * dy2 - dx2 * dy1;
-            if(i == 0){
-                sign = crossproduct > 0;
-            }
-            else{
-                if(sign != (crossproduct > 0)){
-                    return false;
-                }
-            }
+//                            for (LatLng i : a)
+//                            {
+//                                System.out.print(i.toString() + " ");
+//                            }
         }
-        return true;
     }
 
     public int isAverage(SensorData data, String value){
@@ -2769,7 +2770,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         average = Double.parseDouble(v);
         return average;
     }
-
 
 
 }

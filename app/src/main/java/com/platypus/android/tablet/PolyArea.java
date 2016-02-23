@@ -3,7 +3,12 @@ package com.platypus.android.tablet;
 /**
  * Created by shenty on 2/13/16.
  */
+import android.graphics.Color;
+
+import com.mapbox.mapboxsdk.annotations.Polygon;
+import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.views.MapView;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -12,9 +17,11 @@ import java.util.Scanner;
 public class PolyArea
 {
     private LatLng centroid;
-
+    ArrayList<LatLng> vertices;
+    ArrayList<LatLng> originalVerts;
     public ArrayList<LatLng> quickHull(ArrayList<LatLng> points)
     {
+        originalVerts = new ArrayList<LatLng>(points);
         ArrayList<LatLng> convexHull = new ArrayList<LatLng>();
         if (points.size() < 3) {
             return points;
@@ -25,8 +32,6 @@ public class PolyArea
         double maxX = Double.MIN_VALUE;
         for (int i = 0; i < points.size(); i++)
         {
-            System.out.println(minLatLng);
-            System.out.println(maxLatLng);
             if (points.get(i).getLatitude() < minX)
             {
                 minX = points.get(i).getLatitude();
@@ -45,6 +50,8 @@ public class PolyArea
         convexHull.add(B);
         points.remove(A);
         points.remove(B);
+        originalVerts.remove(A);
+        originalVerts.remove(B);
 
         ArrayList<LatLng> leftSet = new ArrayList<LatLng>();
         ArrayList<LatLng> rightSet = new ArrayList<LatLng>();
@@ -59,6 +66,8 @@ public class PolyArea
         }
         hullSet(A, B, rightSet, convexHull);
         hullSet(B, A, leftSet, convexHull);
+        vertices = new ArrayList<LatLng>(convexHull);
+
         return convexHull;
     }
 
@@ -154,8 +163,8 @@ public class PolyArea
     }
 
 
-    public ArrayList<ArrayList<LatLng>> createSmallerPolygons(ArrayList<LatLng> vertices)
-    {
+    public ArrayList<ArrayList<LatLng>> createSmallerPolygons(ArrayList<LatLng> vertices) {
+
         centroid = computeCentroid(vertices);
         ArrayList<LatLng> pointToCenter = new ArrayList<LatLng>();
         for (LatLng i : vertices)
@@ -168,7 +177,7 @@ public class PolyArea
             ArrayList<LatLng> points = new ArrayList<LatLng>();
             for (LatLng p : pointToCenter)
             {
-                points.add(new LatLng(p.getLatitude()*i,p.getLongitude()*i));
+                points.add(new LatLng(centroid.getLatitude()+p.getLatitude()*i,centroid.getLongitude()+p.getLongitude()*i));
             }
             spirals.add(points);
         }
@@ -225,4 +234,19 @@ public class PolyArea
             System.out.println("");
         }
     }
+    public LatLng getCentroid()
+    {
+        return centroid;
+    }
+    public ArrayList<PolygonOptions> getSmallerPolygons()
+    {
+        ArrayList<ArrayList<LatLng>> smallerpoly = createSmallerPolygons(vertices);
+        ArrayList<PolygonOptions> spiralList = new ArrayList<PolygonOptions>();
+        for (ArrayList<LatLng> a : smallerpoly)
+        {
+            spiralList.add(new PolygonOptions().addAll(a).strokeColor(Color.BLUE).fillColor(Color.TRANSPARENT)); //draw polygon
+        }
+        return spiralList;
+    }
+
 }
