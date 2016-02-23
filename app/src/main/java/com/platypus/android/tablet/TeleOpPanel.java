@@ -304,6 +304,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     private UtmPose _pose;
     private UtmPose[] wpPose = null , tempPose = null;
     private int N_waypoint = 0;
+    private boolean waypointlistener = false;
 
     Icon Ihome;
 
@@ -334,6 +335,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     LatLng home = null;
     Timer timer;
     TimerTask timerTask;
+    Date d = new Date();
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
     private static final String logTag = TeleOpPanel.class.getName();
 
@@ -395,6 +398,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             mlogger.close();
         }
         mlogger = new TabletLogger();
+
 
 
         //**********************************************************************
@@ -554,17 +558,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //  Initialize the Boat
         // ****************************************************************************
         currentBoat = new Boat(pl, sl);
-        currentBoat.returnServer().addWaypointListener(wl, new FunctionObserver<Void>() {
-            @Override
-            public void completed(Void aVoid) {
-
-            }
-
-            @Override
-            public void failed(FunctionError functionError) {
-
-            }
-        });
+//        currentBoat.returnServer().addWaypointListener(wl, new FunctionObserver<Void>() {
+//            @Override
+//            public void completed(Void aVoid) {
+//                waypointlistener = true;
+//            }
+//
+//            @Override
+//            public void failed(FunctionError functionError) {
+//                waypointlistener = false;
+//            }
+//        });
 
 
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -601,6 +605,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             @Override
             public void onClick(View view) {
                 currentBoat = new Boat(pl, sl);
+                currentBoat.returnServer().addWaypointListener(wl,null);
                 connectBox();
             }
         });
@@ -729,13 +734,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 });
                             }
                             try{
-                                Date d = new Date();
-                                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+
                                 mlogger.info(new JSONObject()
                                         .put("Time", sdf.format(d))
                                         .put("startWP", new JSONObject()
-                                        .put("WP_num", wpPose.length)
-                                        .put("AddWaypoint", Auto)));
+                                                .put("WP_num", wpPose.length)
+                                                .put("AddWaypoint", Auto)));
                             }catch (JSONException e){
                                 Log.w(logTag, "Failed to log startwaypoint");
                             }
@@ -766,6 +770,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         } else {
                             Auto = false;
                         }
+                        if(!waypointlistener){
+                            currentBoat.returnServer().addWaypointListener(wl, new FunctionObserver<Void>() {
+                                @Override
+                                public void completed(Void aVoid) {
+                                    waypointlistener = true;
+                                }
+
+                                @Override
+                                public void failed(FunctionError functionError) {
+                                    waypointlistener = false;
+                                }
+                            });
+                        }
+
                         if (Auto) {
                             currentBoat.returnServer().setAutonomous(true, null);
                         } else {
@@ -1097,6 +1115,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             rudderTemp = fromProgressToRange(x, RUDDER_MIN,RUDDER_MAX);
             Log.i(logTag,"Y:" + y + "\tX:" + x);
             Log.i(logTag, "Thrust" + thrustTemp + "\t Rudder" + rudderTemp);
+            try{
+                mlogger.info(new JSONObject()
+                        .put("Time", sdf.format(d))
+                        .put("Joystick", new JSONObject()
+                        .put("Thrust", thrustTemp)
+                        .put("Rudder", rudderTemp)));
+            }catch (JSONException e){
+
+            }
+
 
         }
 
@@ -1202,7 +1230,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
                     try {
-                        for(Marker m: markerList){
+                        for (Marker m : markerList) {
                             mv.removeMarker(m);
 
                         }
@@ -1225,6 +1253,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         N_waypoint = 0;
 
                         //drawWaypointLines(waypointList,false);
+                        mlogger.info(new JSONObject()
+                                .put("Time", sdf.format(d))
+                                .put("Delete", new JSONObject()
+                                        .put("WP_num", waypointList.size())));
+                    }catch (JSONException e){
+
                     } catch (Exception e) {
                         //boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", new LatLng(pHollowStartingPoint.getLatitude(), pHollowStartingPoint.getLongitude()));
                     }
@@ -2496,72 +2530,113 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
     public void setHome()
     {
-        if(home == null){
-                    new AlertDialog.Builder(context)
-                            .setTitle("Set Home")
-                            .setMessage("Which position do you want to use?")
-                            .setPositiveButton("Phone", new DialogInterface.OnClickListener(){
-                                public void onClick(DialogInterface dialog, int which){
-                                    if( latlongloc != null) {
-                                        home = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-                                        MarkerOptions home_MO = new MarkerOptions()
-                                                .position(home)
-                                                .title("Home")
-                                                .icon(Ihome);
-                                        home_M =mv.addMarker(home_MO);
-                                        //Bitmap home_B = BitmapFactory.decodeResource(getResources(), R.drawable.home);
-                                        //Drawable d = new BitmapDrawablegit (getResources(), home_B);
+        final JSONObject Jhome = new JSONObject();
+        final JSONObject JPhone = new JSONObject();
+        final JSONObject JTablet = new JSONObject();
+        if(home == null) {
 
+                new AlertDialog.Builder(context)
+                        .setTitle("Set Home")
+                        .setMessage("Which position do you want to use?")
+                        .setPositiveButton("Phone", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (latlongloc != null) {
+                                    home = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+                                    try {
+                                        JPhone.put("Lat", home.getLatitude());
+                                        JPhone.put("Lng", home.getLongitude());
+                                        Jhome.put("Phone", JPhone);
+                                        mlogger.info(new JSONObject()
+                                                .put("Time", sdf.format(d))
+                                                .put("Home", Jhome));
+                                    }catch(JSONException e){
 
-                                        mv.setLatLng(home);
                                     }
-                                    else{
+                                    MarkerOptions home_MO = new MarkerOptions()
+                                            .position(home)
+                                            .title("Home")
+                                            .icon(Ihome);
+                                    home_M = mv.addMarker(home_MO);
+                                    //Bitmap home_B = BitmapFactory.decodeResource(getResources(), R.drawable.home);
+                                    //Drawable d = new BitmapDrawablegit (getResources(), home_B);
 
-                                        Toast.makeText(getApplicationContext(),"Phone doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
+
+                                    mv.setLatLng(home);
+                                } else {
+
+                                    Toast.makeText(getApplicationContext(), "Phone doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        })
+                        .setNegativeButton("Tablet", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+
+                                LatLng loc = new LatLng(mv.getMyLocation());
+
+                                if (loc != null) {
+                                    home = loc;
+                                    MarkerOptions home_MO = new MarkerOptions()
+                                            .position(home)
+                                            .title("Home")
+                                            .icon(Ihome);
+                                    home_M = mv.addMarker(home_MO);
+                                    mv.setLatLng(home);
+                                    try {
+                                        JTablet.put("Lat", home.getLatitude());
+                                        JTablet.put("Lng", home.getLongitude());
+                                        Jhome.put("Tablet", JTablet);
+                                        mlogger.info(new JSONObject()
+                                                .put("Time", sdf.format(d))
+                                                .put("Home", Jhome));
+                                    }catch(JSONException e){
+
                                     }
+
+                                } else {
+                                    Toast.makeText(getApplicationContext(), "Tablet doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
                                 }
-                            })
-                            .setNegativeButton("Tablet", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-
-                                    LatLng loc = new LatLng(mv.getMyLocation());
-
-                                    if (loc != null) {
-                                        home = loc;
-                                        MarkerOptions home_MO = new MarkerOptions()
-                                                .position(home)
-                                                .title("Home")
-                                                .icon(Ihome);
-                                        home_M = mv.addMarker(home_MO);
-                                        mv.setLatLng(home);
 
 
-                                    } else {
-                                        Toast.makeText(getApplicationContext(), "Tablet doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
-                                    }
+                            }
+                        })
+                        .show();
 
 
-                                }
-                            })
-                            .show();
-                }
-                else{
-                    new AlertDialog.Builder(context)
-                            .setTitle("Set Home")
-                            .setMessage("Do you want to remove the home?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    mv.removeMarker(home_M);
-                                    home = null;
-                                }
-                            })
-                            .setNegativeButton("No",new DialogInterface.OnClickListener(){
-                                public void onClick(DialogInterface dialog, int which) {
+
+
+
+
+        }
+        else{
+                new AlertDialog.Builder(context)
+                        .setTitle("Set Home")
+                        .setMessage("Do you want to remove the home?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+
+                                try {
+                                    Jhome.put("Lat",home.getLatitude());
+                                    Jhome.put("Lng",home.getLongitude());
+                                    mlogger.info(new JSONObject()
+                                            .put("Time", sdf.format(d))
+                                            .put("Removed home", Jhome));
+                                }catch (JSONException e){
 
                                 }
-                            })
-                            .show();
-                }
+                                mv.removeMarker(home_M);
+                                home = null;
+                            }
+                        })
+                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        })
+                        .show();
+        }
+
+
+
     }
     public void goHome()
     {
