@@ -153,6 +153,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     TextView test = null;
     ToggleButton tiltButton = null;
     ToggleButton waypointButton = null;
+    ToggleButton pauseWP = null;
     ToggleButton setHome = null;
     ImageButton goHome = null;
     ImageButton drawPoly = null;
@@ -344,9 +345,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     protected void onCreate(final Bundle savedInstanceState)   {
         super.onCreate(savedInstanceState);
 
-       // this.setContentView(R.layout.tabletlayout_nexus7);  // layout for LG GpadF 8
+       //this.setContentView(R.layout.tabletlayout_nexus7);  // layout for LG GpadF 8
         //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
+       this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
 
         ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
         //thrust = (SeekBar) this.findViewById(R.id.thrustBar);
@@ -377,6 +378,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         sensorvalueButton.setClickable(sensorReady);
         sensorvalueButton.setTextColor(Color.GRAY);
         battery = (TextView)this.findViewById(R.id.batteryVoltage);
+        pauseWP = (ToggleButton) this.findViewById(R.id.pause);
 
       //  saveMap = (Button) this.findViewById(R.id.saveMap);
         //loadMap = (Button) this.findViewById(R.id.loadMap);
@@ -405,13 +407,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //**********************************************************************
         //  faked sensor data
         //***********************************************************************
-        //        sensorData1.setText("6.56");
-        //        sensorType1.setText("ATLAS_PH \n pH");
-        //        sensorData2.setText("9.56");
-        //        sensorType2.setText("ATLAS_DO \n mg/L");
-        //        sensorData3.setText("305\n19.0");
-        //        sensorType3.setText("ES2 \nEC(µS/cm)\nTE(°C)");
-        //        battery.setText("14.566");
+//                sensorData1.setText("6.56");
+//                sensorType1.setText("ATLAS_PH \n pH");
+//                sensorData2.setText("9.56");
+//                sensorType2.setText("ATLAS_DO \n mg/L");
+//                sensorData3.setText("305\n19.0");
+//                sensorType3.setText("ES2 \nEC(µS/cm)\nTE(°C)");
+//                battery.setText("16.566");
         // *****************//
         //      Joystick   //
         // ****************//
@@ -561,6 +563,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //  Initialize the Boat
         // ****************************************************************************
         currentBoat = new Boat(pl, sl);
+
 //        currentBoat.returnServer().addWaypointListener(wl, new FunctionObserver<Void>() {
 //            @Override
 //            public void completed(Void aVoid) {
@@ -599,9 +602,25 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         connectButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                currentBoat = new Boat(pl, sl);
-                currentBoat.returnServer().addWaypointListener(wl,null);
-                connectBox();
+
+                new AlertDialog.Builder(context)
+                        .setTitle("Connect")
+                        .setMessage("You are already connected,\n do you want to reconnect?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                currentBoat = new Boat(pl, sl);
+                                currentBoat.returnServer().addWaypointListener(wl,null);
+                                connectBox();
+                                Log.i(logTag, "Reconnect");
+                            }
+                        })
+                        .setNegativeButton("No", new DialogInterface.OnClickListener(){
+                            public void onClick(DialogInterface dialog, int which){
+                                Log.i(logTag, "Nothing");
+                            }
+                        })
+                        .show();
+
             }
         });
 
@@ -669,6 +688,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             checktest = true;
                             JSONObject JPose = new JSONObject();
                             if (waypointList.size() > 0) {
+
                                 UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
 
                                 waypointStatus = tempUtm.toString();
@@ -688,7 +708,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                                 }
 
+                                currentBoat.returnServer().setAutonomous(true,null);
                                 checkAndSleepForCmd();
+                                currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
+                                    @Override
+                                    public void completed(Boolean aBoolean) {
+                                        isAutonomous = aBoolean;
+                                        Log.i(logTag, "isAutonomous: " + isAutonomous);
+                                    }
+
+                                    @Override
+                                    public void failed(FunctionError functionError) {
+
+                                    }
+                                });
                                 currentBoat.returnServer().startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>() {
                                     @Override
                                     public void completed(Void aVoid) {
@@ -762,9 +795,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                     Toast.makeText(getApplicationContext(), "Use long press to add waypoints", Toast.LENGTH_LONG).show();
                                 }
                             });
-                            Auto = true;
-                        } else {
-                            Auto = false;
+
+                           startDraw = false;
+                           drawPoly.setClickable(false);
+
+
+                        }else{
+                            drawPoly.setClickable(true);
                         }
                         if(!waypointlistener){
                             currentBoat.returnServer().addWaypointListener(wl, new FunctionObserver<Void>() {
@@ -780,11 +817,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             });
                         }
 
-                        if (Auto) {
-                            currentBoat.returnServer().setAutonomous(true, null);
-                        } else {
-                            currentBoat.returnServer().setAutonomous(false, null);
-                        }
+
                         if(speed.isChecked()){
                             currentBoat.returnServer().setGains(0, low_tPID, null);
                             currentBoat.returnServer().setGains(5, low_rPID, null);
@@ -794,18 +827,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             currentBoat.returnServer().setGains(5, rPID, null);
                         }
 
-                        currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
-                            @Override
-                            public void completed(Boolean aBoolean) {
-                                isAutonomous = aBoolean;
-                                Log.i(logTag, "isAutonomous: " + isAutonomous);
-                            }
 
-                            @Override
-                            public void failed(FunctionError functionError) {
-
-                            }
-                        });
 
                         currentBoat.returnServer().getGains(0, new FunctionObserver<double[]>() {
                             @Override
@@ -818,6 +840,38 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                             }
                         });
+                    }
+                };
+                thread.start();
+            }
+        });
+
+        pauseWP.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Thread thread = new Thread() {
+                    public void run() {
+                        if (pauseWP.isChecked())
+
+                        {
+                            Auto = false;
+                        } else
+
+                        {
+                            Auto = true;
+                        }
+
+                        if (Auto)
+
+                        {
+                            currentBoat.returnServer().setAutonomous(true, null);
+                        } else
+
+                        {
+                            currentBoat.returnServer().setAutonomous(false, null);
+                        }
+
+
                     }
                 };
                 thread.start();
@@ -1236,7 +1290,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     //mv.removeMarkers(markerList);
 
                     isCurrentWaypointDone = true;
+                    Thread thread = new Thread(){
+                        public void run(){
+                            currentBoat.returnServer().setAutonomous(false, null);
+                            currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
+                                @Override
+                                public void completed(Boolean aBoolean) {
+                                    isAutonomous = aBoolean;
+                                    Log.i(logTag, "isAutonomous: " + isAutonomous);
+                                }
 
+                                @Override
+                                public void failed(FunctionError functionError) {
+
+                                }
+                            });
+
+                        }
+                    };thread.start();
 
                     try {
                         for (Marker m : markerList) {
@@ -1420,9 +1491,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         boolean firstTime = true;
         boolean isconvex = true;
         Context context;
-        IconFactory mIconFactory = IconFactory.getInstance(context);
-
+       // IconFactory mIconFactory = IconFactory.getInstance(context);
+        int counter = 0;
         int tempnum = 100;
+
+        IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
 
 
 
@@ -1506,7 +1579,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
             LatLng curLoc;
-            if (latlongloc != null) {
+            counter += 1;
+            if (latlongloc != null & counter > 10) {
 
                 curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
 
@@ -1515,11 +1589,36 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                 float bias = mv.getRotation(); // bias is the map orirentation
                 // Using bitmap to make marker rotatable.
-                Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
-                Drawable d = new BitmapDrawable(getResources(), boatarrow);
-                Icon Iboat2 = mIconFactory.fromDrawable(d);
-                //boat2.remove();
-                //boat2 = mv.addMarker(new MarkerOptions().icon(Iboat2).position(curLoc).title("Boat").snippet(curLoc.toString()));
+               // Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
+
+                //Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), boatarrow);
+
+
+              // Drawable mboat = new BitmapDrawable(getResources(), boatarrow);
+               Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), R.drawable.pointarrow);
+
+                Icon Iboat = mIconFactory.fromDrawable(mboat);
+                counter = 0;
+               // Icon Iboat2 = mIconFactory.fromDrawable(d);
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        LatLng curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+//                        float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
+//                        degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+//                        float bias = mv.getRotation(); // bias is the map orirentation
+//                        Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
+//                       // Drawable mboat = new BitmapDrawable(getResources(), boatarrow);
+//
+//                        Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), R.drawable.pointarrow);
+//
+//                        Icon Iboat = mIconFactory.fromDrawable(mboat);
+//                        boat2.remove();
+//                        boat2 = mv.addMarker(new MarkerOptions().position(curLoc).title("Boat").snippet(curLoc.toString()).icon(Iboat));
+//                    }
+//                });
+
+
 
 
             }
@@ -1555,6 +1654,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     battery.setText(batteries[0]);
                     battery.setTextColor(isAverage(Data, batteries[0]));
                     double value = (Double.parseDouble(batteries[0]) + getAverage(Data))/2;
+                    //Log.i(logTag,"Average = "+ value);
 
                     editor.putString(Data.type.toString(), Double.toString(value));
                     editor.commit();
@@ -2755,10 +2855,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public int isAverage(SensorData data, String value){
         double v = Double.parseDouble(value);
         double average = getAverage(data);
-        if(average > v){
+        if((average - v) > average * 0.001 ){
             return Color.RED;
         }
-        else if(average < v){
+        else if((v- average) > average * 0.001){
             return Color.GREEN;
         }
         else{
