@@ -345,9 +345,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     protected void onCreate(final Bundle savedInstanceState)   {
         super.onCreate(savedInstanceState);
 
-       //this.setContentView(R.layout.tabletlayout_nexus7);  // layout for LG GpadF 8
+       this.setContentView(R.layout.tabletlayout_nexus7);  // layout for LG GpadF 8
         //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-       this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
+       //this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
 
         ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
         //thrust = (SeekBar) this.findViewById(R.id.thrustBar);
