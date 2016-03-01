@@ -496,6 +496,14 @@
 
             android:layout_alignStart="@+id/drawPolygon" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Perimeter"
+            android:id="@+id/preimeter"
+            android:layout_alignTop="@+id/removeMap"
+            android:layout_toEndOf="@+id/removeMap" />
+
 
     </RelativeLayout>
 

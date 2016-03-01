@@ -168,6 +168,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Button loadWaypoints = null;
     Button advancedOptions = null;
     Button makeConvex = null; //for testing remove later
+    Button preimeter = null;
 
     //TextView log = null;
     Handler network = new Handler();
@@ -306,6 +307,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     private UtmPose[] wpPose = null , tempPose = null;
     private int N_waypoint = 0;
     private boolean waypointlistener = false;
+    private int counter_M = 0;
 
     Icon Ihome;
 
@@ -379,6 +381,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         sensorvalueButton.setTextColor(Color.GRAY);
         battery = (TextView)this.findViewById(R.id.batteryVoltage);
         pauseWP = (ToggleButton) this.findViewById(R.id.pause);
+        preimeter = (Button) this.findViewById(R.id.preimeter);
 
       //  saveMap = (Button) this.findViewById(R.id.saveMap);
         //loadMap = (Button) this.findViewById(R.id.loadMap);
@@ -396,6 +399,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         advancedOptions = (Button) this.findViewById(R.id.advopt);
 
         drawPoly.setBackgroundResource(R.drawable.draw_icon);
+
 
         if(mlogger != null){
             mlogger.close();
@@ -471,6 +475,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         makeConvex.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
+                counter_M = 0;
                SharedPreferences settings = getSharedPreferences(PREF_NAME,0);
                 settings.edit().clear().commit();
             }
@@ -1233,47 +1238,49 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
                     ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
                     if(startDraw == true) {
-                        LatLng wpLoc = point;
-                        if (Boundry != null) {
-                            Boundry.remove();
-                        }
-                        for (Marker t : boundryList)
-                        {
-                            t.remove();
-                        }
-                        touchpointList.add(wpLoc);
-                        PolyArea area = new PolyArea();
-                        touchpointList = area.quickHull(touchpointList);
+//                        LatLng wpLoc = point;
+//                        if (Boundry != null) {
+//                            Boundry.remove();
+//                        }
+//                        for (Marker t : boundryList)
+//                        {
+//                            t.remove();
+//                        }
+//                        touchpointList.add(wpLoc);
+//                        PolyArea area = new PolyArea();
+//                        touchpointList = area.quickHull(touchpointList);
+//
+//                        if (touchpointList.contains(wpLoc))
+//                        {
+//                            lastAdded.add(wpLoc);
+//                        }
+//
+//                        if (lastAdded.size() != touchpointList.size())
+//                        {
+//                            ArrayList<LatLng> tempLastAdded = new ArrayList<LatLng>(lastAdded);
+//                            tempLastAdded.removeAll(touchpointList);
+//                            //item that should be ommited
+//                            lastAdded.remove(tempLastAdded.get(0));
+//                        }
+//
+//                        spirals = area.createSmallerPolygons(touchpointList);
+//                            drawSmallerPolys(spirals);
+//
+//                        for (LatLng i : touchpointList)
+//                        {
+//                            boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
+//                        }
+//
+//
+//                        //System.out.println(lastAdded.size() + " " + touchpointList.size());
+//                        //System.out.println(lastAdded);
+//                        //System.out.println(touchpointList);
+//                        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy")); //draw polygon
+//                        //border gets aa'd better than the fill causing gaps between border and fill...
+//                        poly.alpha((float).6); //set interior opacity
+//                        Boundry = mv.addPolygon(poly);
 
-                        if (touchpointList.contains(wpLoc))
-                        {
-                            lastAdded.add(wpLoc);
-                        }
-
-                        if (lastAdded.size() != touchpointList.size())
-                        {
-                            ArrayList<LatLng> tempLastAdded = new ArrayList<LatLng>(lastAdded);
-                            tempLastAdded.removeAll(touchpointList);
-                            //item that should be ommited
-                            lastAdded.remove(tempLastAdded.get(0));
-                        }
-
-                        spirals = area.createSmallerPolygons(touchpointList);
-                            drawSmallerPolys(spirals);
-
-                        for (LatLng i : touchpointList)
-                        {
-                            boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
-                        }
-
-
-                        //System.out.println(lastAdded.size() + " " + touchpointList.size());
-                        //System.out.println(lastAdded);
-                        //System.out.println(touchpointList);
-                        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy")); //draw polygon
-                        //border gets aa'd better than the fill causing gaps between border and fill...
-                        poly.alpha((float).6); //set interior opacity
-                        Boundry = mv.addPolygon(poly);
+                        drawPolygon(point, Iboundry);
                     }
                 }
             });
@@ -1348,8 +1355,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             removeMap.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    try
-                    {
+                    try {
                         touchpointList.remove(touchpointList.indexOf(lastAdded.get(lastAdded.size() - 1)));
                         lastAdded.remove(lastAdded.size() - 1);
 
@@ -1372,14 +1378,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
                         /* If tpl size =< 0 mapbox segfaults (submitted bug report) */
-                        if (touchpointList.size()>0) {
+                        if (touchpointList.size() > 0) {
                             ArrayList<ArrayList<LatLng>> spirals = area.createSmallerPolygons(touchpointList);
                             drawSmallerPolys(spirals);
                         }
-                    }
-                    catch (Exception e)
-                    {
+                    } catch (Exception e) {
                         //System.out.println(e.toString());
+                    }
+                }
+            });
+
+            preimeter.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(latlongloc != null){
+                        LatLng point = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+                        drawPolygon(point, Iboundry);
                     }
                 }
             });
@@ -1401,7 +1415,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             //boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", new LatLng(pHollowStartingPoint.getLatitude(), pHollowStartingPoint.getLongitude()));
             boat2 = mv.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat").icon(Iboat));
 
-            mv.setLatLng(pHollowStartingPoint);
+            mv.setLatLng(new LatLng(mv.getMyLocation()));
 
         }
         catch(Exception e)
@@ -1492,7 +1506,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         boolean isconvex = true;
         Context context;
        // IconFactory mIconFactory = IconFactory.getInstance(context);
-        int counter = 0;
+
         int tempnum = 100;
 
         IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
@@ -1579,53 +1593,62 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
             LatLng curLoc;
-            counter += 1;
-            if (latlongloc != null & counter > 10) {
 
-                curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-
-                float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
-                degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
-
-                float bias = mv.getRotation(); // bias is the map orirentation
-                // Using bitmap to make marker rotatable.
-               // Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
-
-                //Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), boatarrow);
-
-
-              // Drawable mboat = new BitmapDrawable(getResources(), boatarrow);
-               Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), R.drawable.pointarrow);
-
-                Icon Iboat = mIconFactory.fromDrawable(mboat);
-                counter = 0;
-
-               // Icon Iboat2 = mIconFactory.fromDrawable(d);
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        LatLng curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-//                        float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
-//                        degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
-//                        float bias = mv.getRotation(); // bias is the map orirentation
-//                        Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
-//                       // Drawable mboat = new BitmapDrawable(getResources(), boatarrow);
+//            if (latlongloc != null & counter_M == 0) {
 //
-//                        Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), R.drawable.pointarrow);
+//                if(boat2 != null){
+//                    boat2.remove();
+//                }
+//                curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
 //
-//                        Icon Iboat = mIconFactory.fromDrawable(mboat);
-//                        boat2.remove();
-//                        boat2 = mv.addMarker(new MarkerOptions().position(curLoc).title("Boat").snippet(curLoc.toString()).icon(Iboat));
-//                    }
-//                });
+//                float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
+//                degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+//
+//                float bias = mv.getRotation(); // bias is the map orirentation
+//                // Using bitmap to make marker rotatable.
+//                Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
+//
+//                //Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), boatarrow);
+//
+//
+//               Drawable mboat = new BitmapDrawable(getResources(), boatarrow);
+//              // Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), R.drawable.pointarrow);
+//
+//                Icon Iboat = mIconFactory.fromDrawable(mboat);
+//                boat2 = mv.addMarker(new MarkerOptions().position(curLoc).title("Boat").snippet(curLoc.toString()).icon(Iboat));
+//                counter_M = 1;
+//
+//               // Icon Iboat2 = mIconFactory.fromDrawable(d);
+////                try {
+////                    new Thread(new Runnable() {
+////                        @Override
+////                        public void run() {
+////                            LatLng curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+////                            float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
+////                            degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+////                            float bias = mv.getRotation(); // bias is the map orirentation
+////                            Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
+////                            Drawable mboat = new BitmapDrawable(getResources(), boatarrow);
+////
+////                            //  Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), R.drawable.pointarrow);
+////
+////                            Icon Iboat = mIconFactory.fromDrawable(mboat);
+////                            // boat2.remove();
+////
+////                            //boat2 = mv.addMarker(new MarkerOptions().position(curLoc).title("Boat").snippet(curLoc.toString()).icon(Iboat));
+////                        }
+////                    }).start();
+////                }catch(Exception e){
+////
+////                }
+//
+//
+//
+//
+//            }
 
 
-
-
-            }
-
-
-            mv.animate();
+           // mv.animate();
 
 
 //
@@ -2806,8 +2829,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                     Log.i(logTag, "Go home");
                                 }
                             })
-                            .setNegativeButton("No", new DialogInterface.OnClickListener(){
-                                public void onClick(DialogInterface dialog, int which){
+                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
                                     Log.i(logTag, "Nothing");
                                 }
                             })
@@ -2887,6 +2910,52 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         return average;
     }
 
+    private void drawPolygon (LatLng point, Icon icon){
+        ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
+        Icon Iboundry = icon;
+        LatLng wpLoc = point;
+        if (Boundry != null) {
+            Boundry.remove();
+        }
+        for (Marker t : boundryList)
+        {
+            t.remove();
+        }
+        touchpointList.add(wpLoc);
+        PolyArea area = new PolyArea();
+        touchpointList = area.quickHull(touchpointList);
+
+        if (touchpointList.contains(wpLoc))
+        {
+            lastAdded.add(wpLoc);
+        }
+
+        if (lastAdded.size() != touchpointList.size())
+        {
+            ArrayList<LatLng> tempLastAdded = new ArrayList<LatLng>(lastAdded);
+            tempLastAdded.removeAll(touchpointList);
+            //item that should be ommited
+            lastAdded.remove(tempLastAdded.get(0));
+        }
+
+        spirals = area.createSmallerPolygons(touchpointList);
+        drawSmallerPolys(spirals);
+
+        for (LatLng i : touchpointList)
+        {
+            boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
+        }
+
+
+        //System.out.println(lastAdded.size() + " " + touchpointList.size());
+        //System.out.println(lastAdded);
+        //System.out.println(touchpointList);
+        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy")); //draw polygon
+        //border gets aa'd better than the fill causing gaps between border and fill...
+        poly.alpha((float).6); //set interior opacity
+        Boundry = mv.addPolygon(poly);
+
+    }
 
 }
 //
