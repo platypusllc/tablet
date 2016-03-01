@@ -1,1 +1,1 @@
-include ':app', ':MapboxGLAndroidSDK-debug'
+include ':app'
