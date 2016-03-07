@@ -43,6 +43,8 @@ import com.mapbox.mapboxsdk.annotations.Polygon;
 import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.ILatLng;
@@ -51,7 +53,11 @@ import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.geometry.ProjectedMeters;
-import com.mapbox.mapboxsdk.views.MapView;
+import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.maps.UiSettings;
 import com.mapbox.mapboxsdk.utils.ApiAccess;
 
 
@@ -69,6 +75,7 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 
 import android.net.Network;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.view.MenuItem;
@@ -203,6 +210,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
     MapView mv;
+    MapboxMap mMapboxMap;
     String zone;
     String rotation;
 
@@ -308,6 +316,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     private int N_waypoint = 0;
     private boolean waypointlistener = false;
     private int counter_M = 0;
+    private int[] pointarrow = {R.drawable.pointarrow, R.drawable.pointarrow_45, R.drawable.pointarrow_90,
+    R.drawable.pointarrow_135, R.drawable.pointarrow_180, R.drawable.pointarrow_225, R.drawable.pointarrow_270, R.drawable.pointarrow_315};
 
     Icon Ihome;
 
@@ -588,20 +598,36 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         senSensorManager.registerListener(this, senAccelerometer,
                 SensorManager.SENSOR_DELAY_NORMAL);
 
-
-        mv = (MapView) findViewById(R.id.mapview);
-
-        mv.setMyLocationEnabled(true);
-        mv.setCompassEnabled(true);
-        mv.setLatLng(pHollowStartingPoint);
-        mv.setStyleUrl(Style.SATELLITE_STREETS);
-        IconFactory mIconFactory = IconFactory.getInstance(this);
+        final IconFactory mIconFactory = IconFactory.getInstance(this);
         Drawable mhome = ContextCompat.getDrawable(this, R.drawable.home1);
         Ihome = mIconFactory.fromDrawable(mhome);
 
+        mv = (MapView) findViewById(R.id.mapview);
 
-        mv.setZoom(16);
+        mv = (MapView) findViewById(R.id.mapview);
+        mv.setAccessToken(ApiAccess.getToken(this));
         mv.onCreate(savedInstanceState);
+        mv.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(@NonNull MapboxMap mapboxMap) {
+                mMapboxMap = mapboxMap;
+                mMapboxMap.setStyle(Style.MAPBOX_STREETS);
+                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                        new CameraPosition.Builder()
+                                .target(pHollowStartingPoint)
+                                .zoom(14)
+                                .build()
+                ));
+                boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
+                        .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
+
+            }
+        });
+
+
+
+
+
 
 
         connectButton.setOnClickListener(new OnClickListener() {
@@ -961,6 +987,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         mv.onSaveInstanceState(outState);
     }
 
+    @Override
+    public void onLowMemory(){
+        super.onLowMemory();
+        mv.onLowMemory();
+    }
+
 //    private void saveOfflineMap (LatLng Mapcenter){
 //        mv.setDiskCacheEnabled(true);
 //        offlineMapDownloader = OfflineMapDownloader.getOfflineMapDownloader(this);
@@ -1223,21 +1255,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             };
             //thread.start();
 
-            mv.setOnMapLongClickListener(new MapView.OnMapLongClickListener() {
+            mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
                 @Override
-                public void onMapLongClick(LatLng point){
-                    if(waypointButton.isChecked()){
+                public void onMapLongClick(LatLng point) {
+                    if (waypointButton.isChecked()) {
                         LatLng wpLoc = point;
-                        if(Waypath != null){
+                        if (Waypath != null) {
                             Waypath.remove();
                         }
                         WPnum += 1;
                         waypointList.add(wpLoc);
-                        markerList.add(mv.addMarker(new MarkerOptions().position(wpLoc).title(Integer.toString(WPnum))));
-                        Waypath = mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+                        markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(wpLoc).title(Integer.toString(WPnum))));
+                        Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
                     }
                     ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
-                    if(startDraw == true) {
+                    if (startDraw == true) {
 //                        LatLng wpLoc = point;
 //                        if (Boundry != null) {
 //                            Boundry.remove();
@@ -1318,7 +1350,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                     try {
                         for (Marker m : markerList) {
-                            mv.removeMarker(m);
+                            mMapboxMap.removeMarker(m);
 
                         }
                         Waypath.remove();
@@ -1365,13 +1397,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         }
                         boundryList.clear();
                         for (LatLng i : touchpointList) {
-                            boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
+                            boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
                         }
 
                         if (touchpointList.size() > 2) {
                             PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy"));
                             poly.alpha((float) .6);
-                            Boundry = mv.addPolygon(poly);
+                            Boundry = mMapboxMap.addPolygon(poly);
                         }
                         PolyArea area = new PolyArea();
 
@@ -1413,9 +1445,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         try {
             //boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", new LatLng(pHollowStartingPoint.getLatitude(), pHollowStartingPoint.getLongitude()));
-            boat2 = mv.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat").icon(Iboat));
 
-            mv.setLatLng(new LatLng(mv.getMyLocation()));
+
+
 
         }
         catch(Exception e)
@@ -1508,8 +1540,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
        // IconFactory mIconFactory = IconFactory.getInstance(context);
 
         int tempnum = 100;
-
+        Pointarrow Arrow = new Pointarrow();
+        int icon_Index;
+        int icon_Index_old = -1;
         IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
+        BitmapFactory.Options options = new BitmapFactory.Options();
+
+        public void setOptions(BitmapFactory.Options options) {
+            this.options = options;
+            this.options.inDither = false;
+            this.options.inTempStorage = new byte[18 * 23];
+        }
 
 
 
@@ -1519,7 +1560,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         @Override
         protected void onPreExecute()
         {
-
+            setOptions(options);
         }
         @Override
         protected String doInBackground(String... arg0) {
@@ -1593,59 +1634,48 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
             LatLng curLoc;
+            counter_M += 1;
+            if (latlongloc != null & counter_M > 5) {
+                try {
+                    curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
 
-//            if (latlongloc != null & counter_M == 0) {
+                    float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
+                    degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+
+                    float bias = mv.getRotation();  // bias is the map orirentation
+
+
+                    // Using bitmap to make marker rotatable.
+                   // Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow, options), degree + bias);
+
+                    //Icon Iboat = mIconFactory.fromBitmap(boatarrow);
+                    if (mMapboxMap != null) {
+                      //  boolean first = (boolean)mv.getTag();
+                      //  mv.setTag(!first);
+
+                        boat2.setPosition(curLoc);
+                        icon_Index = Arrow.getIcon(degree);
+                        if(icon_Index != icon_Index_old){
+                            boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
+                            icon_Index_old = icon_Index;
+                        }
+
+                        //boat2.setIcon(Iboat);
+//                        boat2.remove();
+//                        boat2 = new Marker(new MarkerOptions().position(curLoc).icon(Iboat));
+//                        mMapboxMap.updateMarker(boat2);
+
+                        //boat2.wait(50);
+                    } else {
+                        Log.i(logTag, "Icon is null");
+                    }
+                    counter_M = 0;
+                } catch (Exception e) {
+                    Log.w(logTag, "Boat Marker" + e);
+                }
+            }
+
 //
-//                if(boat2 != null){
-//                    boat2.remove();
-//                }
-//                curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-//
-//                float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
-//                degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
-//
-//                float bias = mv.getRotation(); // bias is the map orirentation
-//                // Using bitmap to make marker rotatable.
-//                Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
-//
-//                //Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), boatarrow);
-//
-//
-//               Drawable mboat = new BitmapDrawable(getResources(), boatarrow);
-//              // Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), R.drawable.pointarrow);
-//
-//                Icon Iboat = mIconFactory.fromDrawable(mboat);
-//                boat2 = mv.addMarker(new MarkerOptions().position(curLoc).title("Boat").snippet(curLoc.toString()).icon(Iboat));
-//                counter_M = 1;
-//
-//               // Icon Iboat2 = mIconFactory.fromDrawable(d);
-////                try {
-////                    new Thread(new Runnable() {
-////                        @Override
-////                        public void run() {
-////                            LatLng curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-////                            float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
-////                            degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
-////                            float bias = mv.getRotation(); // bias is the map orirentation
-////                            Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow), degree + bias);
-////                            Drawable mboat = new BitmapDrawable(getResources(), boatarrow);
-////
-////                            //  Drawable mboat = ContextCompat.getDrawable(getApplicationContext(), R.drawable.pointarrow);
-////
-////                            Icon Iboat = mIconFactory.fromDrawable(mboat);
-////                            // boat2.remove();
-////
-////                            //boat2 = mv.addMarker(new MarkerOptions().position(curLoc).title("Boat").snippet(curLoc.toString()).icon(Iboat));
-////                        }
-////                    }).start();
-////                }catch(Exception e){
-////
-////                }
-//
-//
-//
-//
-//            }
 
 
            // mv.animate();
@@ -2135,7 +2165,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 {
                     LatLng temp = new LatLng(Double.parseDouble(fileScanner.next()), Double.parseDouble(fileScanner.next()));
                     waypointList.add(temp);
-                    Marker tempMarker = mv.addMarker(new MarkerOptions().position(temp));
+                    Marker tempMarker = mMapboxMap.addMarker(new MarkerOptions().position(temp));
                     markerList.add(tempMarker);
                 }
                 catch(Exception e)
@@ -2579,13 +2609,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     for (ILatLng i : waypointsaves.get(currentselected)) //tbh not sure why there is a 1 offset but there is
                     {
                         //System.out.println(i.getLatitude() + " " + i.getLongitude());
-                        markerList.add(mv.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude())).title(Integer.toString(num))));
+                        markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude())).title(Integer.toString(num))));
                         waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
 
 
                         num ++;
                     }
-                    Waypath = mv.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
 
                     dialog.dismiss();
                 }
@@ -2711,12 +2741,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                             .position(home)
                                             .title("Home")
                                             .icon(Ihome);
-                                    home_M = mv.addMarker(home_MO);
+                                    home_M = mMapboxMap.addMarker(home_MO);
                                     //Bitmap home_B = BitmapFactory.decodeResource(getResources(), R.drawable.home);
                                     //Drawable d = new BitmapDrawablegit (getResources(), home_B);
 
 
-                                    mv.setLatLng(home);
+                                    mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home));
                                 } else {
 
                                     Toast.makeText(getApplicationContext(), "Phone doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
@@ -2726,7 +2756,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         .setNegativeButton("Tablet", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
 
-                                LatLng loc = new LatLng(mv.getMyLocation());
+                                LatLng loc = new LatLng(mMapboxMap.getMyLocation());
 
                                 if (loc != null) {
                                     home = loc;
@@ -2734,8 +2764,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                             .position(home)
                                             .title("Home")
                                             .icon(Ihome);
-                                    home_M = mv.addMarker(home_MO);
-                                    mv.setLatLng(home);
+                                    home_M = mMapboxMap.addMarker(home_MO);
+                                    mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home));
                                     try {
                                         JTablet.put("Lat", home.getLatitude());
                                         JTablet.put("Lng", home.getLongitude());
@@ -2778,7 +2808,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 }catch (JSONException e){
 
                                 }
-                                mv.removeMarker(home_M);
+                                mMapboxMap.removeMarker(home_M);
                                 home = null;
                             }
                         })
@@ -2879,7 +2909,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         spiralList.clear();
         for (ArrayList<LatLng> a : spirals) {
-            spiralList.add(mv.addPolygon(new PolygonOptions().addAll(a).strokeColor(Color.BLUE).fillColor(Color.TRANSPARENT))); //draw polygon
+            spiralList.add(mMapboxMap.addPolygon(new PolygonOptions().addAll(a).strokeColor(Color.BLUE).fillColor(Color.TRANSPARENT))); //draw polygon
 
 //                            for (LatLng i : a)
 //                            {
@@ -2943,7 +2973,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         for (LatLng i : touchpointList)
         {
-            boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
+            boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
         }
 
 
@@ -2953,7 +2983,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy")); //draw polygon
         //border gets aa'd better than the fill causing gaps between border and fill...
         poly.alpha((float).6); //set interior opacity
-        Boundry = mv.addPolygon(poly);
+        Boundry = mMapboxMap.addPolygon(poly);
 
     }
 

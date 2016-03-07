@@ -8,7 +8,7 @@ import android.graphics.Color;
 import com.mapbox.mapboxsdk.annotations.Polygon;
 import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.views.MapView;
+import com.mapbox.mapboxsdk.maps.MapView;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;

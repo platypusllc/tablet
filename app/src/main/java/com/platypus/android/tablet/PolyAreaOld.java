@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.geometry.LatLngZoom;
+//import com.mapbox.mapboxsdk.geometry.LatLngZoom;
 
 /* note
 * Should not use yet for following reasons
