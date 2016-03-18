@@ -27,9 +27,7 @@ proguard/
 #Log Files
 *.log
 # MapboxGLAndroidSDK
-*.a
-*.so
-MapboxGLAndroidSDK/build
+MapboxGLAndroidSDK/
 
 ### Intellij ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
