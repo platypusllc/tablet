@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -19,7 +18,6 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
@@ -35,7 +33,6 @@ import javax.measure.unit.SI;
 import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -44,6 +41,7 @@ import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdate;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.geometry.LatLng;
@@ -52,37 +50,22 @@ import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
-import com.mapbox.mapboxsdk.geometry.ProjectedMeters;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
-
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
-import com.mapbox.mapboxsdk.maps.UiSettings;
-import com.mapbox.mapboxsdk.utils.ApiAccess;
-
 
 import android.app.AlertDialog;
-import android.app.Notification;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.PointF;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 
-import android.net.Network;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
-import android.util.DisplayMetrics;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.graphics.Matrix;
-
 
 import com.platypus.crw.CrwNetworkUtils;
 import com.platypus.crw.SensorListener;
@@ -104,17 +87,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.RadioButton;
@@ -603,32 +582,54 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         Ihome = mIconFactory.fromDrawable(mhome);
 
         mv = (MapView) findViewById(R.id.mapview);
-
-        mv = (MapView) findViewById(R.id.mapview);
-        mv.setAccessToken(ApiAccess.getToken(this));
+        //mv.setAccessToken(ApiAccess.getToken(this));
+        mv.setAccessToken("pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
         mv.onCreate(savedInstanceState);
         mv.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(@NonNull MapboxMap mapboxMap) {
                 mMapboxMap = mapboxMap;
                 mMapboxMap.setStyle(Style.MAPBOX_STREETS);
-                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                        new CameraPosition.Builder()
-                                .target(pHollowStartingPoint)
-                                .zoom(14)
-                                .build()
-                ));
+//                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+//                        new CameraPosition.Builder()
+//                                .target(pHollowStartingPoint)
+//                                .zoom(14)
+//                                .build()
+//                ));
+                System.out.println("mmapbox");
+                mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
+                    @Override
+                    public void onMapLongClick(LatLng point) {
+                        Drawable mboundry = ContextCompat.getDrawable(context, R.drawable.boundary);
+                        final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
+                        if (waypointButton.isChecked()) {
+                            System.out.println("waypoint button");
+                            LatLng wpLoc = point;
+                            if (Waypath != null) {
+                                Waypath.remove();
+                            }
+                            WPnum += 1;
+                            waypointList.add(wpLoc);
+                            markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(wpLoc).title(Integer.toString(WPnum))));
+                            Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+                        }
+                        ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
+                        if (startDraw == true) {
+                            drawPolygon(point, Iboundry);
+                        }
+                    }
+                });
                 boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
                         .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
+//                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+//                        new CameraPosition.Builder()
+//                                .target(pHollowStartingPoint)
+//                                .zoom(14)
+//                                .build()
+//                ));
 
             }
         });
-
-
-
-
-
-
 
         connectButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -1244,82 +1245,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
              * if the add waypoint button is pressed and new marker where ever they click
              */
 
-
-            Thread thread = new Thread() {
-                public void run() {
-                    while(true)
-                    {
-
-                    }
-                }
-            };
             //thread.start();
-
-            mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
-                @Override
-                public void onMapLongClick(LatLng point) {
-                    if (waypointButton.isChecked()) {
-                        LatLng wpLoc = point;
-                        if (Waypath != null) {
-                            Waypath.remove();
-                        }
-                        WPnum += 1;
-                        waypointList.add(wpLoc);
-                        markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(wpLoc).title(Integer.toString(WPnum))));
-                        Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-                    }
-                    ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
-                    if (startDraw == true) {
-//                        LatLng wpLoc = point;
-//                        if (Boundry != null) {
-//                            Boundry.remove();
-//                        }
-//                        for (Marker t : boundryList)
-//                        {
-//                            t.remove();
-//                        }
-//                        touchpointList.add(wpLoc);
-//                        PolyArea area = new PolyArea();
-//                        touchpointList = area.quickHull(touchpointList);
-//
-//                        if (touchpointList.contains(wpLoc))
-//                        {
-//                            lastAdded.add(wpLoc);
-//                        }
-//
-//                        if (lastAdded.size() != touchpointList.size())
-//                        {
-//                            ArrayList<LatLng> tempLastAdded = new ArrayList<LatLng>(lastAdded);
-//                            tempLastAdded.removeAll(touchpointList);
-//                            //item that should be ommited
-//                            lastAdded.remove(tempLastAdded.get(0));
-//                        }
-//
-//                        spirals = area.createSmallerPolygons(touchpointList);
-//                            drawSmallerPolys(spirals);
-//
-//                        for (LatLng i : touchpointList)
-//                        {
-//                            boundryList.add(mv.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
-//                        }
-//
-//
-//                        //System.out.println(lastAdded.size() + " " + touchpointList.size());
-//                        //System.out.println(lastAdded);
-//                        //System.out.println(touchpointList);
-//                        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.BLUE).fillColor(Color.parseColor("navy")); //draw polygon
-//                        //border gets aa'd better than the fill causing gaps between border and fill...
-//                        poly.alpha((float).6); //set interior opacity
-//                        Boundry = mv.addPolygon(poly);
-
-                        drawPolygon(point, Iboundry);
-                    }
-                }
-            });
+            System.out.println("finally");
 
             /*
              * If they press delete wayponts delete all markers off the map and delete waypoints
              */
+            if (mMapboxMap != null) {
+                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                        new CameraPosition.Builder()
+                                .target(pHollowStartingPoint)
+                                .zoom(14)
+                                .build()
+                ));
+
+            }
             deleteWaypoint.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
 
@@ -1552,11 +1492,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             this.options.inTempStorage = new byte[18 * 23];
         }
 
-
-
-
-
-
         @Override
         protected void onPreExecute()
         {
@@ -1570,7 +1505,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     if (System.currentTimeMillis() % 100 == 0 && oldTime != System.currentTimeMillis())
                     {
                         counter++; // if counter == 10 (1000ms), update sensor value
-
                         long tempconn = System.currentTimeMillis();
                         if (currentBoat.isConnected() == true)
                         {
@@ -1652,7 +1586,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     if (mMapboxMap != null) {
                       //  boolean first = (boolean)mv.getTag();
                       //  mv.setTag(!first);
-
+                        if (curLoc != null && mMapboxMap != null)
+                        {
+                            mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                                    new CameraPosition.Builder()
+                                            .target(curLoc)
+                                            .zoom(14)
+                                            .build()
+                            ));
+                        }
                         boat2.setPosition(curLoc);
                         icon_Index = Arrow.getIcon(degree);
                         if(icon_Index != icon_Index_old){
@@ -2073,7 +2015,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 dialogClose();
             }
         });
-
         dialog.show();
 
     }
@@ -2624,8 +2565,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
     }
 
-
-
     public static double planarDistanceSq(Pose3D a, Pose3D b) {
         double dx = a.getX() - b.getX();
         double dy = a.getY() - b.getY();
@@ -2633,7 +2572,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
     public void saveMap()
     {
-        Toast.makeText(getApplicationContext(), "Currently Unavailable", Toast.LENGTH_SHORT).show();
+
+//        Toast.makeText(getApplicationContext(), "Currently Unavailable", Toast.LENGTH_SHORT).show();
 //        saveMap.setOnClickListener(new OnClickListener() {
 //                @Override
 //                public void onClick(View v) {
