@@ -9,8 +9,8 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.mapbox.mapboxsdk/mapbox-android-sdk/4.0.0-SNAPSHOT/c640f387a9ca00884f67e09c7b92fa99c8584d2d/mapbox-android-sdk-4.0.0-SNAPSHOT-sources.jar!/" />
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.mapbox.mapboxsdk/mapbox-android-sdk/4.0.0-SNAPSHOT/44c5eac6ffc84976ba3aa5a60236c153c8c5ed1d/mapbox-android-sdk-4.0.0-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.mapbox.mapboxsdk/mapbox-android-sdk/4.0.0-SNAPSHOT/5c4aa2625b54b4683c33e43433b533d833d22abc/mapbox-android-sdk-4.0.0-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.mapbox.mapboxsdk/mapbox-android-sdk/4.0.0-SNAPSHOT/ab1a5baa69db654ab7b7555777285d3bb99dd12d/mapbox-android-sdk-4.0.0-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

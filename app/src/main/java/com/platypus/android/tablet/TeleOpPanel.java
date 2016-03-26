@@ -41,7 +41,6 @@ import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
-import com.mapbox.mapboxsdk.camera.CameraUpdate;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.geometry.LatLng;
@@ -50,15 +49,22 @@ import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.offline.OfflineManager;
+import com.mapbox.mapboxsdk.offline.OfflineRegion;
+import com.mapbox.mapboxsdk.offline.OfflineRegionDefinition;
+
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 
 import android.support.annotation.NonNull;
@@ -67,6 +73,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.graphics.Matrix;
 
+import com.mapbox.mapboxsdk.offline.OfflineRegionError;
+import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
+import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
+import com.mapzen.android.lost.api.LocationListener;
+import com.mapzen.android.lost.api.LocationServices;
 import com.platypus.crw.CrwNetworkUtils;
 import com.platypus.crw.SensorListener;
 import com.platypus.crw.VehicleServer;
@@ -179,6 +190,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
     boolean checktest;
+    boolean firstmove = false;
     int a = 0;
 
     double xValue;
@@ -300,9 +312,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     Icon Ihome;
 
-
-
-
     ArrayList<LatLng>touchpointList = new ArrayList<LatLng>();
     ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
     ArrayList<Marker> markerList = new ArrayList(); //List of all the
@@ -333,9 +342,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     private static final String logTag = TeleOpPanel.class.getName();
 
+    /* TODO
+    * check to see if the getmapasync works after mapbox fixes it
+    * if so, fix pan to location
+    * also make sure all waypoints/area marker related stuff works
+    * check out the tablet location marker
+    * make sure that joystick bug is fixed (emailed apk check up to see if it worked)
+    * Make callback for markers, dont add until gps lock is found
+    * */
+
     protected void onCreate(final Bundle savedInstanceState)   {
         super.onCreate(savedInstanceState);
-
        //this.setContentView(R.layout.tabletlayout_nexus7);  // layout for LG GpadF 8
         //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
        this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
@@ -356,7 +373,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         autoBox = (CheckBox) this.findViewById(R.id.autonomousBox);
         startWaypoints = (Button) this.findViewById(R.id.waypointStartButton);
         makeConvex = (Button) this.findViewById(R.id.makeconvex);
-
         saveWaypoints = (Button) this.findViewById(R.id.savewpbutton);
         loadWaypoints = (Button) this.findViewById(R.id.loadwpbutton);
         sensorData1 = (TextView) this.findViewById(R.id.SValue1);
@@ -372,7 +388,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         pauseWP = (ToggleButton) this.findViewById(R.id.pause);
         preimeter = (Button) this.findViewById(R.id.preimeter);
 
-      //  saveMap = (Button) this.findViewById(R.id.saveMap);
+        saveMap = (Button) this.findViewById(R.id.saveMap);
         //loadMap = (Button) this.findViewById(R.id.loadMap);
         removeMap = (Button) this.findViewById(R.id.removeMap);
       //  refreshMap = (Button) this.findViewById(R.id.refreshMap);
@@ -410,7 +426,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         // *****************//
         //      Joystick   //
         // ****************//
-
         advancedOptions.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -460,6 +475,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         });
 
+//        saveMap.setOnClickListener(new OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                saveMap();
+//            }
+//        });
 
         makeConvex.setOnClickListener(new OnClickListener() {
             @Override
@@ -583,11 +604,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         mv = (MapView) findViewById(R.id.mapview);
         //mv.setAccessToken(ApiAccess.getToken(this));
-        mv.setAccessToken("pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
+        mv.setAccessToken(getString(R.string.mapbox_access_token));//"pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
         mv.onCreate(savedInstanceState);
         mv.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(@NonNull MapboxMap mapboxMap) {
+                System.out.println("mapboxmap ready");
                 mMapboxMap = mapboxMap;
                 mMapboxMap.setStyle(Style.MAPBOX_STREETS);
 //                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
@@ -619,6 +641,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         }
                     }
                 });
+
                 boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
                         .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
 //                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
@@ -628,9 +651,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //                                .build()
 //                ));
 
+                //final Marker user = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("You"));
+                //LocationListener listen = new LocationListener() {
+                //@Override
+                //public void onLocationChanged(Location location) {
+                //user.setPosition(new LatLng(location.getLatitude(),location.getLongitude()));
+                //};
             }
         });
-
+        try {
+            boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
+                    .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
+        }
+        catch(Exception e)
+        {
+            System.out.println(e.toString());
+        }
         connectButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -884,21 +920,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 Thread thread = new Thread() {
                     public void run() {
                         if (pauseWP.isChecked())
-
                         {
                             Auto = false;
                         } else
-
                         {
                             Auto = true;
                         }
-
                         if (Auto)
-
                         {
                             currentBoat.returnServer().setAutonomous(true, null);
                         } else
-
                         {
                             currentBoat.returnServer().setAutonomous(false, null);
                         }
@@ -1223,7 +1254,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         @Override
         public void OnReturnedToCenter() {
-
+            thrustTemp = 0;
+            rudderTemp = 0;
         }
     };
 
@@ -1251,15 +1283,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             /*
              * If they press delete wayponts delete all markers off the map and delete waypoints
              */
-            if (mMapboxMap != null) {
-                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                        new CameraPosition.Builder()
-                                .target(pHollowStartingPoint)
-                                .zoom(14)
-                                .build()
-                ));
-
-            }
+//            if (mMapboxMap != null) {
+//                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+//                        new CameraPosition.Builder()
+//                                .target(pHollowStartingPoint)
+//                                .zoom(14)
+//                                .build()
+//                ));
+//
+//            }
             deleteWaypoint.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
 
@@ -1565,12 +1597,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
 
-
-
             LatLng curLoc;
             counter_M += 1;
             if (latlongloc != null & counter_M > 5) {
-                try {
+//                try {
                     curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
 
                     float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
@@ -1580,45 +1610,31 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
                     // Using bitmap to make marker rotatable.
-                   // Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow, options), degree + bias);
+                    // Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow, options), degree + bias);
 
                     //Icon Iboat = mIconFactory.fromBitmap(boatarrow);
-                    if (mMapboxMap != null) {
-                      //  boolean first = (boolean)mv.getTag();
-                      //  mv.setTag(!first);
-                        if (curLoc != null && mMapboxMap != null)
-                        {
-                            mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                                    new CameraPosition.Builder()
-                                            .target(curLoc)
-                                            .zoom(14)
-                                            .build()
-                            ));
-                        }
+
+                    if (mMapboxMap != null)
+                    {
+                        //  boolean first = (boolean)mv.getTag();
+                        //  mv.setTag(!first);
                         boat2.setPosition(curLoc);
                         icon_Index = Arrow.getIcon(degree);
                         if(icon_Index != icon_Index_old){
                             boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
                             icon_Index_old = icon_Index;
                         }
-
-                        //boat2.setIcon(Iboat);
-//                        boat2.remove();
-//                        boat2 = new Marker(new MarkerOptions().position(curLoc).icon(Iboat));
-//                        mMapboxMap.updateMarker(boat2);
-
-                        //boat2.wait(50);
-                    } else {
-                        Log.i(logTag, "Icon is null");
+                        else {
+                            //prints constantly??
+                            //Log.i(logTag, "Icon is null");
+                        }
                     }
                     counter_M = 0;
-                } catch (Exception e) {
-                    Log.w(logTag, "Boat Marker" + e);
-                }
+  //              }
+            //catch (Exception e) {
+//                    Log.w(logTag, "Boat Marker" + e.toString());
+    //            }
             }
-
-//
-
 
            // mv.animate();
 
@@ -1947,7 +1963,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         direct = (RadioButton) dialog.findViewById(R.id.wifi);
         reg = (RadioButton) dialog.findViewById(R.id.reg);
-        ipAddress.setText("192.168.1.20");
+        ipAddress.setText("127.0.0.1");
 
         direct.setOnClickListener(new OnClickListener() {
             @Override
@@ -2091,7 +2107,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         catch(Exception e)
         {
-            System.out.println(e.toString());
+            System.out.println("waypoint file not found" + e.toString());
         }
         Scanner fileScanner;
         int valueCounter = 0;
@@ -2570,10 +2586,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         double dy = a.getY() - b.getY();
         return dx * dx + dy * dy;
     }
-    public void saveMap()
-    {
+    //public void saveMap()
+    //{
 
-//        Toast.makeText(getApplicationContext(), "Currently Unavailable", Toast.LENGTH_SHORT).show();
+//Toast.makeText(getApplicationContext(), "saving region", Toast.LENGTH_SHORT).show();
 //        saveMap.setOnClickListener(new OnClickListener() {
 //                @Override
 //                public void onClick(View v) {
@@ -2592,7 +2608,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //                    thread.start();
 //                }
 //            });
-    }
+//    }
     public void loadMap()
     {
         Toast.makeText(getApplicationContext(), "Currently Unavailable", Toast.LENGTH_SHORT).show();
@@ -2621,7 +2637,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //                public void onClick(View v) {
 //
 //                    if(isInternetAvailable()){
-//                        mv.setAccessToken("pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
+        //mv.setAccessToken(getString(R.string.mapbox_access_token);//"pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
+
 //                        //mv.setTileSource(new MapboxTileLayer("mapbox.streets"));
 //                       // mv.setTileSource(new MapboxTileLayer(MapID));
 //                    }
@@ -2659,7 +2676,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         final JSONObject JPhone = new JSONObject();
         final JSONObject JTablet = new JSONObject();
         if(home == null) {
-
                 new AlertDialog.Builder(context)
                         .setTitle("Set Home")
                         .setMessage("Which position do you want to use?")
@@ -2812,27 +2828,69 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
     public void setPID()
     {
+        if (currentBoat == null)
+        {
+            Log.i(logTag,"No boat connected, cant set PID");
+            return;
+        }
+
+        final int THRUST_GAIN_AXIS = 0;
+        final int RUDDER_GAIN_AXIS = 5;
+
         final Dialog piddialog = new Dialog(context);
         piddialog.setContentView(R.layout.setpid);
         piddialog.setTitle("Set PID Gains");
 
         Button setPID = (Button)piddialog.findViewById(R.id.pidsubmit);
 
-        EditText thrust1 = (EditText) piddialog.findViewById(R.id.thrustfirst);
-        EditText thrust2 = (EditText) piddialog.findViewById(R.id.thrustsecond);
-        EditText thrust3 = (EditText) piddialog.findViewById(R.id.thrustthird);
+        final EditText thrustP = (EditText) piddialog.findViewById(R.id.thrustfirst);
+        final EditText thrustI = (EditText) piddialog.findViewById(R.id.thrustsecond);
+        final EditText thrustD = (EditText) piddialog.findViewById(R.id.thrustthird);
 
-        EditText rudder1 = (EditText) piddialog.findViewById(R.id.rudderfirst);
-        EditText rudder2 = (EditText) piddialog.findViewById(R.id.ruddersecond);
-        EditText rudder3 = (EditText) piddialog.findViewById(R.id.rudderthird);
+        final EditText rudderP = (EditText) piddialog.findViewById(R.id.rudderfirst);
+        final EditText rudderI = (EditText) piddialog.findViewById(R.id.ruddersecond);
+        final EditText rudderD = (EditText) piddialog.findViewById(R.id.rudderthird);
 
-
+        //there is probably a better way to do this (without setting them to 0 in xml page)
         setPID.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                //currentBoat.returnServer().set
+                final double thrustPID[] = {Double.parseDouble(thrustP.getText().toString()),Double.parseDouble(thrustI.getText().toString()),Double.parseDouble(thrustD.getText().toString())};
+                final double rudderPID[] = {Double.parseDouble(rudderP.getText().toString()),Double.parseDouble(rudderI.getText().toString()),Double.parseDouble(rudderD.getText().toString())};
+
+                final Thread thread = new Thread(){
+                    public void run(){
+                        System.out.println("pids");
+                        for (double i : thrustPID) {
+                            System.out.println(i);
+                        }
+                        currentBoat.returnServer().setGains(THRUST_GAIN_AXIS, thrustPID, new FunctionObserver<Void>() {
+                            @Override
+                            public void completed(Void aVoid) {
+                                Log.i(logTag, "Setting thrust PID completed.");
+                            }
+
+                            @Override
+                            public void failed(FunctionError functionError) {
+                                Log.i(logTag, "Setting thrust PID failed: " + functionError);
+                            }
+                        });
+                        currentBoat.returnServer().setGains(RUDDER_GAIN_AXIS, rudderPID, new FunctionObserver<Void>() {
+                            @Override
+                            public void completed(Void aVoid) {
+                                Log.i(logTag, "Setting rudder PID completed ");
+                            }
+
+                            @Override
+                            public void failed(FunctionError functionError) {
+                                Log.i(logTag, "Setting rudder PID failed: " + functionError);
+                            }
+                        });
+                    }};
+                thread.start();
                 piddialog.dismiss();
             }
+
         });
         piddialog.show();
     }
@@ -2926,7 +2984,75 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         Boundry = mMapboxMap.addPolygon(poly);
 
     }
+    public void saveMap()
+    {
+        // this can be changed (although using this offline is pointless) and removed after we find out how to access mmapboxmap when offline (async method issue)
 
+        // Set up the OfflineManager
+        OfflineManager mOfflineManager = OfflineManager.getInstance(this);
+        //mOfflineManager.setAccessToken(ApiAccess.getToken(this)); //where did it gooo
+        mOfflineManager.setAccessToken(getString(R.string.mapbox_access_token));
+// Definition
+        String styleURL = mMapboxMap.getStyleUrl();
+        LatLngBounds bounds = mMapboxMap.getProjection().getVisibleRegion().latLngBounds;
+
+        double minZoom = mMapboxMap.getMinZoom();//mMapView.getZoom();
+        double maxZoom = mMapboxMap.getMaxZoom();
+        float pixelRatio = this.getResources().getDisplayMetrics().density;
+
+        OfflineRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
+                styleURL, bounds, minZoom, maxZoom, pixelRatio);
+
+// Your metadatap
+        //OfflineRegionMetadata metadata = ...;
+
+// Create region
+        mOfflineManager.createOfflineRegion(definition, null,
+                new OfflineManager.CreateOfflineRegionCallback() {
+                    @Override
+                    public void onCreate(OfflineRegion offlineRegion) {
+                        //Log.d(LOG_TAG, "Offline region created: " + regionName);
+                        offlineRegion.setObserver(new OfflineRegion.OfflineRegionObserver() {
+                            @Override
+                            public void onStatusChanged(OfflineRegionStatus status) {
+                                System.out.println("status : + " + status.toString());
+                            }
+
+                            @Override
+                            public void onError(OfflineRegionError error) {
+                                System.out.println("save error" + error.toString());
+                            }
+
+                            @Override
+                            public void mapboxTileCountLimitExceeded(long limit) {
+                                System.out.println("exceeded limit");
+                            }
+                        });
+                        offlineRegion.setDownloadState(OfflineRegion.STATE_ACTIVE);
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        //Log.e(LOG_TAG, "Error: " + error);
+                    }
+                });
+
+        //list offline maps, make sure it got saved..
+        mOfflineManager.listOfflineRegions(new OfflineManager.ListOfflineRegionsCallback() {
+            @Override
+            public void onList(OfflineRegion[] offlineRegions) {
+                for (OfflineRegion region : offlineRegions)
+                {
+                    System.out.println("mbregion " + region.toString());
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                System.out.println("error " + error);
+            }
+        });
+    }
 }
 //
 //class

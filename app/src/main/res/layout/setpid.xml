@@ -24,7 +24,7 @@
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:id="@+id/thrustfirst"
-            android:hint="0.0"
+            android:text="0.0"
             android:layout_below="@+id/thrustPIDtext"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true" />
@@ -32,7 +32,7 @@
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:id="@+id/thrustsecond"
-            android:hint="0.0"
+            android:text="0.0"
             android:layout_below="@+id/thrustPIDtext"
             android:layout_toRightOf="@+id/thrustfirst"
             android:layout_toEndOf="@+id/thrustfirst" />
@@ -40,7 +40,7 @@
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:id="@+id/thrustthird"
-            android:hint="0.0"
+            android:text="0.0"
             android:layout_below="@+id/thrustPIDtext"
             android:layout_toRightOf="@+id/thrustsecond"
             android:layout_toEndOf="@+id/thrustsecond" />
@@ -58,7 +58,7 @@
             android:layout_marginTop="36dp" />
 
         <EditText
-            android:hint="0.0"
+            android:text="0.0"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:id="@+id/rudderthird"
@@ -67,7 +67,7 @@
             android:layout_toEndOf="@+id/ruddersecond" />
 
         <EditText
-            android:hint="0.0"
+            android:text="0.0"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:id="@+id/rudderfirst"
@@ -76,7 +76,7 @@
             android:layout_alignParentStart="true" />
 
         <EditText
-            android:hint="0.0"
+            android:text="0.0"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:id="@+id/ruddersecond"
@@ -99,9 +99,6 @@
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
-
-
-
 
         />
 

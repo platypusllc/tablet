@@ -62,19 +62,18 @@ android {
 
 }
 dependencies {
-    //    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:2.3.0@aar') {
-    //       transitive = true
-    //    }
-    compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.0.0-SNAPSHOT@aar'){
-        transitive=true
+    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.0.0-SNAPSHOT@aar') {
+    //compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.0.0-beta.2@aar'){
+        transitive = true
     }
-    compile files('libs/jscience.jar')
     compile files('libs/activation.jar')
     compile files('libs/mail.jar')
     compile files('libs/additionnal.jar')
     compile files('libs/platypus-core.jar')
     // compile files('libs/mapbox-android-sdk-0.7.4.jar')
     compile files('libs/microlog4android-1.0.0.jar')
+    compile files('libs/platypus-core.jar')
+    compile files('libs/jscience.jar')
 }
 
 repositories {

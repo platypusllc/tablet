@@ -182,7 +182,6 @@ public class Boat
 			}
 		});
 		return connected;
-
 	}
 
 	public boolean getConnected()
