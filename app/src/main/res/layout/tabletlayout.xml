@@ -160,21 +160,27 @@
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
         android:layout_weight="0.5"
-
-
         android:layout_below="@+id/printIpAddress"
-
         android:layout_toRightOf="@+id/relativeLayout_sensor"
         android:layout_toEndOf="@+id/relativeLayout_sensor">
 
-        <com.mapbox.mapboxsdk.maps.MapView
-            android:id="@+id/mapview"
-            android:layout_width="fill_parent"
-            android:layout_height="460dp"
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <com.mapbox.mapboxsdk.maps.MapView
+                android:id="@+id/mapview"
+                android:layout_width="fill_parent"
+                android:layout_height="460dp"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/centermap"
+                android:text="Center"
+                android:layout_alignTop="@id/mapview"
+                android:layout_alignLeft="@id/mapview"/>
 
 
-            />
-
+        </RelativeLayout>
     </RelativeLayout>
 
 
