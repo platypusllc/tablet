@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.net.InetSocketAddress;
 
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.FunctionObserver;
 import com.platypus.crw.PoseListener;
 import com.platypus.crw.SensorListener;
@@ -34,6 +35,7 @@ public class Boat
 	private final Object _waypointLock = new Object();
 	private String boatLog = "";
 	private String logTag = Boat.class.getName();
+	private LatLng currentLocation = null;
 
 	public Boat()
 	{
@@ -243,4 +245,13 @@ public class Boat
 	{
 		boatLog = boatLog + s  + "\n";
 	}
+	public LatLng getLocation()
+	{
+		return currentLocation;
+	}
+	public void setLocation(LatLng loc)
+	{
+		currentLocation = loc;
+	}
+
 }

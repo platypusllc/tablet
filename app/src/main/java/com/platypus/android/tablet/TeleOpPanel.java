@@ -144,7 +144,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     TextView rudderProgress = null;
     RelativeLayout linlay = null;
     CheckBox autonomous = null;
-    Button mapButton = null;
+
     static TextView testIP = null;
     AsyncTask networkThread;
     TextView test = null;
@@ -154,6 +154,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     ToggleButton setHome = null;
     ImageButton goHome = null;
     ImageButton drawPoly = null;
+
 
     Button deleteWaypoint = null;
     Button connectButton = null;
@@ -166,6 +167,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Button advancedOptions = null;
     Button makeConvex = null; //for testing remove later
     Button preimeter = null;
+    Button mapButton = null;
+    Button centerToBoat = null;
 
     //TextView log = null;
     Handler network = new Handler();
@@ -199,7 +202,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     LatLong latlongloc;
     LatLng boatLocation;
 
-
     MapView mv;
     MapboxMap mMapboxMap;
     String zone;
@@ -210,6 +212,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Marker boat2;
     Marker compass;
     Marker home_M;
+    Marker userloc;
 
     int currentselected = -1; //which element selected
     String saveName; //shouldnt be here?
@@ -387,24 +390,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         battery = (TextView)this.findViewById(R.id.batteryVoltage);
         pauseWP = (ToggleButton) this.findViewById(R.id.pause);
         preimeter = (Button) this.findViewById(R.id.preimeter);
-
         saveMap = (Button) this.findViewById(R.id.saveMap);
-        //loadMap = (Button) this.findViewById(R.id.loadMap);
         removeMap = (Button) this.findViewById(R.id.removeMap);
-      //  refreshMap = (Button) this.findViewById(R.id.refreshMap);
-//        progressBar = (ProgressBar) this.findViewById(R.id.progressBar);
-//        progressBar.setVisibility(View.GONE);
         joystick = (JoystickView) findViewById(R.id.joystickView);
-
        // setHome = (ToggleButton) this.findViewById(R.id.sethome);
         speed = (Switch) this.findViewById(R.id.Sswitch);
        // goHome = (ImageButton) this.findViewById(R.id.gohome);
         drawPoly = (ImageButton) this.findViewById(R.id.drawPolygon);
         Title = (TextView) this.findViewById(R.id.controlScreenEnter);
         advancedOptions = (Button) this.findViewById(R.id.advopt);
+        centerToBoat = (Button) this.findViewById(R.id.centermap);
 
         drawPoly.setBackgroundResource(R.drawable.draw_icon);
-
 
         if(mlogger != null){
             mlogger.close();
@@ -423,9 +420,34 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //                sensorData3.setText("305\n19.0");
 //                sensorType3.setText("ES2 \nEC(µS/cm)\nTE(°C)");
 //                battery.setText("16.566");
-        // *****************//
-        //      Joystick   //
-        // ****************//
+
+        //Center map button
+        centerToBoat.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mMapboxMap == null)
+                {
+                    //toast
+                    return;
+                }
+                if (currentBoat == null)
+                {
+                    //toast
+                    return;
+                }
+                if (currentBoat.getLocation() == null)
+                {
+                    return;
+                }
+                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                        new CameraPosition.Builder()
+                                .target(currentBoat.getLocation())
+                                .zoom(14)
+                                .build()
+                ));
+            }
+        });
+        //Options menu
         advancedOptions.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -490,6 +512,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 settings.edit().clear().commit();
             }
         });
+
+
+        // *****************//
+        //      Joystick   //
+        // ****************//
 
         joystick.setYAxisInverted(false);
 
@@ -641,9 +668,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         }
                     }
                 });
-
                 boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
                         .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
+                userloc = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Your Location"));
+
 //                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
 //                        new CameraPosition.Builder()
 //                                .target(pHollowStartingPoint)
@@ -1594,21 +1622,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         @Override
         protected void onProgressUpdate(Integer... result) {
-
-
-
             LatLng curLoc;
             counter_M += 1;
             if (latlongloc != null & counter_M > 5) {
 //                try {
-                    curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
 
+                curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
                     float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
                     degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
 
                     float bias = mv.getRotation();  // bias is the map orirentation
 
-
+                if (currentBoat != null && curLoc != null)
+                {
+                    currentBoat.setLocation(curLoc);
+                }
                     // Using bitmap to make marker rotatable.
                     // Bitmap boatarrow = RotateBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pointarrow, options), degree + bias);
 
@@ -1619,6 +1647,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         //  boolean first = (boolean)mv.getTag();
                         //  mv.setTag(!first);
                         boat2.setPosition(curLoc);
+                        Location userlocation = LocationServices.FusedLocationApi.getLastLocation();
+                        userloc.setPosition(new LatLng(userlocation.getLatitude(),userlocation.getLongitude()));
                         icon_Index = Arrow.getIcon(degree);
                         if(icon_Index != icon_Index_old){
                             boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
