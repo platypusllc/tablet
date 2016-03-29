@@ -1,5 +1,5 @@
 package com.platypus.android.tablet;
-//code load waypoitns from file
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -65,7 +66,6 @@ import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.location.LocationManager;
 import android.net.ConnectivityManager;
 
 import android.support.annotation.NonNull;
@@ -77,7 +77,6 @@ import android.graphics.Matrix;
 import com.mapbox.mapboxsdk.offline.OfflineRegionError;
 import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
 import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
-import com.mapzen.android.lost.api.LocationListener;
 import com.mapzen.android.lost.api.LocationServices;
 import com.platypus.crw.CrwNetworkUtils;
 import com.platypus.crw.SensorListener;
@@ -355,14 +354,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     * make bottom area smaller
     * Transect distance spacing parameter
     * IMPORTANT STUFF
-    * * check to see if the getmapasync works after mapbox fixes it
+    * check to see if the getmapasync works after mapbox fixes it (not yet :\ )
     * if so, fix pan to location
-    * See how nate handles waypoints, "if i hit add previous waypoints are deleted" - Paul
-    * Make sure listener works properly
-    * See the time of background and onupdate for async task, if slow lower the poll rate
-    * Or lower poll rate of just isconnected
-    * Make sure is connected is working properly
-
+    * Switch while to timed runnable
+    * DONE See the time of background and onupdate for async task, if slow lower the poll rate
+    * DONE Or lower poll rate of just isconnected
+    * DONE Make sure is connected is working properly
     * */
 
     protected void onCreate(final Bundle savedInstanceState) {
@@ -1538,31 +1535,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         protected void onPreExecute() {
 
             setOptions(options);
-            try {
-                updateMarkers();
-            }
-            catch(Exception e)
-            {
-                System.out.println("marker update" + e.toString());
-            }
+
         }
 
         @Override
         protected String doInBackground(String... arg0) {
-            // currentBoat.isConnected();
-            while (true) { //constantly looping
+            updateMarkers(); //Launch update markers thread
+            Runnable networkRun = new Runnable() {
+                @Override
+                public void run() {
+                    if (currentBoat != null) {
 
-                if (currentBoat != null) {
-                    if (System.currentTimeMillis() % 250 == 0 && oldTime != System.currentTimeMillis()) {
-                        oldTime = System.currentTimeMillis();
-                        counter++; // if counter == 10 (1000ms), update sensor value
-                        long tempconn = System.currentTimeMillis();
-                        if (currentBoat.isConnected() == true)
-                        {
+                        if (currentBoat.isConnected() == true) {
                             connected = true;
-                        }
-                        else
-                        {
+                        } else {
                             connected = false;
                         }
 
@@ -1580,7 +1566,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         }
                         old_thrust = thrustTemp;
                         old_rudder = rudderTemp;
-
 
                         if (tempPose != null) {
                             try {
@@ -1608,9 +1593,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         publishProgress();
                     }
                 }
-            }
-        }
+            };
 
+            ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
+            exec.scheduleAtFixedRate(networkRun, 0, 100, TimeUnit.MILLISECONDS);
+            return null;
+        }
         @Override
         protected void onProgressUpdate(Integer... result) {
             LatLng curLoc;
@@ -2956,7 +2944,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
 
     public void saveMap() {
-        // this can be changed (although using this offline is pointless) and removed after we find out how to access mmapboxmap when offline (async method issue)
+        if (mMapboxMap == null)
+        {
+            Toast.makeText(getApplicationContext(), "Map not loaded (make sure youre connected to internet for downloading maps", Toast.LENGTH_LONG).show();
+            return;
+        }
         if (isNetworkAvailable(this) == false)
         {
             Toast.makeText(getApplicationContext(), "Please Connect to the Internet first", Toast.LENGTH_LONG).show();
@@ -3027,21 +3019,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         });
     }
     public void updateMarkers() {
-        Thread thread = new Thread() {
+        Runnable markerRun = new Runnable() {
+            @Override
             public void run() {
-                double oldTime = 0;
-                while (true)
-                    if (System.currentTimeMillis() % 1000 == 0 && oldTime != System.currentTimeMillis()) {
-                        oldTime = System.currentTimeMillis();
-                        if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null) {
-                            boat2.setPosition(currentBoat.getLocation());
-                            Location userlocation = LocationServices.FusedLocationApi.getLastLocation();
-                            userloc.setPosition(new LatLng(userlocation.getLatitude(), userlocation.getLongitude()));
-                        }
-                    }
-            }
-        };
-        thread.start();
+                if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null) {
+                    boat2.setPosition(currentBoat.getLocation());
+                    Location userlocation = LocationServices.FusedLocationApi.getLastLocation();
+                    userloc.setPosition(new LatLng(userlocation.getLatitude(), userlocation.getLongitude()));
+                }
+        }};
+        ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
+        exec.scheduleAtFixedRate(markerRun, 0, 1000, TimeUnit.MILLISECONDS);
+
     }
 }
 
