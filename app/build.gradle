@@ -62,10 +62,12 @@ android {
 
 }
 dependencies {
-    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.0.0-SNAPSHOT@aar') {
+    //compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.0.0-SNAPSHOT@aar') {
     //compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.0.0-beta.2@aar'){
-        transitive = true
-    }
+    compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.0.0-rc.1@aar')
+            {
+                transitive = true
+            }
     compile files('libs/activation.jar')
     compile files('libs/mail.jar')
     compile files('libs/additionnal.jar')

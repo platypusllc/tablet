@@ -169,7 +169,7 @@ public class Boat
 		return zValue;
 	}
 
-	public boolean isConnected()
+    public boolean isConnected()
 	{
 		server.isConnected(new FunctionObserver<Boolean>()
 		{
@@ -183,7 +183,7 @@ public class Boat
 				connected = false;
 			}
 		});
-		return connected;
+        return connected;
 	}
 
 	public boolean getConnected()
