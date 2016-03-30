@@ -175,12 +175,28 @@ public class Boat
 		{
 			public void completed(Boolean v)
 			{
-				connected = true;
+                connected = true;
+                try {
+                    Thread.sleep(300);
+                }
+                catch(InterruptedException e)
+                {
+                    System.out.println(e.toString());
+                }
+                isConnected();
 			}
 
 			public void failed(FunctionError fe)
 			{
 				connected = false;
+                try {
+                    Thread.sleep(300);
+                }
+                catch(InterruptedException e)
+                {
+                    System.out.println(e.toString());
+                }
+                isConnected();
 			}
 		});
         return connected;

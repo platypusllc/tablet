@@ -785,7 +785,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 Thread thread = new Thread() {
                     public void run() {
                         //if (currentBoat.isConnected() == true) {
-                        if (currentBoat.isConnected() == true) {
+                        if (currentBoat.getConnected() == true)
+                        {
                             checktest = true;
                             JSONObject JPose = new JSONObject();
                             if (waypointList.size() > 0) {
@@ -1248,6 +1249,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         public void OnMoved(int x, int y) {
             thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
             rudderTemp = fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX);
+            if (currentBoat != null) {
+
+                Thread thread = new Thread() {
+                    public void run() {
+                        if (currentBoat.getConnected() == true) {
+                            updateVelocity(currentBoat);
+                        }
+                    }
+                };
+                    thread.start();
+            }
             Log.i(logTag, "Y:" + y + "\tX:" + x);
             Log.i(logTag, "Thrust" + thrustTemp + "\t Rudder" + rudderTemp);
             try {
@@ -1272,6 +1284,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         public void OnReturnedToCenter() {
             thrustTemp = 0;
             rudderTemp = 0;
+            if (currentBoat != null) {
+                Thread thread = new Thread() {
+                    public void run() {
+                        updateVelocity(currentBoat);
+                    }
+                };
+                thread.start();
+            }
         }
     };
 
@@ -1483,7 +1503,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             a.returnServer().setVelocity(twist, new FunctionObserver<Void>() {
                 @Override
                 public void completed(Void aVoid) {
-
+                    Log.w(logTag, "updated velocity");
                 }
 
                 @Override
@@ -1541,23 +1561,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         @Override
         protected String doInBackground(String... arg0) {
             updateMarkers(); //Launch update markers thread
+            currentBoat.isConnected();
             Runnable networkRun = new Runnable() {
                 @Override
                 public void run() {
                     if (currentBoat != null) {
-
-                        if (currentBoat.isConnected() == true) {
-                            connected = true;
-                        } else {
-                            connected = false;
-                        }
+                        connected = currentBoat.getConnected();
+//                        if (currentBoat.isConnected() == true) {
+//                            connected = true;
+//                        } else {
+//                            connected = false;
+//                        }
 
                         if (old_thrust != thrustTemp) { //update velocity
-                            updateVelocity(currentBoat);
+                            //updateVelocity(currentBoat);
                         }
 
                         if (old_rudder != rudderTemp) { //update rudder
-                            updateVelocity(currentBoat);
+                            //updateVelocity(currentBoat);
                         }
 
                         if (stopWaypoints == true) {
@@ -1596,7 +1617,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             };
 
             ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
-            exec.scheduleAtFixedRate(networkRun, 0, 100, TimeUnit.MILLISECONDS);
+            exec.scheduleAtFixedRate(networkRun, 0, 500, TimeUnit.MILLISECONDS);
             return null;
         }
         @Override
