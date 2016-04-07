@@ -218,11 +218,6 @@ public class Boat
 			return;
 
 		UtmPose[] wpPose = new UtmPose[1];
-		// synchronized (_waypointLock)
-		// {
-		// wpPose[0] = _waypoint;
-		// }
-		//
 
 		wpPose[0] = new UtmPose(_pose, _origin);
 		server.startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>()

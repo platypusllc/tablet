@@ -1,3 +1,4 @@
+//*TODO  CHANGE THIS ADD MAPBOX STUFF BACK
 package com.platypus.android.tablet;
 
 /**
@@ -8,7 +9,6 @@ import android.graphics.Color;
 import com.mapbox.mapboxsdk.annotations.Polygon;
 import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.maps.MapView;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -222,31 +222,22 @@ public class PolyArea
 
         PolyArea qh = new PolyArea();
         ArrayList<LatLng> p = qh.quickHull(points);
-        System.out.println("The points in the Convex hull using Quick Hull are: ");
 
-        //ArrayList<LatLng> spirals = qh.createSmallerPolygons();
-        //for (ArrayList<LatLng> i : spirals)
-        {
-//            for (LatLng t : i)
-            {
-//                System.out.println(t + " " );
-            }
-            System.out.println("");
-        }
     }
     public LatLng getCentroid()
     {
         return centroid;
     }
+
     public ArrayList<PolygonOptions> getSmallerPolygons()
-    {
-        ArrayList<ArrayList<LatLng>> smallerpoly = createSmallerPolygons(vertices);
-        ArrayList<PolygonOptions> spiralList = new ArrayList<PolygonOptions>();
-        for (ArrayList<LatLng> a : smallerpoly)
-        {
-            spiralList.add(new PolygonOptions().addAll(a).strokeColor(Color.BLUE).fillColor(Color.TRANSPARENT)); //draw polygon
-        }
-        return spiralList;
-    }
+     {
+         ArrayList<ArrayList<LatLng>> smallerpoly = createSmallerPolygons(vertices);
+         ArrayList<PolygonOptions> spiralList = new ArrayList<PolygonOptions>();
+         for (ArrayList<LatLng> a : smallerpoly)
+         {
+             spiralList.add(new PolygonOptions().addAll(a).strokeColor(Color.BLUE).fillColor(Color.TRANSPARENT)); //draw polygon
+         }
+         return spiralList;
+     }
 
 }

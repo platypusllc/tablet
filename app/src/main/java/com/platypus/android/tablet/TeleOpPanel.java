@@ -37,6 +37,7 @@ import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.spi.LocationAwareLogger;
 
 import com.mapbox.mapboxsdk.annotations.Polygon;
 import com.mapbox.mapboxsdk.annotations.PolygonOptions;
@@ -207,12 +208,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     String zone;
     String rotation;
 
-    TextView loca = null;
     //Marker boat;
     Marker boat2;
-    Marker compass;
     Marker home_M;
     Marker userloc;
+
+    Location userlocation;
 
     int currentselected = -1; //which element selected
     String saveName; //shouldnt be here?
@@ -636,13 +637,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 System.out.println("mapboxmap ready");
                 mMapboxMap = mapboxMap;
                 mMapboxMap.setStyle(Style.MAPBOX_STREETS);
-//                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-//                        new CameraPosition.Builder()
-//                                .target(pHollowStartingPoint)
-//                                .zoom(14)
-//                                .build()
-//                ));
-                System.out.println("mmapbox");
+                mMapboxMap.setMyLocationEnabled(true); //show current location
+                mMapboxMap.getUiSettings().setRotateGesturesEnabled(false); //broken on mapbox side, currently fixing issue 4635 https://github.com/mapbox/mapbox-gl-native/issues/4635
+
                 mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
                     @Override
                     public void onMapLongClick(LatLng point) {
@@ -667,29 +664,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 });
                 boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
                         .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
-                userloc = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Your Location"));
+                //userloc = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Your Location"));
 
-//                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-//                        new CameraPosition.Builder()
-//                                .target(pHollowStartingPoint)
-//                                .zoom(14)
-//                                .build()
-//                ));
-
-                //final Marker user = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("You"));
-                //LocationListener listen = new LocationListener() {
-                //@Override
-                //public void onLocationChanged(Location location) {
-                //user.setPosition(new LatLng(location.getLatitude(),location.getLongitude()));
-                //};
             }
         });
-        try {
-            boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
-                    .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
-        } catch (Exception e) {
-            System.out.println(e.toString());
-        }
+//        try {
+//            boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
+//                    .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
+//        } catch (Exception e) {
+//            System.out.println(e.toString());
+//        }
         connectButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -791,12 +775,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             JSONObject JPose = new JSONObject();
                             if (waypointList.size() > 0) {
 
+                                //Convert all UTM to latlong
                                 UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
 
                                 waypointStatus = tempUtm.toString();
 
-                                //System.out.println("wps" + waypointStatus);
-                                currentBoat.addWaypoint(tempUtm.pose, tempUtm.origin);
+                                //Confused now, this does same thing as whats below uncomment if needed
+                                //currentBoat.addWaypoint(tempUtm.pose, tempUtm.origin);
                                 wpPose = new UtmPose[waypointList.size()];
                                 synchronized (_waypointLock) {
                                     //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
@@ -806,7 +791,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                     tempPose = wpPose;
                                 }
 
-                                currentBoat.returnServer().setAutonomous(true, null);
+                                currentBoat.returnServer().setAutonomous(true, new FunctionObserver<Void>() {
+                                    @Override
+                                    public void completed(Void aVoid) {
+                                        Log.i(logTag, "Autonomy set to true");
+                                    }
+
+                                    @Override
+                                    public void failed(FunctionError functionError) {
+                                        Log.i(logTag, "Failed to set autonomy");
+                                    }
+                                });
                                 checkAndSleepForCmd();
                                 currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
                                     @Override
@@ -870,8 +865,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             }
 
                         }
-
-
                     }
                 };
                 thread.start();
@@ -1005,13 +998,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     @Override
     protected void onStart() {
         super.onStart();
-        mv.onStart();
+  //      mv.onStart();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        mv.onStop();
+//        mv.onStop();
     }
 
     @Override
@@ -1250,7 +1243,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
             rudderTemp = fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX);
             if (currentBoat != null) {
-
+                //does this need to be in seperate thread?
                 Thread thread = new Thread() {
                     public void run() {
                         if (currentBoat.getConnected() == true) {
@@ -1258,7 +1251,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         }
                     }
                 };
-                    thread.start();
+                thread.start();
             }
             Log.i(logTag, "Y:" + y + "\tX:" + x);
             Log.i(logTag, "Thrust" + thrustTemp + "\t Rudder" + rudderTemp);
@@ -1655,7 +1648,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                     icon_Index = Arrow.getIcon(degree);
                     if (icon_Index != icon_Index_old) {
-                        boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
+                        //boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
                         icon_Index_old = icon_Index;
                     } else {
                         //prints constantly??
@@ -2983,7 +2976,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         String styleURL = mMapboxMap.getStyleUrl();
         LatLngBounds bounds = mMapboxMap.getProjection().getVisibleRegion().latLngBounds;
 
-        double minZoom = 3.0; //mMapboxMap.getMinZoom();//mMapView.getZoom();
+        double minZoom = mMapboxMap.getMinZoom(); //mMapView.getZoom();
         double maxZoom = mMapboxMap.getMaxZoom();
         float pixelRatio = this.getResources().getDisplayMetrics().density;
 
@@ -3040,18 +3033,54 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         });
     }
     public void updateMarkers() {
+        //Unfortunetly this causes UI lag :(
+        //TODO update userloc on different schedule at lower update rate to reduce UI lag
         Runnable markerRun = new Runnable() {
             @Override
             public void run() {
                 if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null) {
                     boat2.setPosition(currentBoat.getLocation());
-                    Location userlocation = LocationServices.FusedLocationApi.getLastLocation();
-                    userloc.setPosition(new LatLng(userlocation.getLatitude(), userlocation.getLongitude()));
-                }
-        }};
-        ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
-        exec.scheduleAtFixedRate(markerRun, 0, 1000, TimeUnit.MILLISECONDS);
 
+                    //userlocation = LocationServices.FusedLocationApi.getLastLocation();
+                    //userloc.setPosition(new LatLng(userlocation.getLatitude(), userlocation.getLongitude()));
+                }
+            }
+        };
+        ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
+        exec.scheduleAtFixedRate(markerRun, 0, 500, TimeUnit.MILLISECONDS);
+
+    }
+    /*
+    * TODO
+    * Look into previous waypoint bug
+    * Add start region button
+    * Implement this
+    * Send all wps at once? or send each spiral wait for completion then send new ones
+    *
+    *
+    */
+
+    /*Not implemented on server side yet */
+    /* Should be called from some start region button */
+    /* Should be passed outer layer after quickhull is run */
+    public void startArea(ArrayList<LatLng> perimeter)
+    {
+        UtmPose poseList[] = new UtmPose[perimeter.size()];
+        for (LatLng position : perimeter)
+        {
+            convertLatLngUtm(position); //Convert all
+        }
+        currentBoat.returnServer().startWaypoints(poseList, "Spiral", new FunctionObserver<Void>() {
+            @Override
+            public void completed(Void aVoid) {
+
+            }
+
+            @Override
+            public void failed(FunctionError functionError) {
+
+            }
+        });
     }
 }
 
