@@ -79,6 +79,7 @@ import com.mapbox.mapboxsdk.offline.OfflineRegionError;
 import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
 import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
 import com.mapzen.android.lost.api.LocationServices;
+
 import com.platypus.crw.CrwNetworkUtils;
 import com.platypus.crw.SensorListener;
 import com.platypus.crw.VehicleServer;
@@ -1247,7 +1248,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 Thread thread = new Thread() {
                     public void run() {
                         if (currentBoat.getConnected() == true) {
-                            updateVelocity(currentBoat);
+                            updateVelocity(currentBoat, null);
                         }
                     }
                 };
@@ -1280,7 +1281,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             if (currentBoat != null) {
                 Thread thread = new Thread() {
                     public void run() {
-                        updateVelocity(currentBoat);
+                        updateVelocity(currentBoat, new FunctionObserver<Void>() {
+                            @Override
+                            public void completed(Void aVoid) {
+
+                            }
+
+                            @Override
+                            public void failed(FunctionError functionError) {
+
+                            }
+                        });
                     }
                 };
                 thread.start();
@@ -1479,7 +1490,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
     }
 
-    public void updateVelocity(Boat a) { //taken right from desktop client for updating velocity
+    /* Function observer is passed as parameter since it is needed when
+     * the joystick is being moved but not when it is released  */
+    public void updateVelocity(Boat a, FunctionObserver<Void> fobs) { //taken right from desktop client for updating velocity
         // ConnectScreen.boat.setVelocity(thrust.getProgress(),
         // rudder.getProgress());
         if (a.returnServer() != null) {
@@ -1493,17 +1506,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             } else {
                 twist.drz(rudderTemp >= -1 & rudderTemp <= 1 ? rudderTemp : 0);
             }
-            a.returnServer().setVelocity(twist, new FunctionObserver<Void>() {
-                @Override
-                public void completed(Void aVoid) {
-                    Log.w(logTag, "updated velocity");
-                }
+            a.returnServer().setVelocity(twist, fobs);
 
-                @Override
-                public void failed(FunctionError functionError) {
-                    Log.w(logTag, "failed to update velocity");
-                }
-            });
+//            a.returnServer().setVelocity(twist, new FunctionObserver<Void>() {
+//                @Override
+//                public void completed(Void aVoid) {
+//                    Log.w(logTag, "updated velocity");
+//                }
+//
+//                @Override
+//                public void failed(FunctionError functionError) {
+//                    Log.w(logTag, "failed to update velocity");
+//                }
+//            });
         }
     }
 
@@ -1648,7 +1663,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                     icon_Index = Arrow.getIcon(degree);
                     if (icon_Index != icon_Index_old) {
-                        //boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
+                        boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
                         icon_Index_old = icon_Index;
                     } else {
                         //prints constantly??
