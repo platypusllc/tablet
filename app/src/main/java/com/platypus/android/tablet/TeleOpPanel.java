@@ -246,6 +246,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Bitmap currentImage = null;
     boolean isAutonomous;
     boolean isCurrentWaypointDone = true;
+    boolean isWaypointsRunning = false;
 
     SensorManager senSensorManager;
     Sensor senAccelerometer;
@@ -346,6 +347,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
     private static final String logTag = TeleOpPanel.class.getName();
+    //static final String
 
     /* TODO
     * DONE check out the tablet location marker
@@ -571,6 +573,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             @Override
             public void waypointUpdate(WaypointState waypointState) {
                 boatwaypoint = waypointState.toString();
+                System.out.println(waypointState.toString());
                 //  Log.i(logTag, "Waypoint listener called");
             }
         };
@@ -767,108 +770,30 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         startWaypoints.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                Thread thread = new Thread() {
-                    public void run() {
-                        //if (currentBoat.isConnected() == true) {
-                        if (currentBoat.getConnected() == true)
-                        {
-                            checktest = true;
-                            JSONObject JPose = new JSONObject();
-                            if (waypointList.size() > 0) {
-
-                                //Convert all UTM to latlong
-                                UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
-
-                                waypointStatus = tempUtm.toString();
-
-                                //Confused now, this does same thing as whats below uncomment if needed
-                                //currentBoat.addWaypoint(tempUtm.pose, tempUtm.origin);
-                                wpPose = new UtmPose[waypointList.size()];
-                                synchronized (_waypointLock) {
-                                    //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
-                                    for (int i = 0; i < waypointList.size(); i++) {
-                                        wpPose[i] = convertLatLngUtm(waypointList.get(i));
-                                    }
-                                    tempPose = wpPose;
+                //if (!pauseWP.isChecked() && isWaypointsRunning)
+                if (pauseWP.isChecked())
+                {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                    builder.setMessage("Currently waypoints are paused, by pressing start waypoints the boat will restart the path. \n If you want to resume waypoints press cancel then toggle resume ")
+                            .setCancelable(false)
+                            .setPositiveButton("Restart Path", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    startWaypoints();
                                 }
+                            })
+                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    return;
+                                }
+                            });
+                    AlertDialog alert = builder.create();
+                    alert.show();
+                }
 
-                                currentBoat.returnServer().setAutonomous(true, new FunctionObserver<Void>() {
-                                    @Override
-                                    public void completed(Void aVoid) {
-                                        Log.i(logTag, "Autonomy set to true");
-                                    }
-
-                                    @Override
-                                    public void failed(FunctionError functionError) {
-                                        Log.i(logTag, "Failed to set autonomy");
-                                    }
-                                });
-                                checkAndSleepForCmd();
-                                currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
-                                    @Override
-                                    public void completed(Boolean aBoolean) {
-                                        isAutonomous = aBoolean;
-                                        Log.i(logTag, "isAutonomous: " + isAutonomous);
-                                    }
-
-                                    @Override
-                                    public void failed(FunctionError functionError) {
-
-                                    }
-                                });
-                                currentBoat.returnServer().startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>() {
-                                    @Override
-                                    public void completed(Void aVoid) {
-                                        System.out.println("startwaypoints - completed");
-                                    }
-
-                                    @Override
-                                    public void failed(FunctionError functionError) {
-                                        isCurrentWaypointDone = false;
-                                        System.out.println("startwaypoints - failed");
-                                        // = waypointStatus + "\n" + functionError.toString();
-                                        // System.out.println(waypointStatus);
-                                    }
-                                });
-                                currentBoat.returnServer().getWaypoints(new FunctionObserver<UtmPose[]>() {
-                                    @Override
-                                    public void completed(UtmPose[] wps) {
-                                        for (UtmPose i : wps) {
-                                            System.out.println("wp");
-                                            System.out.println(i.toString());
-                                        }
-                                    }
-
-                                    @Override
-                                    public void failed(FunctionError functionError) {
-
-                                    }
-                                });
-                            } else {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(getApplicationContext(), "Please Select Waypoints", Toast.LENGTH_LONG).show();
-                                    }
-                                });
-                            }
-                            try {
-
-                                mlogger.info(new JSONObject()
-                                        .put("Time", sdf.format(d))
-                                        .put("startWP", new JSONObject()
-                                                .put("WP_num", wpPose.length)
-                                                .put("AddWaypoint", Auto)));
-                            } catch (JSONException e) {
-                                Log.w(logTag, "Failed to log startwaypoint");
-                            } catch (Exception e) {
-
-                            }
-
-                        }
-                    }
-                };
-                thread.start();
+                if (pauseWP.isChecked() == false)
+                {
+                    startWaypoints();
+                }
             }
         });
 
@@ -939,9 +864,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             public void onClick(View v) {
                 Thread thread = new Thread() {
                     public void run() {
+
+                        /* If pauseWp.isChecked is false that means boat is currently paused
+                         * if pauseWP.isChecked is true that means boat is running */
                         if (pauseWP.isChecked()) {
                             Auto = false;
+                            isWaypointsRunning = false;
                         } else {
+                            isWaypointsRunning = true;
                             Auto = true;
                         }
                         if (Auto) {
@@ -949,8 +879,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         } else {
                             currentBoat.returnServer().setAutonomous(false, null);
                         }
-
-
                     }
                 };
                 thread.start();
@@ -1238,6 +1166,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     // *******************************
     //  JoystickView listener
     // *******************************
+    JoystickClickedListener listen = new JoystickClickedListener() {
+        @Override
+        public void OnClicked() {
+            System.out.println("touched");
+        }
+
+        @Override
+        public void OnReleased() {
+
+        }
+    };
     private JoystickMovedListener _listener = new JoystickMovedListener() {
         @Override
         public void OnMoved(int x, int y) {
@@ -1265,8 +1204,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             } catch (JSONException e) {
 
             }
-
-
         }
 
         @Override
@@ -1334,14 +1271,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             deleteWaypoint.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
 
-                    // ConnectScreen.boat.cancelWaypoint)
-                    stopWaypoints = true;
-                    //mv.clear();
-                    //mv.removeMarkers(markerList);
 
+                    isWaypointsRunning = false;
+                    pauseWP.setChecked(false);
+                    stopWaypoints = true;
                     isCurrentWaypointDone = true;
                     Thread thread = new Thread() {
                         public void run() {
+
                             currentBoat.returnServer().setAutonomous(false, null);
                             currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
                                 @Override
@@ -3096,6 +3033,115 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
             }
         });
+    }
+
+    //Change this to take a waypointlist in not sure global variable
+    public void startWaypoints()
+    {
+        Thread thread = new Thread() {
+            public void run() {
+                //if (currentBoat.isConnected() == true) {
+                if (currentBoat.getConnected() == true) {
+                    checktest = true;
+                    JSONObject JPose = new JSONObject();
+                    if (waypointList.size() > 0) {
+
+                        //Convert all UTM to latlong
+                        UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
+
+                        waypointStatus = tempUtm.toString();
+
+                        //Confused now, this does same thing as whats below uncomment if needed
+                        //currentBoat.addWaypoint(tempUtm.pose, tempUtm.origin);
+                        wpPose = new UtmPose[waypointList.size()];
+                        synchronized (_waypointLock) {
+                            //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
+                            for (int i = 0; i < waypointList.size(); i++) {
+                                wpPose[i] = convertLatLngUtm(waypointList.get(i));
+                            }
+                            tempPose = wpPose;
+                        }
+
+                        currentBoat.returnServer().setAutonomous(true, new FunctionObserver<Void>() {
+                            @Override
+                            public void completed(Void aVoid) {
+                                Log.i(logTag, "Autonomy set to true");
+                            }
+
+                            @Override
+                            public void failed(FunctionError functionError) {
+                                Log.i(logTag, "Failed to set autonomy");
+                            }
+                        });
+                        checkAndSleepForCmd();
+                        currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
+                            @Override
+                            public void completed(Boolean aBoolean) {
+                                isAutonomous = aBoolean;
+                                Log.i(logTag, "isAutonomous: " + isAutonomous);
+                            }
+
+                            @Override
+                            public void failed(FunctionError functionError) {
+
+                            }
+                        });
+                        currentBoat.returnServer().startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>() {
+                            @Override
+                            public void completed(Void aVoid) {
+
+                                isWaypointsRunning = true;
+                                System.out.println("startwaypoints - completed");
+                            }
+
+                            @Override
+                            public void failed(FunctionError functionError) {
+                                isCurrentWaypointDone = false;
+                                System.out.println("startwaypoints - failed");
+                                // = waypointStatus + "\n" + functionError.toString();
+                                // System.out.println(waypointStatus);
+                            }
+                        });
+                        currentBoat.returnServer().getWaypoints(new FunctionObserver<UtmPose[]>() {
+                            @Override
+                            public void completed(UtmPose[] wps) {
+                                for (UtmPose i : wps) {
+                                    System.out.println("wp");
+                                    System.out.println(i.toString());
+                                }
+                            }
+
+                            @Override
+                            public void failed(FunctionError functionError) {
+
+                            }
+                        });
+                    } else {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(), "Please Select Waypoints", Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                    try {
+
+                        mlogger.info(new JSONObject()
+                                .put("Time", sdf.format(d))
+                                .put("startWP", new JSONObject()
+                                        .put("WP_num", wpPose.length)
+                                        .put("AddWaypoint", Auto)));
+                    } catch (JSONException e) {
+                        Log.w(logTag, "Failed to log startwaypoint");
+                    } catch (Exception e) {
+
+                    }
+
+                }
+            }
+        };
+        thread.start();
+
     }
 }
 
