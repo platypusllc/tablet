@@ -8,6 +8,7 @@ import android.graphics.Color;
 
 import com.mapbox.mapboxsdk.annotations.Polygon;
 import com.mapbox.mapboxsdk.annotations.PolygonOptions;
+import com.mapbox.mapboxsdk.constants.MathConstants;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
 import java.lang.reflect.Array;
@@ -16,9 +17,12 @@ import java.util.Scanner;
 
 public class PolyArea
 {
+    final double MAXDISTFROMSIDE = .0000898;;
+    final double SUBTRACTDIST = MAXDISTFROMSIDE/2;
     private LatLng centroid;
     ArrayList<LatLng> vertices;
     ArrayList<LatLng> originalVerts;
+    final double DIST= .0000898; //10 meters
     public ArrayList<LatLng> quickHull(ArrayList<LatLng> points)
     {
         originalVerts = new ArrayList<LatLng>(points);
@@ -172,6 +176,9 @@ public class PolyArea
             pointToCenter.add(new LatLng(i.getLatitude()-centroid.getLatitude(),i.getLongitude()-centroid.getLongitude()));
         }
         ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
+
+
+
         for (double i = 1; i >= 0; i-=.1)
         {
             ArrayList<LatLng> points = new ArrayList<LatLng>();
@@ -239,5 +246,120 @@ public class PolyArea
          }
          return spiralList;
      }
+    public double computeDistance(LatLng firstPoint, LatLng secondPoint)
+    {
+        double x = Math.pow((secondPoint.getLatitude() - firstPoint.getLatitude()),2);
+        double y = Math.pow((secondPoint.getLongitude() - firstPoint.getLongitude()),2);
+        return Math.sqrt(x+y);
+    }
+    public double calculateLength(LatLng vector)
+    {
+        return Math.sqrt(Math.pow(vector.getLatitude(),2) + Math.pow(vector.getLongitude(),2));
+    }
+    public LatLng normalizeVector(LatLng vector)
+    {
+        double distance = calculateLength(vector);
+        return new LatLng(vector.getLatitude()/distance, vector.getLongitude()/distance);
+    }
+    public boolean isNonAdjacentLessThan10Meters(ArrayList<LatLng> verts) {
+
+        //since all points in triangle are adjacent
+        if (verts.size() == 3)
+        {
+
+            // System.out.println("points 0 and 1" + verts.get(0) + " " + verts.get(1) + " distance: " + comput// eDistance(verts.get(0),verts.get(1)));
+            // // System.out.println("points 0 and 2" + verts.get(0) + " " + verts.get(2) + " distance: " + computeDistance(verts.get(0),verts.get(2)));
+            // // System.out.println("points 1 and 2" +
+            // verts.get(1) + " " + verts.get(2) + " distance: " +
+            // computeDistance(verts.get(1),verts.get(2)));
+
+            System.out.println("distance between points 0 and 1: " + computeDistance(verts.get(0),verts.get(1)));
+            System.out.println("distance between points 0 and 2: " + computeDistance(verts.get(0),verts.get(2)));
+            System.out.println("distance between points 0 and 3: " + computeDistance(verts.get(1),verts.get(2)));
+
+
+            System.out.println();
+            if (computeDistance(verts.get(0),verts.get(1)) < MAXDISTFROMSIDE)
+            {
+                return true;
+            }
+            else if(computeDistance(verts.get(0),verts.get(2)) < MAXDISTFROMSIDE)
+            {
+                return true;
+            }
+            else if(computeDistance(verts.get(1),verts.get(2)) < MAXDISTFROMSIDE)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        for (int i = 0; i < verts.size(); i++)
+        {
+            for (int p = i+2; p < verts.size(); p++)
+            {
+                //case where the first and last point (adjacent are
+                //being compared
+                //                        System.out.println(i + " " + p);
+                if (i == 0 && p == verts.size()-1)
+                {
+                    continue;
+                }
+                //                      System.out.println(computeDistance(verts.get(i),verts.get(p)));
+                if (computeDistance(verts.get(i),verts.get(p)) < MAXDISTFROMSIDE)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public ArrayList<ArrayList<LatLng>> createSmallerPolygonsFlat(ArrayList<LatLng> vertices) {
+
+        if (vertices.size() < 3)
+        {
+            ArrayList<ArrayList<LatLng>> temp = new ArrayList<ArrayList<LatLng>>();
+            temp.add(vertices);
+            return temp;
+        }
+        centroid = computeCentroid(vertices);
+        ArrayList<LatLng> pointToCenter = new ArrayList<LatLng>();
+
+        //normalized vectors from vertex to center
+        for (LatLng i : vertices)
+        {
+            pointToCenter.add(normalizeVector(new LatLng(i.getLatitude()-centroid.getLatitude(),i.getLongitude()-centroid.getLongitude())));
+        }
+
+        ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
+        spirals.add(vertices);
+
+        for (int i = 1; !isNonAdjacentLessThan10Meters(spirals.get(i-1)) ; i++)
+        {
+            // if (i == 20)
+            // 	{
+            // 		return null;
+            // 	}
+            //the last layer to be added
+            ArrayList<LatLng> previousPolygon = spirals.get(i-1);
+            //upcoming layer
+            ArrayList<LatLng> nextPolygon = new ArrayList<LatLng>();
+            //for (LatLng p : pointToCenter)
+
+            for (int t = 0; t < pointToCenter.size(); t++)
+            {
+                nextPolygon.add(new LatLng(previousPolygon.get(t).getLatitude()-pointToCenter.get(t).getLatitude()*SUBTRACTDIST,previousPolygon.get(t).getLongitude()-pointToCenter.get(t).getLongitude()*SUBTRACTDIST));
+            }
+            spirals.add(nextPolygon);
+            System.out.println("New Polygon");
+            for (LatLng a : nextPolygon)
+            {
+                System.out.println(a);
+            }
+            System.out.println("");
+        }
+        return spirals;
+    }
 
 }

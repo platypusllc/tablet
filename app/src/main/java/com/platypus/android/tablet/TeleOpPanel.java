@@ -72,6 +72,7 @@ import android.net.ConnectivityManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.graphics.Matrix;
 
@@ -171,6 +172,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Button preimeter = null;
     Button mapButton = null;
     Button centerToBoat = null;
+    Button startRegion = null;
 
     //TextView log = null;
     Handler network = new Handler();
@@ -323,6 +325,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     ArrayList<Marker> markerList = new ArrayList(); //List of all the
     ArrayList<Marker> boundryList = new ArrayList();
     ArrayList<LatLng> lastAdded = new ArrayList<LatLng>();
+    ArrayList<ArrayList<LatLng>> spiralWaypoints = new ArrayList<ArrayList<LatLng>>();
     ArrayList<Polygon> spiralList = new ArrayList<Polygon>();
     private Polyline Waypath;
     private Polygon Boundry;
@@ -350,20 +353,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //static final String
 
     /* TODO
-    * DONE check out the tablet location marker
-    * make sure that joystick bug is fixed (emailed apk check up to see if it worked)
-    * Make callback for markers, dont add until gps lock is found
-    * Adding new waypoints doesnt go through always
     * Boat speed on that toggle button thing (gains)
     * make bottom area smaller
     * Transect distance spacing parameter
     * IMPORTANT STUFF
-    * check to see if the getmapasync works after mapbox fixes it (not yet :\ )
-    * if so, fix pan to location
-    * Switch while to timed runnable
-    * DONE See the time of background and onupdate for async task, if slow lower the poll rate
-    * DONE Or lower poll rate of just isconnected
-    * DONE Make sure is connected is working properly
+    * Moving joystick should turn autonomy off then releasing should turn back on. Joystick click listener doesnt seem to work though
+    * Get back to that later ^
+    * polygon region
     * */
 
     protected void onCreate(final Bundle savedInstanceState) {
@@ -412,6 +408,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         Title = (TextView) this.findViewById(R.id.controlScreenEnter);
         advancedOptions = (Button) this.findViewById(R.id.advopt);
         centerToBoat = (Button) this.findViewById(R.id.centermap);
+        startRegion = (Button) this.findViewById(R.id.startRegionButton);
 
         drawPoly.setBackgroundResource(R.drawable.draw_icon);
 
@@ -433,6 +430,123 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //                battery.setText("16.566");
 
         //Center map button
+        startRegion.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Thread thread = new Thread() {
+                    public void run() {
+                        //if (currentBoat.isConnected() == true) {
+                        ArrayList<LatLng> flatlist = new ArrayList<LatLng>();
+                        for (ArrayList<LatLng> list : spiralWaypoints)
+                        {
+                            for (LatLng wpoint : list)
+                            {
+                                flatlist.add(wpoint);
+                            }
+                        }
+                        if (currentBoat.getConnected() == true) {
+                            checktest = true;
+                            JSONObject JPose = new JSONObject();
+                            if (flatlist.size() > 0) {
+
+                                //Convert all UTM to latlong
+                                UtmPose tempUtm = convertLatLngUtm(flatlist.get(flatlist.size() - 1));
+
+                                waypointStatus = tempUtm.toString();
+
+                                //Confused now, this does same thing as whats below uncomment if needed
+                                //currentBoat.addWaypoint(tempUtm.pose, tempUtm.origin);
+                                wpPose = new UtmPose[flatlist.size()];
+                                synchronized (_waypointLock) {
+                                    //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
+                                    for (int i = 0; i < flatlist.size(); i++) {
+                                        wpPose[i] = convertLatLngUtm(flatlist.get(i));
+                                    }
+                                    tempPose = wpPose;
+                                }
+
+                                currentBoat.returnServer().setAutonomous(true, new FunctionObserver<Void>() {
+                                    @Override
+                                    public void completed(Void aVoid) {
+                                        Log.i(logTag, "Autonomy set to true");
+                                    }
+
+                                    @Override
+                                    public void failed(FunctionError functionError) {
+                                        Log.i(logTag, "Failed to set autonomy");
+                                    }
+                                });
+                                checkAndSleepForCmd();
+                                currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
+                                    @Override
+                                    public void completed(Boolean aBoolean) {
+                                        isAutonomous = aBoolean;
+                                        Log.i(logTag, "isAutonomous: " + isAutonomous);
+                                    }
+
+                                    @Override
+                                    public void failed(FunctionError functionError) {
+
+                                    }
+                                });
+                                currentBoat.returnServer().startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>() {
+                                    @Override
+                                    public void completed(Void aVoid) {
+
+                                        isWaypointsRunning = true;
+                                        System.out.println("startwaypoints - completed");
+                                    }
+
+                                    @Override
+                                    public void failed(FunctionError functionError) {
+                                        isCurrentWaypointDone = false;
+                                        System.out.println("startwaypoints - failed");
+                                        // = waypointStatus + "\n" + functionError.toString();
+                                        // System.out.println(waypointStatus);
+                                    }
+                                });
+                                currentBoat.returnServer().getWaypoints(new FunctionObserver<UtmPose[]>() {
+                                    @Override
+                                    public void completed(UtmPose[] wps) {
+                                        for (UtmPose i : wps) {
+                                            System.out.println("wp");
+                                            System.out.println(i.toString());
+                                        }
+                                    }
+
+                                    @Override
+                                    public void failed(FunctionError functionError) {
+
+                                    }
+                                });
+                            } else {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(getApplicationContext(), "Please Select Waypoints", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                            }
+                            try {
+
+                                mlogger.info(new JSONObject()
+                                        .put("Time", sdf.format(d))
+                                        .put("startWP", new JSONObject()
+                                                .put("WP_num", wpPose.length)
+                                                .put("AddWaypoint", Auto)));
+                            } catch (JSONException e) {
+                                Log.w(logTag, "Failed to log startwaypoint");
+                            } catch (Exception e) {
+
+                            }
+
+                        }
+                    }
+                };
+                thread.start();
+
+            }
+        });
         centerToBoat.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -1166,17 +1280,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     // *******************************
     //  JoystickView listener
     // *******************************
-    JoystickClickedListener listen = new JoystickClickedListener() {
-        @Override
-        public void OnClicked() {
-            System.out.println("touched");
-        }
 
-        @Override
-        public void OnReleased() {
-
-        }
-    };
     private JoystickMovedListener _listener = new JoystickMovedListener() {
         @Override
         public void OnMoved(int x, int y) {
@@ -1360,7 +1464,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                         /* If tpl size =< 0 mapbox segfaults (submitted bug report) */
                         if (touchpointList.size() > 0) {
-                            ArrayList<ArrayList<LatLng>> spirals = area.createSmallerPolygons(touchpointList);
+                            //ArrayList<ArrayList<LatLng>> spirals = area.createSmallerPolygons(touchpointList);
+                            ArrayList<ArrayList<LatLng>> spirals = area.createSmallerPolygonsFlat(touchpointList);
+                            spiralWaypoints = spirals;
                             drawSmallerPolys(spirals);
                         }
                     } catch (Exception e) {
@@ -1715,7 +1821,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             // Adding Joystick move listener//
             // ******************************//
             joystick.setOnJostickMovedListener(_listener);
+            joystick.setOnJostickClickedListener(new JoystickClickedListener() {
+                @Override
+                public void OnClicked() {
+                    System.out.println("joystick clicked");
+                }
 
+                @Override
+                public void OnReleased() {
+                    System.out.println("joystick released");
+                }
+            });
             DecimalFormat velFormatter = new DecimalFormat("####.###");
 
             //thrustTemp = fromProgressToRange(thrust.getProgress(), THRUST_MIN, THRUST_MAX);
@@ -2891,7 +3007,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             lastAdded.remove(tempLastAdded.get(0));
         }
 
-        spirals = area.createSmallerPolygons(touchpointList);
+//        spirals = area.createSmallerPolygons(touchpointList);
+        spirals = area.createSmallerPolygonsFlat(touchpointList);
         drawSmallerPolys(spirals);
 
         for (LatLng i : touchpointList) {
