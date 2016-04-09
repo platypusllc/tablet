@@ -17,8 +17,8 @@ import java.util.Scanner;
 
 public class PolyArea
 {
-    final double MAXDISTFROMSIDE = .0000898;;
-    final double SUBTRACTDIST = MAXDISTFROMSIDE/2;
+    final double MAXDISTFROMSIDE = .0000898;; //10 meters
+    final double SUBTRACTDIST = MAXDISTFROMSIDE/2; //5 meters
     private LatLng centroid;
     ArrayList<LatLng> vertices;
     ArrayList<LatLng> originalVerts;
@@ -317,6 +317,7 @@ public class PolyArea
 
     public ArrayList<ArrayList<LatLng>> createSmallerPolygonsFlat(ArrayList<LatLng> vertices) {
 
+        //need at least a triangle
         if (vertices.size() < 3)
         {
             ArrayList<ArrayList<LatLng>> temp = new ArrayList<ArrayList<LatLng>>();
@@ -335,6 +336,10 @@ public class PolyArea
         ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
         spirals.add(vertices);
 
+        /*
+        * While the distance between points is greater than 10 meters
+        * add a new arraylist<latLng> to spirals which is computed by point=point-vectorToCenter*distance
+        * */
         for (int i = 1; !isNonAdjacentLessThan10Meters(spirals.get(i-1)) ; i++)
         {
             // if (i == 20)

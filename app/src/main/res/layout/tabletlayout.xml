@@ -438,9 +438,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Autonomy Allowed"
+            android:checked="false"
             android:layout_alignParentBottom="true"
-            android:layout_alignStart="@+id/log"
-            android:checked="false" />
+            android:layout_alignEnd="@+id/log" />
 
         <TextView
             android:id="@+id/log"
@@ -455,14 +455,14 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:id="@+id/relativeLayout_area"
-        android:layout_toRightOf="@+id/relativeLayout_waypoint"
         android:layout_alignEnd="@+id/relativeLayout_map"
         android:layout_alignTop="@+id/relativeLayout_control"
         android:paddingTop="10dp"
         android:paddingLeft="15dp"
         android:paddingRight="10dp"
         android:layout_marginLeft="1dp"
-        android:background="@drawable/border">
+        android:background="@drawable/border"
+        android:layout_toEndOf="@+id/relativeLayout_waypoint">
 
         <TextView
             android:id="@+id/area"
@@ -514,7 +514,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Start Region"
-            android:id="@+id/button"
+            android:id="@+id/startRegionButton"
             android:layout_alignParentBottom="true"
             android:layout_toEndOf="@+id/removeMap" />
 
