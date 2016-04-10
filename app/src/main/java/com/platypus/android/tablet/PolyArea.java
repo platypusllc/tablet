@@ -273,12 +273,12 @@ public class PolyArea
             // verts.get(1) + " " + verts.get(2) + " distance: " +
             // computeDistance(verts.get(1),verts.get(2)));
 
-            System.out.println("distance between points 0 and 1: " + computeDistance(verts.get(0),verts.get(1)));
-            System.out.println("distance between points 0 and 2: " + computeDistance(verts.get(0),verts.get(2)));
-            System.out.println("distance between points 0 and 3: " + computeDistance(verts.get(1),verts.get(2)));
+            // System.out.println("distance between points 0 and 1: " + computeDistance(verts.get(0),verts.get(1)));
+            // System.out.println("distance between points 0 and 2: " + computeDistance(verts.get(0),verts.get(2)));
+            // System.out.println("distance between points 0 and 3: " + computeDistance(verts.get(1),verts.get(2)));
 
 
-            System.out.println();
+            //				System.out.println();
             if (computeDistance(verts.get(0),verts.get(1)) < MAXDISTFROMSIDE)
             {
                 return true;
@@ -317,13 +317,6 @@ public class PolyArea
 
     public ArrayList<ArrayList<LatLng>> createSmallerPolygonsFlat(ArrayList<LatLng> vertices) {
 
-        //need at least a triangle
-        if (vertices.size() < 3)
-        {
-            ArrayList<ArrayList<LatLng>> temp = new ArrayList<ArrayList<LatLng>>();
-            temp.add(vertices);
-            return temp;
-        }
         centroid = computeCentroid(vertices);
         ArrayList<LatLng> pointToCenter = new ArrayList<LatLng>();
 
@@ -335,34 +328,40 @@ public class PolyArea
 
         ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
         spirals.add(vertices);
-
-        /*
-        * While the distance between points is greater than 10 meters
-        * add a new arraylist<latLng> to spirals which is computed by point=point-vectorToCenter*distance
-        * */
-        for (int i = 1; !isNonAdjacentLessThan10Meters(spirals.get(i-1)) ; i++)
+        int i = 0;
+        while(!isNonAdjacentLessThan10Meters(spirals.get(spirals.size()-1)))
         {
-            // if (i == 20)
-            // 	{
-            // 		return null;
-            // 	}
-            //the last layer to be added
-            ArrayList<LatLng> previousPolygon = spirals.get(i-1);
+            i++;
+            //uncomment this for testing if printlns are flooding output
+
+            //the last layer added
+            ArrayList<LatLng> previousPolygon = spirals.get(spirals.size()-1);
             //upcoming layer
             ArrayList<LatLng> nextPolygon = new ArrayList<LatLng>();
-            //for (LatLng p : pointToCenter)
 
+            for (LatLng p : previousPolygon)
+            {
+                LatLng temp = new LatLng(centroid.getLatitude() - p.getLatitude(),centroid.getLongitude()-p.getLongitude());
+                System.out.println("dist " + calculateLength(temp));
+                if (calculateLength(temp) < SUBTRACTDIST)
+                {
+                    System.out.println("spirals: " + spirals.size());
+                    return spirals;
+                }
+            }
+
+            //for (LatLng p : pointToCenter)
             for (int t = 0; t < pointToCenter.size(); t++)
             {
                 nextPolygon.add(new LatLng(previousPolygon.get(t).getLatitude()-pointToCenter.get(t).getLatitude()*SUBTRACTDIST,previousPolygon.get(t).getLongitude()-pointToCenter.get(t).getLongitude()*SUBTRACTDIST));
             }
             spirals.add(nextPolygon);
-            System.out.println("New Polygon");
-            for (LatLng a : nextPolygon)
-            {
-                System.out.println(a);
-            }
-            System.out.println("");
+            // System.out.println("New Polygon");
+            // for (LatLng a : nextPolygon)
+            // 	{
+            // 		System.out.println(a);
+            // 	}
+            // System.out.println("");
         }
         return spirals;
     }

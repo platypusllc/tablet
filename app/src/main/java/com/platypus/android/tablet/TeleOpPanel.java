@@ -437,11 +437,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     public void run() {
                         //if (currentBoat.isConnected() == true) {
                         ArrayList<LatLng> flatlist = new ArrayList<LatLng>();
+                        System.out.println("wpsize + " + spiralWaypoints.size());
                         for (ArrayList<LatLng> list : spiralWaypoints)
                         {
                             for (LatLng wpoint : list)
                             {
                                 flatlist.add(wpoint);
+
                             }
                         }
                         if (currentBoat.getConnected() == true) {
@@ -501,6 +503,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                     public void failed(FunctionError functionError) {
                                         isCurrentWaypointDone = false;
                                         System.out.println("startwaypoints - failed");
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Toast.makeText(getApplicationContext(), "Failed to start waypoints, you may be using a too large region", Toast.LENGTH_LONG).show();
+                                            }
+                                        });
+
                                         // = waypointStatus + "\n" + functionError.toString();
                                         // System.out.println(waypointStatus);
                                     }
@@ -509,8 +518,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                     @Override
                                     public void completed(UtmPose[] wps) {
                                         for (UtmPose i : wps) {
-                                            System.out.println("wp");
-                                            System.out.println(i.toString());
+                                            System.out.println("waypoints" + i.toString());
                                         }
                                     }
 
@@ -1461,13 +1469,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         PolyArea area = new PolyArea();
 
 
-
-                        /* If tpl size =< 0 mapbox segfaults (submitted bug report) */
                         if (touchpointList.size() > 0) {
-                            //ArrayList<ArrayList<LatLng>> spirals = area.createSmallerPolygons(touchpointList);
-                            ArrayList<ArrayList<LatLng>> spirals = area.createSmallerPolygonsFlat(touchpointList);
-                            spiralWaypoints = spirals;
-                            drawSmallerPolys(spirals);
+                            System.out.println("spiral called");
+                            spiralWaypoints = area.createSmallerPolygonsFlat(touchpointList);
+                            System.out.println("spiral " + spiralWaypoints.size());
+                            drawSmallerPolys(spiralWaypoints);
                         }
                     } catch (Exception e) {
                         //System.out.println(e.toString());
@@ -3008,8 +3014,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
 
 //        spirals = area.createSmallerPolygons(touchpointList);
-        spirals = area.createSmallerPolygonsFlat(touchpointList);
-        drawSmallerPolys(spirals);
+        spiralWaypoints = area.createSmallerPolygonsFlat(touchpointList);
+        drawSmallerPolys(spiralWaypoints);
 
         for (LatLng i : touchpointList) {
             boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
