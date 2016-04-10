@@ -765,6 +765,46 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 mMapboxMap.setStyle(Style.MAPBOX_STREETS);
                 mMapboxMap.setMyLocationEnabled(true); //show current location
                 mMapboxMap.getUiSettings().setRotateGesturesEnabled(false); //broken on mapbox side, currently fixing issue 4635 https://github.com/mapbox/mapbox-gl-native/issues/4635
+                mMapboxMap.setOnMarkerClickListener(new MapboxMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(@NonNull Marker marker) {
+                        final int index = markerList.indexOf(marker);
+                        final Marker mark = marker;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                                builder.setMessage("Delete this waypoint?")
+                                        .setCancelable(false)
+                                        .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                markerList.remove(index);
+                                                waypointList.remove(index);
+                                                mMapboxMap.removeMarker(mark);
+                                                mMapboxMap.removePolyline(Waypath);
+                                                Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+
+                                                for (int i = 0; i < markerList.size(); i++)
+                                                {
+                                                    //edit snipped, cant do this atm
+                                                }
+                                            }
+                                        })
+                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                return;
+                                            }
+                                        });
+
+                                AlertDialog alert = builder.create();
+                                alert.show();
+
+                            }
+                        });
+                        return false;
+                    }
+                });
 
                 mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
                     @Override
@@ -2627,8 +2667,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         //System.out.println(i.getLatitude() + " " + i.getLongitude());
                         markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude())).title(Integer.toString(num))));
                         waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
-
-
                         num++;
                     }
                     Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
