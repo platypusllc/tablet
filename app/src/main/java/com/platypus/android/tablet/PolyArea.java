@@ -317,15 +317,6 @@ public class PolyArea
 
     public ArrayList<ArrayList<LatLng>> createSmallerPolygonsFlat(ArrayList<LatLng> vertices) {
 
-        centroid = computeCentroid(vertices);
-        ArrayList<LatLng> pointToCenter = new ArrayList<LatLng>();
-
-        //normalized vectors from vertex to center
-        for (LatLng i : vertices)
-        {
-            pointToCenter.add(normalizeVector(new LatLng(i.getLatitude()-centroid.getLatitude(),i.getLongitude()-centroid.getLongitude())));
-        }
-
         ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
         spirals.add(vertices);
         int i = 0;
@@ -333,6 +324,13 @@ public class PolyArea
         {
             i++;
             //uncomment this for testing if printlns are flooding output
+            centroid = computeCentroid(spirals.get(spirals.size()-1));
+            ArrayList<LatLng> pointToCenter = new ArrayList<LatLng>();
+            //normalized vectors from vertex to center
+            for (LatLng it : spirals.get(spirals.size()-1))
+            {
+                pointToCenter.add(normalizeVector(new LatLng(it.getLatitude()-centroid.getLatitude(),it.getLongitude()-centroid.getLongitude())));
+            }
 
             //the last layer added
             ArrayList<LatLng> previousPolygon = spirals.get(spirals.size()-1);
@@ -342,10 +340,10 @@ public class PolyArea
             for (LatLng p : previousPolygon)
             {
                 LatLng temp = new LatLng(centroid.getLatitude() - p.getLatitude(),centroid.getLongitude()-p.getLongitude());
-                System.out.println("dist " + calculateLength(temp));
+                //System.out.println("dist " + calculateLength(temp));
                 if (calculateLength(temp) < SUBTRACTDIST)
                 {
-                    System.out.println("spirals: " + spirals.size());
+                    //System.out.println("spirals: " + spirals.size());
                     return spirals;
                 }
             }
