@@ -305,10 +305,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     private boolean startDraw = false;
 
     boolean Mapping_S = false;
-    double[] low_tPID = {.45, .5, .5};
-    double[] tPID = {.7, .5, .5};
-    double[] low_rPID = {.1, 0, .3};
-    double[] rPID = {.2, 0, .3};
+    double[] low_tPID = {.2, .0, .0};
+    double[] tPID = {.6, .0, .0};
+
+    double[] low_rPID = {.4, 0, .1};
+    double[] rPID = {1, 0, .2};
 
     private UtmPose _pose;
     private UtmPose[] wpPose = null, tempPose = null;
@@ -995,27 +996,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         }
 
 
-                        if (speed.isChecked()) {
-                            currentBoat.returnServer().setGains(0, low_tPID, null);
-                            currentBoat.returnServer().setGains(5, low_rPID, null);
-                        } else {
-                            currentBoat.returnServer().setGains(0, tPID, null);
-                            currentBoat.returnServer().setGains(5, rPID, null);
-                        }
+                        //System.out.println(currentBoat.returnServer().getGains(0);)
 
 
-                        currentBoat.returnServer().getGains(0, new FunctionObserver<double[]>() {
-                            @Override
-                            public void completed(double[] doubles) {
-                                Log.i(logTag, "PID: " + doubles[0]);
-                            }
-
-                            @Override
-                            public void failed(FunctionError functionError) {
-
-                            }
-                        });
-                    }
+                                            }
                 };
                 thread.start();
             }
@@ -1047,7 +1031,40 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         });
 
+        speed.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
+                Thread thread = new Thread()
+                {
+                    public void run()
+                    {
+                        if (currentBoat != null) {
+                            if (speed.isChecked()) {
+                                currentBoat.returnServer().setGains(0, low_tPID, null);
+                                currentBoat.returnServer().setGains(5, low_rPID, null);
+                            } else {
+                                currentBoat.returnServer().setGains(0, tPID, null);
+                                currentBoat.returnServer().setGains(5, rPID, null);
+                            }
+                            currentBoat.returnServer().getGains(0, new FunctionObserver<double[]>() {
+                                @Override
+                                public void completed(double[] doubles) {
+                                    Log.i(logTag, "PID: " + doubles[0]);
+                                }
+                                @Override
+                                public void failed(FunctionError functionError) {
+
+                                }
+                            });
+                        }
+                    }
+                };
+                thread.start();
+
+            }
+
+        });
         //        speed.setOnClickListener(new OnClickListener() {
         //            @Override
         //            public void onClick(View v) {
@@ -3100,6 +3117,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //OfflineRegionMetadata metadata = ...;
 
 // Create region
+
         mOfflineManager.createOfflineRegion(definition, null,
                 new OfflineManager.CreateOfflineRegionCallback() {
                     @Override
@@ -3108,7 +3126,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         offlineRegion.setObserver(new OfflineRegion.OfflineRegionObserver() {
                             @Override
                             public void onStatusChanged(OfflineRegionStatus status) {
-                                System.out.println("status : + " + status.toString());
+                                System.out.println("status : + " + status.getDownloadState());
                             }
 
                             @Override
@@ -3146,16 +3164,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         });
     }
     public void updateMarkers() {
-        //Unfortunetly this causes UI lag :(
-        //TODO update userloc on different schedule at lower update rate to reduce UI lag
+
         Runnable markerRun = new Runnable() {
             @Override
             public void run() {
                 if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null) {
                     boat2.setPosition(currentBoat.getLocation());
-
-                    //userlocation = LocationServices.FusedLocationApi.getLastLocation();
-                    //userloc.setPosition(new LatLng(userlocation.getLatitude(), userlocation.getLongitude()));
                 }
             }
         };
@@ -3163,15 +3177,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         exec.scheduleAtFixedRate(markerRun, 0, 500, TimeUnit.MILLISECONDS);
 
     }
-    /*
-    * TODO
-    * Look into previous waypoint bug
-    * Add start region button
-    * Implement this
-    * Send all wps at once? or send each spiral wait for completion then send new ones
-    *
-    *
-    */
 
     /*Not implemented on server side yet */
     /* Should be called from some start region button */
