@@ -1810,7 +1810,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 if (Data.channel == 4) {
                     String[] batteries = sensorV.split(",");
                     battery.setText(batteries[0]);
-                    battery.setTextColor(isAverage(Data, batteries[0]));
+                    if (Double.parseDouble(batteries[0]) < 14.8)
+                    {
+                        battery.setTextColor(Color.RED);
+                    }
+                    if (Double.parseDouble(batteries[0]) < 15.2)
+                    {
+                        battery.setTextColor(Color.YELLOW);
+                    }
+                    else
+                    {
+                        battery.setTextColor(Color.GREEN);
+                    }
+
+                    //battery.setTextColor(isAverage(Data, batteries[0]));
                     double value = (Double.parseDouble(batteries[0]) + getAverage(Data)) / 2;
                     //Log.i(logTag,"Average = "+ value);
 
@@ -3308,7 +3321,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         };
         thread.start();
-
     }
 }
 

@@ -170,7 +170,7 @@
             <com.mapbox.mapboxsdk.maps.MapView
                 android:id="@+id/mapview"
                 android:layout_width="fill_parent"
-                android:layout_height="340dp"/>
+                android:layout_height="550dp"/>
             <Button
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
@@ -250,7 +250,7 @@
             android:id="@+id/batteryTextView"
             android:layout_marginLeft="20dp"
             android:layout_alignParentTop="true"
-            android:layout_alignParentBottom="true" />
+            android:layout_alignBottom="@+id/batteryVoltage" />
 
         <TextView
             android:layout_width="wrap_content"
