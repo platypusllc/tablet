@@ -367,7 +367,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         super.onCreate(savedInstanceState);
         //this.setContentView(R.layout.tabletlayout_nexus7);  // layout for LG GpadF 8
         //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
+        //this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
+        this.setContentView(R.layout.tabletlayout7inch);
 
         ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
         //thrust = (SeekBar) this.findViewById(R.id.thrustBar);
@@ -3147,21 +3148,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         //Log.e(LOG_TAG, "Error: " + error);
                     }
                 });
-
+        System.out.println("finished downloading maps");
         //list offline maps, make sure it got saved..
-        mOfflineManager.listOfflineRegions(new OfflineManager.ListOfflineRegionsCallback() {
-            @Override
-            public void onList(OfflineRegion[] offlineRegions) {
-                for (OfflineRegion region : offlineRegions) {
-                    System.out.println("mbregion " + region.toString());
-                }
-            }
-
-            @Override
-            public void onError(String error) {
-                System.out.println("error " + error);
-            }
-        });
+//        mOfflineManager.listOfflineRegions(new OfflineManager.ListOfflineRegionsCallback() {
+//            @Override
+//            public void onList(OfflineRegion[] offlineRegions) {
+//                for (OfflineRegion region : offlineRegions) {
+//                    System.out.println("mbregion " + region.toString());
+//                }
+//            }
+//
+//            @Override
+//            public void onError(String error) {
+//                System.out.println("error " + error);
+//            }
+//        });
     }
     public void updateMarkers() {
 
