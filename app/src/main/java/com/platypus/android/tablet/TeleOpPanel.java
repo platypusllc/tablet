@@ -367,8 +367,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         super.onCreate(savedInstanceState);
         //this.setContentView(R.layout.tabletlayout_nexus7);  // layout for LG GpadF 8
         //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        //this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
-        this.setContentView(R.layout.tabletlayout7inch);
+        this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
+        //this.setContentView(R.layout.tabletlayout7inch);
 
         ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
         //thrust = (SeekBar) this.findViewById(R.id.thrustBar);
@@ -1107,6 +1107,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     @Override
     protected void onStart() {
         super.onStart();
+
   //      mv.onStart();
     }
 
@@ -1529,7 +1530,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                         if (touchpointList.size() > 0) {
                             System.out.println("spiral called");
-                            spiralWaypoints = area.createSmallerPolygonsFlat(touchpointList);
+                            //spiralWaypoints = area.createSmallerPolygonsFlat(touchpointList);
+                            spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList);
                             System.out.println("spiral " + spiralWaypoints.size());
                             drawSmallerPolys(spiralWaypoints);
                         }
@@ -3083,7 +3085,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
 
 //        spirals = area.createSmallerPolygons(touchpointList);
-        spiralWaypoints = area.createSmallerPolygonsFlat(touchpointList);
+        spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList);
         drawSmallerPolys(spiralWaypoints);
 
         for (LatLng i : touchpointList) {
