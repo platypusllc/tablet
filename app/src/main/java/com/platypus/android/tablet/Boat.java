@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.net.InetSocketAddress;
 
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.FunctionObserver;
 import com.platypus.crw.PoseListener;
 import com.platypus.crw.SensorListener;
@@ -34,6 +35,7 @@ public class Boat
 	private final Object _waypointLock = new Object();
 	private String boatLog = "";
 	private String logTag = Boat.class.getName();
+	private LatLng currentLocation = null;
 
 	public Boat()
 	{
@@ -47,11 +49,31 @@ public class Boat
 		server = new UdpVehicleServer();
 		try {
 			if(pl != null) {
-				server.addPoseListener(pl, null);
+				server.addPoseListener(pl, new FunctionObserver<Void>() {
+					@Override
+					public void completed(Void aVoid) {
+						Log.i("Boat", "addPoseListener");
+					}
+
+					@Override
+					public void failed(FunctionError functionError) {
+
+					}
+				});
 			}
 			if(sl != null) {
 				for (int channel = 0; channel < 5; channel++) {
-					server.addSensorListener(channel, sl, null);
+					server.addSensorListener(channel, sl, new FunctionObserver<Void>() {
+						@Override
+						public void completed(Void aVoid) {
+
+						}
+
+						@Override
+						public void failed(FunctionError functionError) {
+
+						}
+					});
 				}
 			}
 		}
@@ -147,22 +169,37 @@ public class Boat
 		return zValue;
 	}
 
-	public boolean isConnected()
+    public boolean isConnected()
 	{
 		server.isConnected(new FunctionObserver<Boolean>()
 		{
 			public void completed(Boolean v)
 			{
-				connected = true;
+                connected = true;
+                try {
+                    Thread.sleep(300);
+                }
+                catch(InterruptedException e)
+                {
+                    System.out.println(e.toString());
+                }
+                isConnected();
 			}
 
 			public void failed(FunctionError fe)
 			{
 				connected = false;
+                try {
+                    Thread.sleep(300);
+                }
+                catch(InterruptedException e)
+                {
+                    System.out.println(e.toString());
+                }
+                isConnected();
 			}
 		});
-		return connected;
-
+        return connected;
 	}
 
 	public boolean getConnected()
@@ -181,11 +218,6 @@ public class Boat
 			return;
 
 		UtmPose[] wpPose = new UtmPose[1];
-		// synchronized (_waypointLock)
-		// {
-		// wpPose[0] = _waypoint;
-		// }
-		//
 
 		wpPose[0] = new UtmPose(_pose, _origin);
 		server.startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>()
@@ -224,4 +256,13 @@ public class Boat
 	{
 		boatLog = boatLog + s  + "\n";
 	}
+	public LatLng getLocation()
+	{
+		return currentLocation;
+	}
+	public void setLocation(LatLng loc)
+	{
+		currentLocation = loc;
+	}
+
 }

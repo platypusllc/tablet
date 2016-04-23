@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+
+    android:layout_gravity="center_vertical">
+
+
+
+    <RelativeLayout
+        android:layout_width="320dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/thrustpids">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Thrust PID"
+            android:id="@+id/thrustPIDtext"
+            android:layout_gravity="center_horizontal" />
+        <EditText
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/thrustfirst"
+            android:text="0.0"
+            android:layout_below="@+id/thrustPIDtext"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+        <EditText
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/thrustsecond"
+            android:text="0.0"
+            android:layout_below="@+id/thrustPIDtext"
+            android:layout_toRightOf="@+id/thrustfirst"
+            android:layout_toEndOf="@+id/thrustfirst" />
+        <EditText
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/thrustthird"
+            android:text="0.0"
+            android:layout_below="@+id/thrustPIDtext"
+            android:layout_toRightOf="@+id/thrustsecond"
+            android:layout_toEndOf="@+id/thrustsecond" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Rudder PID"
+            android:layout_gravity="center_horizontal"
+            android:id="@+id/textView2"
+            android:layout_below="@+id/thrustfirst"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="36dp" />
+
+        <EditText
+            android:text="0.0"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/rudderthird"
+            android:layout_below="@+id/textView2"
+            android:layout_toRightOf="@+id/ruddersecond"
+            android:layout_toEndOf="@+id/ruddersecond" />
+
+        <EditText
+            android:text="0.0"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/rudderfirst"
+            android:layout_below="@+id/textView2"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+        <EditText
+            android:text="0.0"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/ruddersecond"
+            android:layout_below="@+id/textView2"
+            android:layout_toRightOf="@+id/thrustPIDtext"
+            android:layout_toEndOf="@+id/thrustPIDtext" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set PID"
+            android:id="@+id/pidsubmit"
+            android:layout_below="@+id/rudderfirst"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="33dp" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        />
+
+
+
+    </RelativeLayout>
+
+
+</LinearLayout>

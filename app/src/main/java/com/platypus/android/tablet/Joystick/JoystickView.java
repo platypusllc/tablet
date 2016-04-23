@@ -474,12 +474,14 @@ public class JoystickView extends View {
                 clickListener.OnReleased();
                 this.clicked = false;
 //                              Log.d(TAG, "reset click");
+                System.out.println("joystick class reset click");
                 invalidate();
             }
             else if ( !clicked && touchPressure >= clickThreshold ) {
                 clicked = true;
                 clickListener.OnClicked();
 //                              Log.d(TAG, "click");
+                System.out.println("joystick class click");
                 invalidate();
                 performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             }

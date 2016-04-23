@@ -1,10 +1,36 @@
 apply plugin: 'com.android.application'
+
+task accessToken {
+    def tokenFile = new File("app/src/main/res/values/developer-config.xml")
+    if (!tokenFile.exists()) {
+        String tokenFileContents = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                "<resources>\n" +
+                "    <string name=\"mapbox_access_token\">" + "$System.env.MAPBOX_ACCESS_TOKEN" + "</string>\n" +
+                "</resources>"
+
+        if (tokenFileContents == null) {
+            throw new InvalidUserDataException("You must set the MAPBOX_ACCESS_TOKEN environment variable.")
+        }
+        tokenFile.write(tokenFileContents)
+    }
+}
+
+gradle.projectsEvaluated {
+    preBuild.dependsOn('accessToken')
+}
+
+ext {
+    supportLibVersion = '23.1.1'
+}
+
+
+
 android {
-    compileSdkVersion 21
-    buildToolsVersion '21.1.2'
+    compileSdkVersion 23
+    buildToolsVersion '23'
     defaultConfig {
         applicationId "com.platypus.android.tablet"
-        minSdkVersion 15
+        minSdkVersion 19
         targetSdkVersion 21
     }
     buildTypes {
@@ -25,7 +51,7 @@ android {
                     def date = new Date();
                     //def formattedDate = date.format('yyyyMMddHHmmss')
                     output.outputFile = new File(output.outputFile.parent,
-                            output.outputFile.name.replace("-release", "-Tablet")
+                            output.outputFile.name.replace("app-release", "platypus-Tablet")
                             //for Debug use output.outputFile = new File(output.outputFile.parent,
                             //                             output.outputFile.name.replace("-debug", "-" + formattedDate)
                     )
@@ -36,20 +62,20 @@ android {
 
 }
 dependencies {
-    //    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:2.3.0@aar') {
-    //       transitive = true
-    //    }
-    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:0.7.4@aar') {
+    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.1.0-SNAPSHOT@aar') {
         transitive = true
     }
-    compile files('libs/jscience.jar')
     compile files('libs/activation.jar')
     compile files('libs/mail.jar')
     compile files('libs/additionnal.jar')
-    compile files('libs/platypus-core.jar')
     // compile files('libs/mapbox-android-sdk-0.7.4.jar')
+    compile files('libs/microlog4android-1.0.0.jar')
+    compile files('libs/jscience.jar')
+    compile files('libs/platypus-core.jar')
+    compile 'com.android.support:support-v4:23.2.0'
 }
 
 repositories {
     mavenCentral()
+    maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
 }

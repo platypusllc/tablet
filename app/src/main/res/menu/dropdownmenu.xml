@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent">
+
+    <item
+        android:id="@+id/one"
+        android:title="Save Map"/>
+    <item
+        android:id="@+id/sat"
+        android:title="Satellite Map" />
+    <item
+        android:id="@+id/vector"
+        android:title="Vector Map" />
+
+    <item
+        android:id="@+id/three"
+        android:title="Set Home"/>
+
+    <item
+        android:id="@+id/four"
+        android:title="Go Home"/>
+    <item
+        android:id="@+id/pid"
+        android:title="Set PID" />
+    <item
+        android:id="@+id/savewpbutton"
+        android:title="Save Waypoints" />
+    <item
+        android:id="@+id/loadwpbutton"
+        android:title="Load Waypoints" />
+
+</menu>
