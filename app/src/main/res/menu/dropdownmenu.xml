@@ -5,18 +5,12 @@
     <item
         android:id="@+id/one"
         android:title="Save Map"/>
-
     <item
-        android:id="@+id/two"
-        android:title="Load Map"/>
-
+        android:id="@+id/sat"
+        android:title="Satellite Map" />
     <item
-        android:id="@+id/refresh"
-        android:title="Refresh Map"/>
-
-    <item
-        android:id="@+id/reload"
-        android:title="Reload Map"/>
+        android:id="@+id/vector"
+        android:title="Vector Map" />
 
     <item
         android:id="@+id/three"
@@ -28,4 +22,11 @@
     <item
         android:id="@+id/pid"
         android:title="Set PID" />
+    <item
+        android:id="@+id/savewpbutton"
+        android:title="Save Waypoints" />
+    <item
+        android:id="@+id/loadwpbutton"
+        android:title="Load Waypoints" />
+
 </menu>

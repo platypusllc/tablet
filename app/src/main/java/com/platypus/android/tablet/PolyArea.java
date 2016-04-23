@@ -1,27 +1,21 @@
-package com.platypus.android.tablet;
 
 /**
  * Created by shenty on 2/13/16.
  */
-import android.graphics.Color;
+package com.platypus.android.tablet;
 
-import com.mapbox.mapboxsdk.annotations.Polygon;
-import com.mapbox.mapboxsdk.annotations.PolygonOptions;
-import com.mapbox.mapboxsdk.constants.MathConstants;
 import com.mapbox.mapboxsdk.geometry.LatLng;
-
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Scanner;
+
 
 public class PolyArea
 {
 
-    // final double MAXDISTFROMSIDE = .0000898; //distance between wayp
-    // final double SUBTRACTDIST = MAXDISTFROMSIDE/2; //subtracted
+     final double MAXDISTFROMSIDE = .0000898; //distance between wayp
+     final double SUBTRACTDIST = MAXDISTFROMSIDE/2; //subtracted
     // dist
-    final double MAXDISTFROMSIDE = .4; //distance between wayp
-    final double SUBTRACTDIST = .2; //subtracted dist
+//    final double MAXDISTFROMSIDE = .4; //distance between wayp
+//    final double SUBTRACTDIST = .2; //subtracted dist
 
     private LatLng centroid;
     ArrayList<LatLng> vertices;
@@ -450,7 +444,10 @@ public class PolyArea
 
         ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
         spirals.add(polygon); //add first polygon
-
+        if (polygon.size() < 3)
+        {
+            return spirals;
+        }
 
         //compute all of the bisecting vectors note these look wrong
 
@@ -491,10 +488,10 @@ public class PolyArea
                 interiorAngles.add(findInteriorAngle(edgeVectors.get(i),edgeVectors.get(i+1)));
             }
             interiorAngles.add(findInteriorAngle(edgeVectors.get(edgeVectors.size()-1),edgeVectors.get(0)));
-//          System.out.println(interiorAngles);
+//			System.out.println(interiorAngles);
             for (Double i : interiorAngles)
             {
-//              System.out.println(i);
+//				System.out.println(i);
                 if (i >= 2.8)
                 {
                     //return spirals;
