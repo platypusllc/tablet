@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation = "vertical">
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/region_draw"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_above="@+id/makeconvex"
+        android:layout_alignStart="@+id/removeMap" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Start Region"
+        android:id="@+id/region_start"
+        android:layout_alignParentBottom="true"
+        android:layout_toEndOf="@+id/removeMap" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Perimeter"
+        android:id="@+id/region_perimeter"
+        android:layout_alignTop="@+id/removeMap"
+        android:layout_toEndOf="@+id/removeMap" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Remove"
+        android:id="@+id/regIon_remove"
+        android:layout_above="@+id/drawPolygon"
+        android:layout_alignStart="@+id/area" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Clear"
+        android:id="@+id/region_clear"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@+id/drawPolygon" />
+    </LinearLayout>
+</LinearLayout>
