@@ -3,9 +3,12 @@
     <string name="app_name">Platypus Control App</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-    
+
     <string name="connect">Connect To the Boat</string>
     <string name="ipAddress">Type in the UP Address</string>
     <string name="color">Which color will this boat be?</string>
-    
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 </resources>
