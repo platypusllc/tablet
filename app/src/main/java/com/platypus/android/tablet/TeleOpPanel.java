@@ -610,7 +610,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                         new CameraPosition.Builder()
                                 .target(currentBoat.getLocation())
-                                .zoom(19)
+                                .zoom(16)
                                 .build()
                 ));
             }
@@ -2524,9 +2524,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             submitButton.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    //Object checkedItem = wpsaves.getAdapter().getItem(wpsaves.getCheckedItemPosition());
-                    //System.out.println(chosensave);
-
                     if (currentselected == -1) {
                         dialog.dismiss();
                         //write no selected box
@@ -2936,7 +2933,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //change zoom to 15 if need be
 
         OfflineTilePyramidRegionDefinition definition = new OfflineTilePyramidRegionDefinition(
-                mv.getStyleUrl(),latLngBounds,19,21, this.getResources().getDisplayMetrics().density); //try 19
+                mv.getStyleUrl(),latLngBounds,15,16, this.getResources().getDisplayMetrics().density); //try 19
 
         // Set the metadata not sure but changing "area" to something longer might be causing crash
         byte[] metadata;
@@ -3416,23 +3413,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
                 };
                 thread.start();
+
+
                 try
                 {
-                    //List<Annotation> anot = mMapboxMap.getAnnotations();
-//                    if (anot.contains(markerList.get(0)))
-//                    {
-//                        System.out.println("in list");
-//                    }
-//                    System.out.println(anot);
-//                    System.out.println("marker list size: " + markerList.size());
-
-                    for (Marker m : markerList) {
-                        mMapboxMap.removeMarker(m);
-                    }
-                    //delete markers not deleting has to do with mapbox
+                    mMapboxMap.removeAnnotations(markerList);
 
                     Waypath.remove();
                     waypointList.clear();
+                    touchpointList.clear();
+                    boundryList.clear();
                     WPnum = 0;
                     N_waypoint = 0;
 
@@ -3443,9 +3433,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
                 catch (JSONException e) {
                 }
-
+                mMapboxMap.removeAnnotations();
             }
         });
+
         startWaypoints.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
