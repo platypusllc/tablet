@@ -47,5 +47,11 @@
         android:id="@+id/region_clear"
         android:layout_alignParentBottom="true"
         android:layout_alignStart="@+id/drawPolygon" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stop "
+            android:id="@+id/stopButton" />
     </LinearLayout>
 </LinearLayout>

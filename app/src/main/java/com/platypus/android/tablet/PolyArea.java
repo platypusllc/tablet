@@ -1,4 +1,3 @@
-
 /**
  * Created by shenty on 2/13/16.
  */
@@ -7,15 +6,21 @@ package com.platypus.android.tablet;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import java.util.ArrayList;
 
-
+//issues
+//subtract method does subtraction in wrong order
+//for bisect vectors it multiples -1 and for findInteriorAngles it
+//switches order of parameters. Should fix this but no rush...
 public class PolyArea
 {
 
      final double MAXDISTFROMSIDE = .0000898; //distance between wayp
-     final double SUBTRACTDIST = MAXDISTFROMSIDE/2; //subtracted
+    // final double SUBTRACTDIST = MAXDISTFROMSIDE/2; //subtracted
+    //final double MAXDISTFROMSIDE = .5; //distance between wayp
+    final double SUBTRACTDIST = MAXDISTFROMSIDE/2; //subtracted
+
     // dist
-//    final double MAXDISTFROMSIDE = .4; //distance between wayp
-//    final double SUBTRACTDIST = .2; //subtracted dist
+    // final double MAXDISTFROMSIDE = .4; //distance between wayp
+    // final double SUBTRACTDIST = .2; //subtracted dist
 
     private LatLng centroid;
     ArrayList<LatLng> vertices;
@@ -35,12 +40,17 @@ public class PolyArea
         double maxX = Double.MIN_VALUE;
         for (int i = 0; i < points.size(); i++)
         {
+            // System.out.println("max x " + maxX);
+            // System.out.println(points.get(i).getLatitude());
             if (points.get(i).getLatitude() < minX)
             {
                 minX = points.get(i).getLatitude();
                 minLatLng = i;
             }
-            if (points.get(i).getLatitude() > maxX)
+            //System.out.println("i lat: " +
+            //points.get(i).getLatitude() + " max " + maxX);
+
+            if (points.get(i).getLatitude() > maxX) //is this right?
             {
                 maxX = points.get(i).getLatitude();
                 maxLatLng = i;
@@ -70,7 +80,6 @@ public class PolyArea
         hullSet(A, B, rightSet, convexHull);
         hullSet(B, A, leftSet, convexHull);
         vertices = new ArrayList<LatLng>(convexHull);
-
         return convexHull;
     }
 
@@ -247,13 +256,15 @@ public class PolyArea
             {
                 //case where the first and last point (adjacent are
                 //being compared
-                //                        System.out.println(i + " " + p);
+
+                //System.out.println("size" + (verts.size()-1));
                 if (i == 0 && p == verts.size()-1)
                 {
                     continue;
                 }
+                //  System.out.println(i + " " + p + "\n");
                 //                      System.out.println(computeDistance(verts.get(i),verts.get(p)));
-                if (computeDistance(verts.get(i),verts.get(p)) < MAXDISTFROMSIDE)
+                if (computeDistance(verts.get(i),verts.get(p)) < 2*MAXDISTFROMSIDE)
                 {
                     return true;
                 }
@@ -296,22 +307,22 @@ public class PolyArea
             for (LatLng p : previousPolygon)
             {
                 LatLng temp = new LatLng(centroid.getLatitude() - p.getLatitude(),centroid.getLongitude()-p.getLongitude());
-                System.out.println("dist " + calculateLength(temp));
+                //System.out.println("dist " + calculateLength(temp));
                 if (calculateLength(temp) < MAXDISTFROMSIDE)
                 {
-                    System.out.println("centroid");
-                    System.out.print("centx = [");
-                    for (LatLng t : centers)
-                    {
-                        System.out.print(t.getLatitude()+",");
-                    }
+//                    System.out.println("centroid");
+//                    System.out.print("centx = [");
+//                    for (LatLng t : centers)
+//                    {
+//                        System.out.print(t.getLatitude()+",");
+//                    }
 
-                    System.out.print("]\n\ncenty=[");
-                    for (LatLng t : centers)
-                    {
-                        System.out.print(t.getLongitude()+",");
-                    }
-                    System.out.print("]\n\n");
+//                    System.out.print("]\n\ncenty=[");
+//                    for (LatLng t : centers)
+//                    {
+////                        System.out.print(t.getLongitude()+",");
+//                    }
+//                    System.out.print("]\n\n");
 
                     return spirals;
                 }
@@ -329,7 +340,7 @@ public class PolyArea
 
                 nextPolygon.add(new LatLng(previousPolygon.get(t).getLatitude()-pointToCenter.get(t).getLatitude()*SUBTRACTDIST,previousPolygon.get(t).getLongitude()-pointToCenter.get(t).getLongitude()*SUBTRACTDIST));
             }
-            System.out.println(nextPolygon.size());
+            //System.out.println(nextPolygon.size());
             spirals.add(nextPolygon);
             // System.out.println("New Polygon");
             // for (LatLng a : nextPolygon)
@@ -406,6 +417,22 @@ public class PolyArea
         // System.out.println("a.b: " + dot(a,b));
         // System.out.println("dot(a,b)/lengtha*lengthb : " + Math.acos(dot(a,b)/(calculateLength(a)*calculateLength(b
         //                                                                                                                ))));
+        double dot = dot(a,b);
+        double cross = a.getLatitude()*b.getLongitude()-a.getLongitude()*b.getLatitude();
+        double output = Math.atan2(dot,cross);
+        if (output < 0)
+        {
+            output += Math.PI;
+        }
+        if (output == 0)
+        {
+            output = Math.PI/2;
+        }
+        // if (output > Math.PI/2)
+        // {
+        // 	output = Math.PI - output;
+        // }
+        //return output;
         return Math.acos(dot(a,b)/(calculateLength(a)*calculateLength(b)));
     }
     public LatLng findBisectNormal(LatLng a, LatLng b)
@@ -426,6 +453,7 @@ public class PolyArea
     public LatLng subtract(LatLng a, LatLng b)
     {
         return new LatLng(a.getLatitude() - b.getLatitude(),a.getLongitude() - b.getLongitude());
+        //return new LatLng(b.getLatitude() - a.getLatitude(),b.getLongitude() - a.getLongitude());
     }
 
     public LatLng findVector(LatLng a, LatLng b)
@@ -438,21 +466,25 @@ public class PolyArea
     }
 
     /*This works by finding the bisecting vector of each angle and
-     * moving along the bisecting vector of distance dist/sin(angle/2) */
+     * moving along the secting vector of distance dist/sin(angle/2) */
     public ArrayList<ArrayList<LatLng>> computeSpiralsPolygonOffset(ArrayList<LatLng> polygon)
     {
-
         ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
         spirals.add(polygon); //add first polygon
-        if (polygon.size() < 3)
+        if (polygon.size() <= 2)
         {
+            System.out.println("poly size < 2 is: " + polygon.size());
             return spirals;
         }
 
-        //compute all of the bisecting vectors note these look wrong
 
+        //compute all of the bisecting vectors note these look wrong
+        int counter = 0;
+        //while(counter < 10)
         while(!isNonAdjacentLessThan10Meters(spirals.get(spirals.size()-1)))
         {
+            counter++;
+            //System.out.println(spirals.get(spirals.size()-1).size());
             //Last Polygon to be added
             ArrayList<LatLng> lastSpiral = spirals.get(spirals.size()-1);
             //Comput the centroid of the last spiral
@@ -460,12 +492,17 @@ public class PolyArea
             //Check to see if any points are less than
             //subtractdist from the centroid, if so return(this is
             //a stopping point)
+            //oSystem.out.println(lastSpiral);
             for (LatLng p : lastSpiral)
             {
                 LatLng temp = new LatLng(centroid.getLatitude() - p.getLatitude(),centroid.getLongitude()-p.getLongitude());
                 //System.out.println("dist " + calculateLength(temp));
+                //System.out.println(temp);
                 if (calculateLength(temp) < SUBTRACTDIST)
                 {
+                    // System.out.println(lastSpiral);
+                    // System.out.println(computeCentroid(spirals.get(spirals.size()-2)));
+                    System.out.println("poly area center close");
                     return spirals;
                 }
             }
@@ -477,42 +514,78 @@ public class PolyArea
                 edgeVectors.add(findVector(lastSpiral.get(i),lastSpiral.get(i+1)));
             }
             edgeVectors.add(findVector(lastSpiral.get(lastSpiral.size()-1),lastSpiral.get(0)));
-            // System.out.println(lastSpiral);
-            // System.out.println("");
-            // System.out.println(edgeVectors);
+            //System.out.println(edgeVectors);
+            //            System.out.println(edgeVectors);
             //Compute all of the angles between these edges
-
+            //System.out.println("points");
+            //System.out.println(lastSpiral);
             ArrayList<Double> interiorAngles = new ArrayList<Double>();
-            for (int i = 0; i < edgeVectors.size()-1; i++)
+            for (int i = 0; i < lastSpiral.size()-1; i++)
             {
-                interiorAngles.add(findInteriorAngle(edgeVectors.get(i),edgeVectors.get(i+1)));
-            }
-            interiorAngles.add(findInteriorAngle(edgeVectors.get(edgeVectors.size()-1),edgeVectors.get(0)));
-//			System.out.println(interiorAngles);
-            for (Double i : interiorAngles)
-            {
-//				System.out.println(i);
-                if (i >= 2.8)
+                LatLng v;
+                LatLng u;
+                if (i == 0)
                 {
-                    //return spirals;
+                    v = subtract(lastSpiral.get(i),lastSpiral.get(lastSpiral.size()-1));
+                    u = subtract(lastSpiral.get(i),lastSpiral.get(i+1));
+                    interiorAngles.add(findInteriorAngle(v,u));
+                    // System.out.println("u " + u);
+                    // System.out.println("v " + v);
+                    // System.out.println("0 Angle " + findInteriorAngle(v,u)*180/Math.PI);
+                    continue;
                 }
+                v = subtract(lastSpiral.get(i),lastSpiral.get(i+1));
+                u = subtract(lastSpiral.get(i),lastSpiral.get(i-1));
+                interiorAngles.add(findInteriorAngle(v,u));
+                // System.out.println("u " + u);
+                // System.out.println("v " + v);
+                // System.out.println(i + " Angle " + findInteriorAngle(v,u)*180/Math.PI);
+
             }
+            LatLng v1 = subtract(lastSpiral.get(lastSpiral.size()-1),lastSpiral.get(0));
+            LatLng u1 = subtract(lastSpiral.get(lastSpiral.size()-1),lastSpiral.get(lastSpiral.size()-2));
+            interiorAngles.add(findInteriorAngle(v1,u1));
+            // System.out.println("u " + u1);
+            // System.out.println("v " + v1);
+            // System.out.println("Angle last" + (findInteriorAngle(v1,u1)*180/Math.PI));
 
 
+            // for (int i = 0; i < edgeVectors.size()-1; i++)
+            //  {
+            //      interiorAngles.add(findInteriorAngle(edgeVectors.get(i),edgeVectors.get(i+1)));
+            //  }
+            // interiorAngles.add(findInteriorAngle(edgeVectors.get(0),edgeVectors.get(edgeVectors.size()-1)));
 
-            //compute all of the bisecting vectors note these look wrong
-            ArrayList<LatLng> bisectingVectors = new ArrayList<LatLng>();
-            for (int i = 0; i < edgeVectors.size()-1; i++)
-            {
-                bisectingVectors.add(findBisectNormal(edgeVectors.get(i),edgeVectors.get(i+1)));
-            }
-            bisectingVectors.add(findBisectNormal(edgeVectors.get(edgeVectors.size()-1),edgeVectors.get(0)));
-            bisect.add(bisectingVectors);
-
-            // System.out.println("last "+lastSpiral.size());
-            // System.out.println("edge "+edgeVectors.size());
-            // System.out.println("bisect " +bisectingVectors.size());
+            // System.out.println("points");
+            // System.out.println(lastSpiral);
+            // System.out.println("edges");
+            // System.out.println(edgeVectors);
+            // System.out.println("Angles");
+            // for (Double i : interiorAngles)
+            // {
+            //     System.out.println(i*180/Math.PI);
+            // }
             // System.out.println("");
+
+            ArrayList<LatLng> bisectingVectors = new ArrayList<LatLng>();
+            for (int i = 0; i < lastSpiral.size()-1; i++)
+            {
+                LatLng v;
+                LatLng u;
+                if (i == 0)
+                {
+                    v = subtract(lastSpiral.get(lastSpiral.size()-1),lastSpiral.get(i));
+                    u = subtract(lastSpiral.get(i+1),lastSpiral.get(i));
+                    bisectingVectors.add(findBisectNormal(v,u));
+                    continue;
+                }
+                v = subtract(lastSpiral.get(i+1),lastSpiral.get(i));
+                u = subtract(lastSpiral.get(i-1),lastSpiral.get(i));
+                bisectingVectors.add(findBisectNormal(v,u));
+            }
+            LatLng v = subtract(lastSpiral.get(0),lastSpiral.get(lastSpiral.size()-1));
+            LatLng u = subtract(lastSpiral.get(lastSpiral.size()-2),lastSpiral.get(lastSpiral.size()-1));
+            bisectingVectors.add(findBisectNormal(v,u));
 
             //p = p- dist
             //finds vector between the point and the bisecting
@@ -527,18 +600,47 @@ public class PolyArea
                 //and the point subtracted by the bisecting
                 //vector with length
                 //subtractdist/math.sin(interiorangle/2)
-                LatLng nextPoint = multiply(bisectingVectors.get(i),SUBTRACTDIST/Math.sin(interiorAngles.get(i)/2));
+                //System.out.println("dist" +
+                //SUBTRACTDIST/Math.sin(interiorAngles.get(i)/2));
+                //System.out.println(interiorAngles.get(i)*180/Math.PI);
+                LatLng nextPoint = multiply(bisectingVectors.get(i),-1*SUBTRACTDIST/Math.sin(interiorAngles.get(i)/2));
+
+                //System.out.println(point + " " + nextPoint + " " + findVector(point,nextPoint));
                 nextPolygon.add(findVector(point,nextPoint));
             }
-            //spirals.add(nextPolygon);
-            //dont use quickHull it reorders points
-            spirals.add(quickHull(nextPolygon));
 
+            //check intersections
+            //if so remove one points and set the other as the avergae
+            //of both
+            for (int i = 0; i < nextPolygon.size()-1; i++)
+            {
+                LatLng lastPoint0 = lastSpiral.get(i);
+                LatLng nextPoint0 = nextPolygon.get(i);
+                LatLng lastPoint1 = lastSpiral.get(i+1);
+                LatLng nextPoint1 = nextPolygon.get(i+1);
+                if( linesIntersect(lastPoint0.getLatitude(),lastPoint0.getLongitude(),nextPoint0.getLatitude(),nextPoint0.getLongitude(),lastPoint1.getLatitude(),lastPoint1.getLongitude(),nextPoint1.getLatitude(),nextPoint1.getLongitude()))
+                {
+                    System.out.println("Removed vertex : " + i + " from polygon: " + spirals.size());
+                    LatLng average = new LatLng((nextPoint0.getLatitude() + nextPoint1.getLatitude())/2,(nextPoint0.getLongitude() + nextPoint1.getLongitude())/2);
+                    nextPolygon.set(i+1,average);
+                    nextPolygon.remove(i);
+
+                }
+            }
+            //System.out.println(nextPolygon.size());
+            //spirals.add(quickHull(nextPolygon));
+            spirals.add((nextPolygon));
         }
         return  spirals;
     }
 
-
+    // check for intersection between bisects
+    // if the two will intersect in the next spira
+    // meaning the points will "swap place"
+    // merge points at average? or something
+    // if not the shape changes and the angles change drastically
+    // causing overlap
+    //check if intersect is between area defined by old points and new points
     public static void main(String[] args)
     {
         ArrayList<LatLng> points = new ArrayList<LatLng>();
@@ -549,18 +651,29 @@ public class PolyArea
         //        LatLng point4 = new LatLng(-10,200);
 
 
-        LatLng point0 = new LatLng(-1,-2);
-        LatLng point1 = new LatLng(-1,1);
-        LatLng point2 = new LatLng(1,1);
-        LatLng point3 = new LatLng(1,-1);
+        // LatLng point0 = new LatLng(-1,-2);
+        // LatLng point1 = new LatLng(-1,1);
+        // LatLng point2 = new LatLng(1,1);
+        // LatLng point3 = new LatLng(1,-1);
         // LatLng point4 = new LatLng(2,4);
 
+        // LatLng point0 = new LatLng(-1,0);
+        // LatLng point1 = new LatLng(0,0);
+        // LatLng point2 = new LatLng(0,1);
+        //  LatLng point3 = new LatLng(1,-1);
 
-        // LatLng point0 = new LatLng(-2,-3);
-        // LatLng point1 = new LatLng(-2,2);
-        // LatLng point2 = new LatLng(2,2);
-        // LatLng point3 = new LatLng(2,-2);
+        LatLng point0 = new LatLng(-2,-3); //2
+        LatLng point1 = new LatLng(-3,2); //1
+        LatLng point2 = new LatLng(2,4);
+        LatLng point3 = new LatLng(1,-2); //3
         //LatLng point4 = new LatLng(2,4);
+
+        // LatLng point0 = new LatLng(-2,-2); //2
+        // LatLng point1 = new LatLng(-2,2); //1
+        // LatLng point2 = new LatLng(2,2);
+        // LatLng point3 = new LatLng(2,-2); //3
+        // LatLng point4 = new LatLng(2,2);
+
 
 
         points.add(point0);
@@ -571,25 +684,37 @@ public class PolyArea
 
         PolyArea qh = new PolyArea();
         // qh.test();
-        // System.exit(0);
 
 
         // qh.test();
-        // System.exit(0);
+
         ArrayList<LatLng> p = qh.quickHull(points);
+        //1 0 3
+
+        // LatLng u = qh.findVector(point1,point0);
+        // LatLng v = qh.findVector(point0, point2);
+        // System.out.println("Point 1 + " + point0);
+        // System.out.println("Point 2 + " + point1);
+        // System.out.println("Point 3 + " + point2);
+        // System.out.println("U: " + u);
+        // System.out.println("V:" + v);
+        // System.out.println("U Length: " + qh.calculateLength(u));
+        // System.out.println("V Length: " + qh.calculateLength(v));
+        // System.out.println("U dot V: " + qh.dot(u,v));
+        // System.out.println("U normalized: " + qh.normalizeVector(u));
+        // System.out.println("U normalized: " + qh.normalizeVector(u));
+        // double angle = qh.findInteriorAngle(u,v);
+        // //System.out.println(Math.acos(qh.dot(u,v)/(qh.calculateLength(u)*qh.calculateLength(v)))*180/3.14);
+        // System.out.println("Interior Angle: " + qh.findInteriorAngle(u,v)* 180/3.14 + " degrees");
+        // LatLng bisect = qh.findBisectNormal(u,v);
+        // System.out.println("Bisecting Vector: " + bisect);
+        // // LatLng newpoint = qh.findVector(point0,qh.multiply(bisect,Math.sin(angle/2)));
+        // // System.out.println("New Point: " + newpoint);
+        // System.exit(0);
+
         ArrayList<ArrayList<LatLng>> spirals =  qh.computeSpiralsPolygonOffset(qh.vertices);
         ArrayList<LatLng> allpoints = new ArrayList<LatLng>();
 
-        // for (ArrayList<LatLng> a : spirals)
-        //  {
-        //      for (LatLng b : a)
-        //          {
-        //              System.out.println(b);
-        //          }
-        //      System.out.println("");
-        //  }
-        // System.exit(0);
-        //System.out.print("x = [");
         int counter = 0;
         for (ArrayList<LatLng> i : spirals)
         {
@@ -648,8 +773,64 @@ public class PolyArea
         {
             System.out.print("plot(bx"+i+",by"+i+",\"r\");" + "hold on; ");
         }
-
     }
+
+    //http://www.java2s.com/Code/Android/Game/TestsifthelinesegmentfromX1nbspY1toX2nbspY2intersectsthelinesegmentfromX3nbspY3toX4nbspY4.htm
+    public static boolean linesIntersect(final double X1, final double Y1, final double X2, final double Y2, final double X3, final double Y3, final double X4, final double Y4) {
+        return ((relativeCCW(X1, Y1, X2, Y2, X3, Y3)
+                * relativeCCW(X1, Y1, X2, Y2, X4, Y4) <= 0) && (relativeCCW(X3,
+                Y3, X4, Y4, X1, Y1)
+                * relativeCCW(X3, Y3, X4, Y4, X2, Y2) <= 0));
+    }
+
+    private static double relativeCCW(final double X1, final double Y1, double X2, double Y2, double PX,
+                                      double PY) {
+        X2 -= X1;
+        Y2 -= Y1;
+        PX -= X1;
+        PY -= Y1;
+        double ccw = PX * Y2 - PY * X2;
+        if (ccw == 0) {
+            // The point is colinear, classify based on which side of
+            // the segment the point falls on. We can calculate a
+            // relative value using the projection of PX,PY onto the
+            // segment - a negative value indicates the point projects
+            // outside of the segment in the direction of the particular
+            // endpoint used as the origin for the projection.
+            ccw = PX * X2 + PY * Y2;
+            if (ccw > 0) {
+                // Reverse the projection to be relative to the original X2,Y2
+                // X2 and Y2 are simply negated.
+                // PX and PY need to have (X2 - X1) or (Y2 - Y1) subtracted
+                // from them (based on the original values)
+                // Since we really want to get a positive answer when the
+                // point is "beyond (X2,Y2)", then we want to calculate
+                // the inverse anyway - thus we leave X2 & Y2 negated.
+                PX -= X2;
+                PY -= Y2;
+                ccw = PX * X2 + PY * Y2;
+                if (ccw < 0) {
+                    ccw = 0;
+                }
+            }
+        }
+        return (ccw < 0) ? -1 : ((ccw > 0) ? 1 : 0);
+    }
+    public void doAdjacentLinesIntersect(ArrayList<LatLng> last, ArrayList<LatLng> next)
+    {
+        for (int i = 0; i < last.size()-1; i++)
+        {
+            LatLng lastPoint0 = last.get(i);
+            LatLng nextPoint0 = next.get(i);
+            LatLng lastPoint1 = last.get(i+1);
+            LatLng nextPoint1 = next.get(i+1);
+            if( linesIntersect(lastPoint0.getLatitude(),lastPoint0.getLongitude(),nextPoint0.getLatitude(),nextPoint0.getLongitude(),lastPoint1.getLatitude(),lastPoint1.getLongitude(),nextPoint1.getLatitude(),nextPoint1.getLongitude()))
+            {
+                System.out.println("intersecting bisect at: " + i + " " + (i+1));
+            }
+        }
+    }
+
 }
 /*
  */
