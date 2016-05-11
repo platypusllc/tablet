@@ -64,8 +64,11 @@ android {
 dependencies {
 
 
-    //compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.1.0-SNAPSHOT@aar') {
-    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.0.0@aar') {
+
+
+
+    //compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.0.0@aar') {
+    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.1.0-SNAPSHOT@aar') {
         transitive = true
     }
     compile files('libs/activation.jar')

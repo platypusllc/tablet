@@ -16,7 +16,6 @@
         android:layout_alignStart="@+id/removeMap" />
 
     <Button
-        style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Start Region"
@@ -24,7 +23,17 @@
         android:layout_alignParentBottom="true"
         android:layout_toEndOf="@+id/removeMap" />
 
-    <Button
+        <ToggleButton
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Spiral"
+            android:textOff="Spiral"
+            android:textOn="LawnMower"
+            android:id="@+id/region_spiralorlawn"
+            android:layout_gravity="center_horizontal"
+            android:checked="false" />
+
+        <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Perimeter"
@@ -53,5 +62,29 @@
             android:layout_height="wrap_content"
             android:text="Stop "
             android:id="@+id/stopButton" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Transect Distance (Meters)"
+            android:id="@+id/textView8" />
+
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:inputType="number"
+            android:ems="10"
+            android:text="5"
+            android:id="@+id/region_transect" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Update Trasect"
+            android:id="@+id/region_transectButton"
+            android:layout_gravity="center_horizontal" />
+
     </LinearLayout>
 </LinearLayout>
