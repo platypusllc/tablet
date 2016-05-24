@@ -10,7 +10,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/region_draw"
-        android:layout_marginTop="10dp"
         android:layout_marginLeft="10dp"
         android:layout_above="@+id/makeconvex"
         android:layout_alignStart="@+id/removeMap" />
@@ -68,18 +67,21 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:text="Transect Distance (Meters)"
-            android:id="@+id/textView8" />
+            android:id="@+id/textView8"
+            android:layout_marginLeft="5dp" />
 
         <EditText
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:inputType="number"
-            android:ems="10"
+            android:ems="5"
             android:text="5"
-            android:id="@+id/region_transect" />
+            android:id="@+id/region_transect"
+            android:layout_marginLeft="10dp" />
 
         <Button
+            style="?android:attr/buttonStyleSmall"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Update Trasect"

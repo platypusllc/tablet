@@ -1927,8 +1927,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         direct = (RadioButton) dialog.findViewById(R.id.wifi);
         reg = (RadioButton) dialog.findViewById(R.id.reg);
-        ipAddress.setText("192.168.1.250");
-        //ipAddress.setText("127.0.0.1");
+        //ipAddress.setText("192.168.1.250");
+        ipAddress.setText("127.0.0.1");
+
 
         direct.setOnClickListener(new OnClickListener() {
             @Override
@@ -3455,7 +3456,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
                 catch (JSONException e) {
                 }
-                mMapboxMap.removeAnnotations();
+                //mMapboxMap.removeAnnotations();
             }
         });
 
@@ -3544,6 +3545,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 if (transectDistance.getText().toString().equals("") == false) {
                     area.updateTransect(Double.parseDouble(transectDistance.getText().toString()));
                     if (spirallawn.isChecked() == false) {
+                        mMapboxMap.removeAnnotation(Boundry);
+
                         drawPolygon(touchpointList, area);
                         drawSmallerPolys(spiralWaypoints);
                     }
@@ -3570,9 +3573,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         for (LatLng i : touchpointList) { //add markers
                             boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i)));
                         }
+                        mMapboxMap.removeAnnotation(Boundry);
                         PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.YELLOW).fillColor(Color.YELLOW); //draw polygon
                         poly.alpha((float) .4); //set interior opacity
-                        mMapboxMap.addPolygon(poly);
+                        //Boundry = mMapboxMap.addPolygon(poly); //addpolygon
+
                         if (waypointList.size()>2) {
                             Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GRAY).width(5));
                         }
@@ -3658,21 +3663,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             @Override
             public void onClick(View view) {
                 try {
-                    mMapboxMap.removeAnnotation(Waypath);
-                    mMapboxMap.removeAnnotation(Boundry);
                     mMapboxMap.removeAnnotations(boundryList);
                     mMapboxMap.removeAnnotations(spiralList);
-                    if(Waypath != null)
-                    {
-                        mMapboxMap.removeAnnotation(Waypath);
-                    }
+                    mMapboxMap.removeAnnotation(Boundry);
                     boundryList.clear();
                     spiralList.clear();
                     spiralWaypoints.clear();
                     touchpointList.clear();
                     lastAdded.clear();
                     waypointList.clear();
-
                 }
                 catch(Exception e)
                 {
