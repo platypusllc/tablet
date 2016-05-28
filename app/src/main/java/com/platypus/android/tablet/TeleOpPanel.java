@@ -51,6 +51,7 @@ import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdate;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.constants.Style;
+import com.mapbox.mapboxsdk.exceptions.InvalidLatLngBoundsException;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.ILatLng;
 import com.mapbox.mapboxsdk.annotations.Marker;
@@ -1321,12 +1322,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         updateVelocity(currentBoat, new FunctionObserver<Void>() {
                             @Override
                             public void completed(Void aVoid) {
-
                             }
 
                             @Override
                             public void failed(FunctionError functionError) {
-
                             }
                         });
                     }
@@ -2744,11 +2743,23 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             t.remove();
         }
         spiralList.clear();
+        ArrayList<LatLng> flatlist = new ArrayList<LatLng>();
         for (ArrayList<LatLng> a : spirals) {
-            spiralList.add(mMapboxMap.addPolygon(new PolygonOptions().addAll(a).strokeColor(Color.GRAY).fillColor(Color.TRANSPARENT))); //draw polygon
-            //spiralList.add(mMapboxMap.addPolygon(new PolygonOptions().addAll(a).strokeColor(Color.YELLOW).fillColor(Color.YELLOW))); //draw polygon
+            for (LatLng b : a) {
+                flatlist.add(b);
+            }
+            //spiralList.add(mMapboxMap.addPolygon(new PolygonOptions().addAll(a).strokeColor(Color.GRAY).fillColor(Color.TRANSPARENT))); //draw polygon
             //border gets aa'd better than the fill causing gaps between border and fill...
         }
+        if (Waypath != null)
+        {
+            mMapboxMap.removeAnnotation(Waypath);
+        }
+        if (home != null)
+        {
+            flatlist.add(home);
+        }
+        Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(flatlist).color(Color.YELLOW).width(5));
     }
 
     public int isAverage(SensorData data, String value) {
@@ -2776,7 +2787,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         final IconFactory mIconFactory = IconFactory.getInstance(this);
         Drawable mboundry = ContextCompat.getDrawable(context, R.drawable.boundary);
         final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
-
+        area.updateTransect(currentTransectDist);
         spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList); //some how is editing touchpointlist when used as the parameter
         drawSmallerPolys(spiralWaypoints);
         runOnUiThread(new Runnable() {
@@ -2786,17 +2797,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 boundryList.clear(); //clear list
                 for (LatLng i : touchpointList) { //add markers
                     //boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
-                    boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i)));
+                    boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry)));
                 }
-                PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.YELLOW).fillColor(Color.YELLOW); //draw polygon
+                PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.YELLOW).fillColor(Color.MAGENTA); //draw polygon
                 //border gets aa'd better than the fill causing gaps between border and fill...
-                poly.alpha((float) .4); //set interior opacity
+                poly.alpha((float) .0); //set interior opacity
                 Boundry = mMapboxMap.addPolygon(poly); //addpolygon
             }
         });
     }
     private void addPointToRegion(LatLng point) {
-
+        final IconFactory mIconFactory = IconFactory.getInstance(this);
+        Drawable mboundry = ContextCompat.getDrawable(context, R.drawable.boundary);
+        final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
         if(spirallawn.isChecked() == true)
         {
 
@@ -2812,27 +2825,28 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             System.out.println("lawn called");
             touchpointList.add(point);
             PolyArea area = new PolyArea();
-//            if (touchpointList.size() >= 2)
+            if (touchpointList.size() >= 2)
             {
-                //touchpointList = area.quickHull(touchpointList);
-                //touchpointList = area.orderCCWUpRight(touchpointList);
+                touchpointList = area.quickHull(touchpointList);
+                //touchpointList p= area.orderCCWUpRight(touchpointList);
             }
             System.out.println(touchpointList);
             //drawPolygon(touchpointList,area); //draws the polygon
             ArrayList<LatLng> templist = (ArrayList<LatLng>)area.getLawnmowerPath(touchpointList,currentTransectDist*1/90000)[0];
-            System.out.println("temp list" + templist.size());
+            //System.out.println("temp list" + templist.size());
             ArrayList<LatLng> reverseList = new ArrayList<LatLng>();
 
             for (int i = templist.size()-1; i>=0; i--)
             {
+
                 reverseList.add(templist.get(i)); //reverse order from ccw to cw
             }
             waypointList.clear();
             waypointList = reverseList;
-            System.out.println(touchpointList.size() + "start touch");
-            System.out.println(templist.size() + "start tpl");
-            System.out.println(reverseList.size() + "start reverse");
-            System.out.println(waypointList.size() + "start wplist\n");
+//            System.out.println(touchpointList.size() + "start touch");
+//            System.out.println(templist.size() + "start tpl");
+//            System.out.println(reverseList.size() + "start reverse");
+//            System.out.println(waypointList.size() + "start wplist\n");
 
 
             //waypointList = templist;
@@ -2842,18 +2856,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //            }
             mMapboxMap.removeAnnotations(boundryList);
             for (LatLng i : touchpointList) { //add markers
-                boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i)));
+                boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry)));
             }
 
-            PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.YELLOW).fillColor(Color.YELLOW); //draw polygon
+            PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.YELLOW).fillColor(Color.MAGENTA); //draw polygon
             poly.alpha((float) .4); //set interior opacity
-            mMapboxMap.addPolygon(poly);
+            Boundry = mMapboxMap.addPolygon(poly);
             if (waypointList.size()>2) {
                 Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GRAY).width(5));
             }
 
             return;
         }
+        //spiral
         LatLng wpLoc = point;
         if (Boundry != null) {
             Boundry.remove();
@@ -3331,7 +3346,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 {
                     waypointList.add(currentBoat.getLocation());
                     markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(currentBoat.getLocation()).title(Integer.toString(WPnum))));
-                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.YELLOW).width(5));
                 }
             }
         });
@@ -3574,7 +3589,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i)));
                         }
                         mMapboxMap.removeAnnotation(Boundry);
-                        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.YELLOW).fillColor(Color.YELLOW); //draw polygon
+                        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.YELLOW).fillColor(Color.MAGENTA); //draw polygon
                         poly.alpha((float) .4); //set interior opacity
                         //Boundry = mMapboxMap.addPolygon(poly); //addpolygon
 
@@ -3662,10 +3677,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         clearRegion.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                try {
+                try { //in case they try to remove before something gets set
                     mMapboxMap.removeAnnotations(boundryList);
                     mMapboxMap.removeAnnotations(spiralList);
                     mMapboxMap.removeAnnotation(Boundry);
+                    mMapboxMap.removeAnnotation(Waypath);
                     boundryList.clear();
                     spiralList.clear();
                     spiralWaypoints.clear();
@@ -3908,6 +3924,30 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         });
 
+    }
+    //removes all annotations and readds them
+    public void invalidate()
+    {
+        if (boundryList != null) {
+            mMapboxMap.removeAnnotations(boundryList);
+        }
+        if (Boundry != null) {
+            mMapboxMap.removeAnnotation(Boundry);
+        }
+        if (Waypath != null) {
+            mMapboxMap.removeAnnotation(Waypath);
+        }
+
+        //if spiral add waypath from spiral
+        //if lawnmower add waypath from lawnmower
+        //add boundry from touchpointlist
+
+//        boundryList.clear();
+//        spiralList.clear();
+//        spiralWaypoints.clear();
+//        touchpointList.clear();
+//        lastAdded.clear();
+//        waypointList.clear();
     }
 }
 
