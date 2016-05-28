@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -78,6 +79,7 @@ import android.net.ConnectivityManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -90,7 +92,7 @@ import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
 import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
 import com.mapzen.android.lost.api.LocationServices;
 
-import com.mapzen.android.lost.internal.SystemClock;
+
 import com.platypus.crw.CrwNetworkUtils;
 import com.platypus.crw.SensorListener;
 import com.platypus.crw.VehicleServer;
@@ -219,7 +221,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Canvas canvas;
     Switch speed = null;
 
-
+    int updateRateMili = 500;
     boolean checktest;
     boolean firstmove = false;
     boolean waypointLayoutEnabled = true; //if false were on region layout
@@ -269,7 +271,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     double tempThrustValue = 0; //used for abs value of thrust
     Twist twist = new Twist();
     boolean networkConnection = true;
-
+    ScheduledFuture future;
+    ScheduledThreadPoolExecutor exec;
+    Runnable networkRun;
     float tempX = 0;
     float tempY = 0;
 
@@ -689,6 +693,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 } catch (Exception e) {
 
                                 }
+                                break;
+                            }
+                            case "Update Command Rate": {
+                                AlertDialog.Builder alertDialog = new AlertDialog.Builder(TeleOpPanel.this);
+                                alertDialog.setTitle("Change Velocity Update Rate");
+                                final EditText input = new EditText(TeleOpPanel.this);
+                                input.setText(updateRateMili+"");
+                                input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                                        LinearLayout.LayoutParams.MATCH_PARENT,
+                                        LinearLayout.LayoutParams.MATCH_PARENT);
+                                input.setLayoutParams(lp);
+                                alertDialog.setView(input);
+                                alertDialog.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        updateRateMili = Integer.parseInt(input.getText().toString());
+                                        //restart exec.
+
+                                        future.cancel(true);
+                                        future = exec.scheduleAtFixedRate(networkRun, 0, updateRateMili, TimeUnit.MILLISECONDS);
+
+
+                                        dialog.cancel();
+                                    }
+                                });
+                                alertDialog.show();
                                 break;
                             }
                         }
@@ -1283,17 +1313,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         public void OnMoved(int x, int y) {
             thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
             rudderTemp = fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX);
-            if (currentBoat != null) {
-                //does this need to be in seperate thread?
-                Thread thread = new Thread() {
-                    public void run() {
-                        if (currentBoat.getConnected() == true) {
-                            updateVelocity(currentBoat, null);
-                        }
-                    }
-                };
-                thread.start();
-            }
+//            if (currentBoat != null) {
+//                //does this need to be in seperate thread?
+//                Thread thread = new Thread() {
+//                    public void run() {
+//                        if (currentBoat.getConnected() == true) {
+//                            updateVelocity(currentBoat, null);
+//                        }
+//                    }
+//                };
+//                thread.start();
+//            }
+            //Instead add the update to async loop and give option to change that update rate
             //Log.i(logTag, "Y:" + y + "\tX:" + x);
             //Log.i(logTag, "Thrust" + thrustTemp + "\t Rudder" + rudderTemp);
             try {
@@ -1472,19 +1503,35 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         protected String doInBackground(String... arg0) {
             updateMarkers(); //Launch update markers thread
             currentBoat.isConnected();
-            Runnable networkRun = new Runnable() {
+            networkRun = new Runnable() {
                 @Override
                 public void run() {
                     if (currentBoat != null) {
                         connected = currentBoat.getConnected();
 
 
-                        if (old_thrust != thrustTemp) { //update velocity
-                            //updateVelocity(currentBoat);
-                        }
+//                        if (old_thrust != thrustTemp) { //update velocity
+//                            //updateVelocity(currentBoat);
+//                        }
+//
+//                        if (old_rudder != rudderTemp) { //update rudder
+//                            //updateVelocity(currentBoat);
+//                        }
 
-                        if (old_rudder != rudderTemp) { //update rudder
-                            //updateVelocity(currentBoat);
+                        if (currentBoat.getConnected() == true) {
+                            System.out.println("vel ran:");
+                            updateVelocity(currentBoat, new FunctionObserver<Void>() {
+                                @Override
+                                public void completed(Void aVoid) {
+                                    System.out.println("vel compl");
+                                }
+
+                                @Override
+                                public void failed(FunctionError functionError) {
+                                    System.out.println("vel failed");
+                                }
+                            });
+
                         }
 
                         if (stopWaypoints == true) {
@@ -1530,8 +1577,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
             };
 
-            ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
-            exec.scheduleAtFixedRate(networkRun, 0, 500, TimeUnit.MILLISECONDS);
+            exec = new ScheduledThreadPoolExecutor(1);
+            future = exec.scheduleAtFixedRate(networkRun, 0, updateRateMili, TimeUnit.MILLISECONDS);
             return null;
         }
         @Override

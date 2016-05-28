@@ -28,5 +28,9 @@
     <item
         android:id="@+id/loadwpbutton"
         android:title="Load Waypoints" />
+    <item
+        android:id="@+id/updateRate"
+        android:title="Update Command Rate" />
+
 
 </menu>
