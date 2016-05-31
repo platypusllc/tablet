@@ -813,20 +813,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         // ****************************************************************************
         currentBoat = new Boat(pl, sl);
 
-//        currentBoat.returnServer().addWaypointListener(wl, new FunctionObserver<Void>() {
-//            @Override
-//            public void completed(Void aVoid) {
-//                waypointlistener = true;
-//            }
-//
-//            @Override
-//            public void failed(FunctionError functionError) {
-//                waypointlistener = false;
-//            }
-//        });
-
-
-
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -1063,24 +1049,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //            }
 //        });
     }
-
     @Override
     protected void onStart() {
         super.onStart();
-  //      mv.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mv.onDestroy();
-//        mv.onStop();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        mv.onPause();
+        //mv.onStart();
     }
 
     @Override
@@ -1090,21 +1062,33 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        mv.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        //mv.onStop();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         mv.onDestroy();
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        mv.onSaveInstanceState(outState);
-    }
-
-    @Override
     public void onLowMemory() {
         super.onLowMemory();
         mv.onLowMemory();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mv.onSaveInstanceState(outState);
     }
 
 //    private void saveOfflineMap (LatLng Mapcenter){
@@ -1552,6 +1536,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         old_thrust = thrustTemp;
                         old_rudder = rudderTemp;
 
+                        //what is this?
                         if (tempPose != null) {
                             try {
                                 Pose3D waypoint = tempPose[0].pose;
@@ -2806,7 +2791,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         {
             flatlist.add(home);
         }
-        Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(flatlist).color(Color.YELLOW).width(5));
+        Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(flatlist).color(Color.GREEN).width(5));
     }
 
     public int isAverage(SensorData data, String value) {
@@ -2846,9 +2831,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     //boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
                     boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry)));
                 }
-                PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.YELLOW).fillColor(Color.MAGENTA); //draw polygon
+                PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.GREEN).fillColor(Color.YELLOW); //draw polygon
                 //border gets aa'd better than the fill causing gaps between border and fill...
-                poly.alpha((float) .0); //set interior opacity
+                poly.alpha((float) .5); //set interior opacity
                 Boundry = mMapboxMap.addPolygon(poly); //addpolygon
             }
         });
@@ -2906,7 +2891,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry)));
             }
 
-            PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.YELLOW).fillColor(Color.MAGENTA); //draw polygon
+            PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.GREEN).fillColor(Color.YELLOW); //draw polygon
             poly.alpha((float) .4); //set interior opacity
             Boundry = mMapboxMap.addPolygon(poly);
             if (waypointList.size()>2) {
@@ -3393,7 +3378,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 {
                     waypointList.add(currentBoat.getLocation());
                     markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(currentBoat.getLocation()).title(Integer.toString(WPnum))));
-                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.YELLOW).width(5));
+                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
                 }
             }
         });
