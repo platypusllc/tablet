@@ -1,27 +1,32 @@
+package com.platypus.android.tablet;
 /**
  * Created by shenty on 2/13/16.
  */
-package com.platypus.android.tablet;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import java.util.ArrayList;
 
 
-import javax.measure.unit.SI;
+//import javax.measure.unit.SI;
 
 //issues
 //subtract method does subtraction in wrong order
 //for bisect vectors it multiples -1 and for findInteriorAngles it
 //switches order of parameters. Should fix this but no rush...
 public class PolyArea {
+    // none usually meaning nothing selected yet..
+    public enum AreaType
+    {
+        LAWNMOWER,SPIRAL,NONE
+    }
 
+    //double MAXDISTFROMSIDE = .4; //distance between waypoints 10 meters
     double MAXDISTFROMSIDE = .0000898; //distance between waypoints 10 meters
     final double ONE_METER = MAXDISTFROMSIDE / 10; //one meter
     double SUBTRACTDIST = MAXDISTFROMSIDE / 2; //5 meters
     final double FIVE_METERS = MAXDISTFROMSIDE / 2;
     public static final double LON_D_PER_M = 1.0 / 90000.0;
     public static final double LAT_D_PER_M = 1.0 / 110000.0;
-
 
     // dist
     // final double MAXDISTFROMSIDE = .4; //distance between wayp
@@ -243,6 +248,7 @@ public class PolyArea {
                 }
             }
         }
+
         return false;
     }
 
@@ -260,6 +266,7 @@ public class PolyArea {
         //         pointToCenter.add(normalizeVector(new LatLng(it.getLatitude()-centroid.getLatitude(),it.getLongitude()-centroid.getLongitude())));
         //     }
         ArrayList<LatLng> centers = new ArrayList<LatLng>();
+        System.out.println(!isNonAdjacentLessThan10Meters(spirals.get(spirals.size() - 1)));
         while (!isNonAdjacentLessThan10Meters(spirals.get(spirals.size() - 1))) {
 
             centroid = computeCentroid(spirals.get(spirals.size() - 1));
@@ -349,7 +356,7 @@ public class PolyArea {
         PolyArea qh = new PolyArea();
         ArrayList<LatLng> p = qh.quickHull(points);
 
-        System.out.println(qh.isNonAdjacentLessThan10Meters(qh.vertices));
+        //System.out.println(qh.isNonAdjacentLessThan10Meters(qh.vertices));
 
         // PolyArea qh = new PolyArea();
         // ArrayList<LatLng> p = qh.quickHull(points);
@@ -393,7 +400,7 @@ public class PolyArea {
         }
         // if (output > Math.PI/2)
         // {
-        // 	output = Math.PI - output;
+        //  output = Math.PI - output;
         // }
         //return output;
         return Math.acos(dot(a, b) / (calculateLength(a) * calculateLength(b)));
@@ -433,7 +440,7 @@ public class PolyArea {
         ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
         spirals.add(polygon); //add first polygon
         if (polygon.size() <= 2) {
-            System.out.println("poly size < 2 is: " + polygon.size());
+            System.out.println("poly size <= 2 is: " + polygon.size());
             return spirals;
         }
 
@@ -442,6 +449,7 @@ public class PolyArea {
         int counter = 0;
         //while(counter < 10)
         while (!isNonAdjacentLessThan10Meters(spirals.get(spirals.size() - 1))) {
+            System.out.println("while");
             counter++;
             //System.out.println(spirals.get(spirals.size()-1).size());
             //Last Polygon to be added
@@ -569,7 +577,7 @@ public class PolyArea {
                 LatLng lastPoint1 = lastSpiral.get(i + 1);
                 LatLng nextPoint1 = nextPolygon.get(i + 1);
                 if (linesIntersect(lastPoint0.getLatitude(), lastPoint0.getLongitude(), nextPoint0.getLatitude(), nextPoint0.getLongitude(), lastPoint1.getLatitude(), lastPoint1.getLongitude(), nextPoint1.getLatitude(), nextPoint1.getLongitude())) {
-                    System.out.println("Removed vertex : " + i + " from polygon: " + spirals.size());
+                    //System.out.println("Removed vertex : " + i + " from polygon: " + spirals.size());
                     LatLng average = new LatLng((nextPoint0.getLatitude() + nextPoint1.getLatitude()) / 2, (nextPoint0.getLongitude() + nextPoint1.getLongitude()) / 2);
                     nextPolygon.set(i + 1, average);
                     nextPolygon.remove(i);
@@ -592,124 +600,31 @@ public class PolyArea {
     //check if intersect is between area defined by old points and new points
     public static void main(String[] args) {
         ArrayList<LatLng> points = new ArrayList<LatLng>();
-        // LatLng point0 = new LatLng(-15 ,145);
-        // LatLng point1 = new LatLng(3,94);
-        // LatLng point2 = new LatLng(35,113);
-        // LatLng point3 = new LatLng(15,200);
-        //        LatLng point4 = new LatLng(-10,200);
+
+        // LatLng point0 = new LatLng(5, 5); //2
+        // LatLng point1 = new LatLng(4, 1); //1
+        // LatLng point2 = new LatLng(0, 2);
 
 
-        // LatLng point0 = new LatLng(-1,-2);
-        // LatLng point1 = new LatLng(-1,1);
-        // LatLng point2 = new LatLng(1,1);
-        // LatLng point3 = new LatLng(1,-1);
-        // LatLng point4 = new LatLng(2,4);
-
-        // LatLng point0 = new LatLng(-1,0);
-        // LatLng point1 = new LatLng(0,0);
-        // LatLng point2 = new LatLng(0,1);
-        //  LatLng point3 = new LatLng(1,-1);
-
-        LatLng point0 = new LatLng(-2, -3); //2
-        LatLng point1 = new LatLng(-3, 2); //1
-        LatLng point2 = new LatLng(2, 4);
-        LatLng point3 = new LatLng(1, -2); //3
-        //LatLng point4 = new LatLng(2,4);
-
-        // LatLng point0 = new LatLng(-2,-2); //2
-        // LatLng point1 = new LatLng(-2,2); //1
-        // LatLng point2 = new LatLng(2,2);
-        // LatLng point3 = new LatLng(2,-2); //3
-        // LatLng point4 = new LatLng(2,2);
+        LatLng point0 = new LatLng(1, 1); //3
+        LatLng point1 = new LatLng(0, 1); //2
+        LatLng point2 = new LatLng(0, 0); //1
+        LatLng point3 = new LatLng(1, 0);
 
 
         points.add(point0);
         points.add(point1);
         points.add(point2);
         points.add(point3);
-        //points.add(point4);
+
+
+        //points.add(point3);
+
 
         PolyArea qh = new PolyArea();
-        // qh.test();
-
-
-        // qh.test();
-
-        ArrayList<LatLng> p = qh.quickHull(points);
-        //1 0 3
-
-        // LatLng u = qh.findVector(point1,point0);
-        // LatLng v = qh.findVector(point0, point2);
-        // System.out.println("Point 1 + " + point0);
-        // System.out.println("Point 2 + " + point1);
-        // System.out.println("Point 3 + " + point2);
-        // System.out.println("U: " + u);
-        // System.out.println("V:" + v);
-        // System.out.println("U Length: " + qh.calculateLength(u));
-        // System.out.println("V Length: " + qh.calculateLength(v));
-        // System.out.println("U dot V: " + qh.dot(u,v));
-        // System.out.println("U normalized: " + qh.normalizeVector(u));
-        // System.out.println("U normalized: " + qh.normalizeVector(u));
-        // double angle = qh.findInteriorAngle(u,v);
-        // //System.out.println(Math.acos(qh.dot(u,v)/(qh.calculateLength(u)*qh.calculateLength(v)))*180/3.14);
-        // System.out.println("Interior Angle: " + qh.findInteriorAngle(u,v)* 180/3.14 + " degrees");
-        // LatLng bisect = qh.findBisectNormal(u,v);
-        // System.out.println("Bisecting Vector: " + bisect);
-        // // LatLng newpoint = qh.findVector(point0,qh.multiply(bisect,Math.sin(angle/2)));
-        // // System.out.println("New Point: " + newpoint);
-        // System.exit(0);
-
-        ArrayList<ArrayList<LatLng>> spirals = qh.computeSpiralsPolygonOffset(qh.vertices);
-        ArrayList<LatLng> allpoints = new ArrayList<LatLng>();
-
-        int counter = 0;
-        for (ArrayList<LatLng> i : spirals) {
-            System.out.print("x" + counter + " = [");
-            for (LatLng t : i) {
-                System.out.print(t.getLatitude() + ",");
-            }
-            System.out.print(i.get(0).getLatitude() + ",");
-            System.out.println("]\n");
-            counter++;
-        }
-        int counter2 = 0;
-        for (ArrayList<LatLng> i : spirals) {
-            System.out.print("y" + counter2 + " = [");
-            for (LatLng t : i) {
-                System.out.print(t.getLongitude() + ",");
-            }
-            System.out.print(i.get(0).getLongitude() + ",");
-            System.out.println("]\n");
-            counter2++;
-        }
-
-        for (int i = 0; i < counter; i++) {
-            System.out.print("plot(x" + i + ",y" + i + ");" + "hold on; ");
-        }
-        System.out.println("\n");
-        //for each polygon
-        counter = 0;
-        for (int i = 0; i < qh.bisect.size(); i++) {
-            //for each vertex
-            for (int t = 0; t < qh.bisect.get(i).size(); t++) {
-                //qh.bisect.get(i).set(t,qh.normalizeVector(qh.bisect.get(i).get(t)));
-
-                System.out.println("bx" + counter + "=[" + spirals.get(i).get(t).getLatitude() + "," + qh.subtract(spirals.get(i).get(t), qh.bisect.get(i).get(t)).getLatitude() + "]");
-                counter++;
-            }
-        }
-
-        counter2 = 0;
-        for (int i = 0; i < qh.bisect.size(); i++) {
-            //for each vertex
-            for (int t = 0; t < qh.bisect.get(i).size(); t++) {
-                System.out.println("by" + counter2 + "=[" + spirals.get(i).get(t).getLongitude() + "," + qh.subtract(spirals.get(i).get(t), qh.bisect.get(i).get(t)).getLongitude() + "]");
-                counter2++;
-            }
-        }
-        for (int i = 0; i < counter; i++) {
-            System.out.print("plot(bx" + i + ",by" + i + ",\"r\");" + "hold on; ");
-        }
+        ArrayList<LatLng> output = qh.getPoints(points,AreaType.LAWNMOWER);
+        //ArrayList<LatLng> output = qh.getPoints(points,AreaType.SPIRAL);
+        qh.print(output);
     }
 
     //http://www.java2s.com/Code/Android/Game/TestsifthelinesegmentfromX1nbspY1toX2nbspY2intersectsthelinesegmentfromX3nbspY3toX4nbspY4.htm
@@ -768,22 +683,25 @@ public class PolyArea {
 
     //this is not accurate since earth isnt flat.
     public void updateTransect(double submeters) {
-        System.out.printf("subm  %f\n", submeters);
-        System.out.printf("sub10  %f\n", submeters * ONE_METER * 2);
-        System.out.printf("sub5  %f\n", submeters * ONE_METER);
-        System.out.printf("sub1  %f\n", ONE_METER);
-        System.out.printf("current max %f\n", MAXDISTFROMSIDE);
+//        System.out.printf("subm  %f\n", submeters);
+//        System.out.printf("sub10  %f\n", submeters * ONE_METER * 2);
+//        System.out.printf("sub5  %f\n", submeters * ONE_METER);
+//        System.out.printf("sub1  %f\n", ONE_METER);
+//        System.out.printf("current max %f\n", MAXDISTFROMSIDE);
         MAXDISTFROMSIDE = submeters * ONE_METER * 2;
         SUBTRACTDIST = MAXDISTFROMSIDE / 2;
     }
 
+
     public static Object[] getLawnmowerPath(ArrayList<LatLng> area, double stepSize) {
+
         // Compute the bounding box
         double minLat = 360;
         double maxLat = -360;
         double minLon = 360;
         double maxLon = -360;
         Double curLat = null;
+        System.out.println(area);
         for (LatLng latLon : area) {  //get list of points
             if (latLon.getLatitude() > maxLat) { //if latlong.getLatitude()...
                 maxLat = latLon.getLatitude();
@@ -797,7 +715,7 @@ public class PolyArea {
             }
         }
         curLat = minLat;
-
+        System.out.println(curLat);
         double totalLength = 0.0;
         Double leftLon = null, rightLon = null; //locations
         ArrayList<LatLng> path = new ArrayList<LatLng>(); //can just
@@ -811,6 +729,7 @@ public class PolyArea {
                 path.add(new LatLng(curLat, rightLon));
                 totalLength += Math.abs((rightLon - leftLon) * LON_D_PER_M);
             } else {
+                System.out.println("null");
             }
             // Right to left
             curLat = curLat+stepSize;
@@ -823,6 +742,7 @@ public class PolyArea {
                     path.add(new LatLng(curLat, leftLon));
                     totalLength += Math.abs((rightLon - leftLon) * LON_D_PER_M);
                 } else {
+                    System.out.println("null");
                 }
             }
             curLat = curLat + stepSize;
@@ -927,8 +847,49 @@ public class PolyArea {
         {
             reordered.add(list.get(i));
         }
-  //      System.out.println(reordered);
+        //      System.out.println(reordered);
         return reordered;
+    }
+    public ArrayList<LatLng> getPoints(ArrayList<LatLng> area, AreaType type)
+    {
+
+        ArrayList<LatLng> flatList = new ArrayList<LatLng>();
+        if (type == AreaType.LAWNMOWER)
+        {
+            Object[] output = getLawnmowerPath(area,SUBTRACTDIST);
+            flatList = (ArrayList<LatLng>)output[0];
+        }
+        if (type == AreaType.SPIRAL)
+        {
+            area = quickHull(area);
+            ArrayList<ArrayList<LatLng>> spirals = computeSpiralsPolygonOffset(vertices);
+            for (ArrayList<LatLng> a : spirals)
+            {
+                for (LatLng p : a)
+                {
+                    flatList.add(p);
+                }
+            }
+        }
+        return flatList;
+    }
+    public void print(ArrayList<LatLng> area)
+    {
+        System.out.print("x=[");
+        for (LatLng a : area)
+        {
+            System.out.print(a.getLatitude() + ",");
+        }
+        System.out.print("]");
+        System.out.println("\n");
+        System.out.print("y=[");
+        for (LatLng a : area)
+        {
+            System.out.print(a.getLongitude() + ",");
+        }
+        System.out.print("]");
+        System.out.println("");
+        System.out.println("plot(x,y)");
     }
 }
 /*

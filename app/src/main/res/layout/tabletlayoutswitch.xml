@@ -36,7 +36,7 @@
         android:paddingTop="30dp"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:layout_width="200dp"
+        android:layout_width="220dp"
         android:layout_height="310dp"
         android:id="@+id/relativeLayout_sensor"
         android:layout_alignParentStart="true"
@@ -113,7 +113,7 @@
 
         <com.platypus.android.tablet.Joystick.JoystickView
             android:layout_width="165dp"
-            android:layout_height="120dp"
+            android:layout_height="140dp"
             android:id="@+id/joystickView"
             android:layout_alignParentStart="true" />
 
