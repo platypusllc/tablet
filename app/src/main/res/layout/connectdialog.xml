@@ -57,26 +57,26 @@
 <!--
     </EditText>
 -->
-        <RadioGroup
-        android:id="@+id/simvsactual"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
+        <!--<RadioGroup-->
+        <!--android:id="@+id/simvsactual"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:orientation="horizontal" >-->
 
-        <RadioButton
-            android:id="@+id/actualBoatRadio"
-            android:layout_width="wrap_content"
-            android:layout_height="52dp"
-            android:checked="true"
-            android:text="ActualBoat" />
-        <RadioButton
-            android:id="@+id/simulationRadio"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:paddingRight="15dp"
-            android:text="Simulation" />
-    </RadioGroup>
+        <!--<RadioButton-->
+            <!--android:id="@+id/actualBoatRadio"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="52dp"-->
+            <!--android:checked="true"-->
+            <!--android:text="ActualBoat" />-->
+        <!--<RadioButton-->
+            <!--android:id="@+id/simulationRadio"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:paddingRight="15dp"-->
+            <!--android:text="Simulation" />-->
+    <!--</RadioGroup>-->
 
     <RadioGroup
         android:id="@+id/connecttype"

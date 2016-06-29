@@ -300,8 +300,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public EditText ipAddress = null;
     public EditText color = null;
     public EditText transectDistance;
-    public RadioButton actualBoat = null;
-    public RadioButton simulation = null;
+    //public RadioButton actualBoat = null;
+    //public RadioButton simulation = null;
     public Button startWaypoints = null;
 
     public RadioButton direct = null;
@@ -1772,7 +1772,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
             //uncomment this
             if (waypointLayoutEnabled == true) {
-                waypointInfo.setText("Waypoint Status: \n" + boatwaypoint);
+                String status = boatwaypoint;
+                if (status == null)
+                {
+                    status = "\t\t-----";
+                }
+                waypointInfo.setText("Waypoint Status: \n" + status);
                 if (speed.isChecked()) {
                     Mapping_S = true;
                 } else {
@@ -1979,9 +1984,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         ipAddress = (EditText) dialog.findViewById(R.id.ipAddress1);
 
         Button submitButton = (Button) dialog.findViewById(R.id.submit);
-        simvsact = (RadioGroup) dialog.findViewById(R.id.simvsactual);
-        actualBoat = (RadioButton) dialog.findViewById(R.id.actualBoatRadio);
-        simulation = (RadioButton) dialog.findViewById(R.id.simulationRadio);
+        //simvsact = (RadioGroup) dialog.findViewById(R.id.simvsactual);
+        //actualBoat = (RadioButton) dialog.findViewById(R.id.actualBoatRadio);
+        //simulation = (RadioButton) dialog.findViewById(R.id.simulationRadio);
 
         direct = (RadioButton) dialog.findViewById(R.id.wifi);
         reg = (RadioButton) dialog.findViewById(R.id.reg);
@@ -2025,7 +2030,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     ipAddressBox.setText("IP Address: " + ipAddress.getText());
                 }
                 markerList = new ArrayList<Marker>();
-                actual = actualBoat.isChecked();
+                //actual = actualBoat.isChecked();
 
                 textIpAddress = ipAddress.getText().toString();
                 //System.out.println("IP Address entered is: " + textIpAddress);

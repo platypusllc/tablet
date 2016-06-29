@@ -79,7 +79,7 @@
         android:layout_height="wrap_content"
         android:text="Waypoint Status"
         android:layout_marginTop="25dp"
-        android:layout_gravity="center_horizontal"
+        android:layout_gravity="center"
         android:layout_below="@+id/switch1"
         android:layout_alignStart="@+id/switch1" />
     </LinearLayout>
