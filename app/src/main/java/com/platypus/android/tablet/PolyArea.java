@@ -696,6 +696,7 @@ public class PolyArea {
     public static Object[] getLawnmowerPath(ArrayList<LatLng> area, double stepSize) {
 
         // Compute the bounding box
+        area.add(area.get(0)); //adds first point to end so the final vector can be computed...
         double minLat = 360;
         double maxLat = -360;
         double minLon = 360;
@@ -856,6 +857,7 @@ public class PolyArea {
         ArrayList<LatLng> flatList = new ArrayList<LatLng>();
         if (type == AreaType.LAWNMOWER)
         {
+
             Object[] output = getLawnmowerPath(area,SUBTRACTDIST);
             flatList = (ArrayList<LatLng>)output[0];
         }

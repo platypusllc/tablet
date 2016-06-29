@@ -3676,7 +3676,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         transectDistance = (EditText) regionlayout.findViewById(R.id.region_transect);
         drawPoly.setBackgroundResource(R.drawable.draw_icon);
         spirallawn = (ToggleButton) regionlayout.findViewById(R.id.region_spiralorlawn);
-        spirallawn.setEnabled(false);
+        //spirallawn.setEnabled(false);
         updateTransect = (Button) regionlayout.findViewById(R.id.region_transectButton);
         updateTransect.setOnClickListener(new OnClickListener() {
             @Override
