@@ -1382,17 +1382,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         Drawable mboat = ContextCompat.getDrawable(this, R.drawable.pointarrow);
         Icon Iboat = mIconFactory.fromDrawable(mboat);
 
-        if (getBoatType() == true) {
+        //if (getBoatType() == true)
+        {
 
             networkThread = new NetworkAsync().execute(); //launch networking asnyc task
 
-        } else if (getBoatType() == false) {
-            log.append("Simulated Boat");
-            ipAddressBox.setText("Simulated Phone");
-            simulatedBoat();
-        } else {
-            log.append("fail");
         }
+//        else if (getBoatType() == false) {
+//            log.append("Simulated Boat");
+//            ipAddressBox.setText("Simulated Phone");
+//            simulatedBoat();
+//        } else {
+//            log.append("fail");
+//        }
 
         try {
             //boat2 = new Marker(currentBoat.getIpAddress().toString(), "Boat", new LatLng(pHollowStartingPoint.getLatitude(), pHollowStartingPoint.getLongitude()));
