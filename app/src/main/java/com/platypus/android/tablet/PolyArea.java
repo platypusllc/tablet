@@ -682,6 +682,7 @@ public class PolyArea {
     }
 
     //this is not accurate since earth isnt flat.
+
     public void updateTransect(double submeters) {
 //        System.out.printf("subm  %f\n", submeters);
 //        System.out.printf("sub10  %f\n", submeters * ONE_METER * 2);

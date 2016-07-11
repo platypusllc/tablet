@@ -40,14 +40,6 @@
         android:layout_alignTop="@+id/removeMap"
         android:layout_toEndOf="@+id/removeMap" />
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Remove Last Waypoint"
-        android:id="@+id/regIon_remove"
-        android:textAppearance="?android:attr/textAppearanceSmallInverse"
-        android:layout_above="@+id/drawPolygon"
-        android:layout_alignStart="@+id/area" />
 
     <Button
         android:layout_width="match_parent"
