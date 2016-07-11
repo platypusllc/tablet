@@ -17,7 +17,7 @@ public class PolyArea {
     // none usually meaning nothing selected yet..
     public enum AreaType
     {
-        LAWNMOWER,SPIRAL,NONE
+        LAWNMOWER,SPIRAL,WAYPOINT
     }
 
     //double MAXDISTFROMSIDE = .4; //distance between waypoints 10 meters
@@ -449,7 +449,7 @@ public class PolyArea {
         int counter = 0;
         //while(counter < 10)
         while (!isNonAdjacentLessThan10Meters(spirals.get(spirals.size() - 1))) {
-            System.out.println("while");
+            //System.out.println("while");
             counter++;
             //System.out.println(spirals.get(spirals.size()-1).size());
             //Last Polygon to be added
@@ -467,7 +467,7 @@ public class PolyArea {
                 if (calculateLength(temp) < SUBTRACTDIST) {
                     // System.out.println(lastSpiral);
                     // System.out.println(computeCentroid(spirals.get(spirals.size()-2)));
-                    System.out.println("poly area center close");
+                    //System.out.println("poly area center close");
                     return spirals;
                 }
             }

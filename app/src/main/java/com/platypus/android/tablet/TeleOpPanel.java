@@ -364,7 +364,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
     ArrayList<Marker> markerList = new ArrayList(); //List of all the
     ArrayList<Marker> boundryList = new ArrayList();
-    ArrayList<LatLng> lastAdded = new ArrayList<LatLng>();
+    //ArrayList<LatLng> lastAdded = new ArrayList<LatLng>();
     ArrayList<ArrayList<LatLng>> spiralWaypoints = new ArrayList<ArrayList<LatLng>>();
     ArrayList<UtmPose> allWaypointsSent = new ArrayList<UtmPose>();
     ArrayList<Polygon> spiralList = new ArrayList<Polygon>();
@@ -396,7 +396,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     String waypointLogTag = "Sensor";
     String mapLogTag = "Sensor";
 
-    PolyArea.AreaType currentAreaType = PolyArea.AreaType.NONE;
+    PolyArea.AreaType currentAreaType = PolyArea.AreaType.WAYPOINT;
     //static final String
 
     /* TODO
@@ -787,7 +787,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             @Override
             public void waypointUpdate(WaypointState waypointState) {
                 boatwaypoint = waypointState.toString();
-                System.out.println(waypointState.toString());
+                //System.out.println(waypointState.toString());
                 //  Log.i(logTag, "Waypoint listener called");
             }
         };
@@ -843,6 +843,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     @Override
                     public boolean onMarkerClick(@NonNull Marker marker) {
                         final int index = markerList.indexOf(marker);
+                        final int indexR = boundryList.indexOf(marker);
+
                         final Marker mark = marker;
                         runOnUiThread(new Runnable() {
                             @Override
@@ -856,19 +858,23 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                         .setCancelable(false)
                                         .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
                                             public void onClick(DialogInterface dialog, int id) {
-                                                if (markerList.size() == 0)
-                                                {
-                                                    return;
+                                                if (waypointLayoutEnabled == true) {
+                                                    if (markerList.size() == 0) {
+                                                        return;
+                                                    }
+                                                    markerList.remove(index);
+                                                    waypointList.remove(index);
+                                                    mMapboxMap.removeMarker(mark);
+                                                    mMapboxMap.removePolyline(Waypath);
+                                                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
                                                 }
-                                                markerList.remove(index);
-                                                waypointList.remove(index);
-                                                mMapboxMap.removeMarker(mark);
-                                                mMapboxMap.removePolyline(Waypath);
-                                                Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-
-                                                for (int i = 0; i < markerList.size(); i++)
+                                                else //region
                                                 {
-                                                    //edit snipped, cant do this atm
+                                                    //remove last added, no real use of this
+                                                    //System.out.println("tp " + touchpointList.size());
+                                                    System.out.println("mapbox " + currentAreaType.toString());
+                                                    touchpointList.remove(boundryList.get(indexR).getPosition());
+                                                    invalidate();
                                                 }
                                             }
                                         })
@@ -909,7 +915,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                         .setMessage("Please Press Delete Region First?")
                                         .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
                                             public void onClick(DialogInterface dialog, int which) {
-                                                System.out.println(touchpointList.size());
                                             }
                                         })
                                         .show();
@@ -1318,7 +1323,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     private JoystickMovedListener _listener = new JoystickMovedListener() {
         @Override
         public void OnMoved(int x, int y) {
-            System.out.println("called");
+        //    System.out.println("called");
             thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
             rudderTemp = fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX);
 //            if (currentBoat != null) {
@@ -1348,12 +1353,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         @Override
         public void OnReleased() {
-            System.out.println("released");
+            //System.out.println("released");
         }
 
         @Override
         public void OnReturnedToCenter() {
-            System.out.println("returned to center");
+            //System.out.println("returned to center");
             thrustTemp = 0;
             rudderTemp = 0;
             if (currentBoat != null) {
@@ -1439,7 +1444,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public void updateVelocity(Boat a, FunctionObserver<Void> fobs) { //taken right from desktop client for updating velocity
         // ConnectScreen.boat.setVelocity(thrust.getProgress(),
         // rudder.getProgress());
-        System.out.println("velocity update");
+        //System.out.println("velocity update");
         if (a.returnServer() != null) {
             //Twist twist = new Twist();
             twist.dx(thrustTemp >= -1 & thrustTemp <= 1 ? thrustTemp : 0);
@@ -1756,12 +1761,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             joystick.setOnJostickClickedListener(new JoystickClickedListener() {
                 @Override
                 public void OnClicked() {
-                    System.out.println("joystick clicked");
+                    //System.out.println("joystick clicked");
                 }
 
                 @Override
                 public void OnReleased() {
-                    System.out.println("joystick released");
+                    //System.out.println("joystick released");
                 }
             });
             DecimalFormat velFormatter = new DecimalFormat("####.###");
@@ -1992,8 +1997,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         direct = (RadioButton) dialog.findViewById(R.id.wifi);
         reg = (RadioButton) dialog.findViewById(R.id.reg);
-        ipAddress.setText("192.168.1.250");
-        //ipAddress.setText("127.0.0.1");
+        //ipAddress.setText("192.168.1.250");
+        ipAddress.setText("127.0.0.1");
 
 
         direct.setOnClickListener(new OnClickListener() {
@@ -2074,7 +2079,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         currentBoat.returnServer().addWaypointListener(new WaypointListener() {
             @Override
             public void waypointUpdate(WaypointState waypointState) {
-                System.out.println("waypontstate: " + waypointState.toString());
+                //System.out.println("waypontstate: " + waypointState.toString());
             }
         }, null);
     }
@@ -2622,7 +2627,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         public void onClick(DialogInterface dialog, int which) {
 
                             LatLng loc = new LatLng(mMapboxMap.getMyLocation());
-
+ 
                             if (loc != null) {
                                 home = loc;
                                 MarkerOptions home_MO = new MarkerOptions()
@@ -2765,7 +2770,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                System.out.println("asdfasdfasdf");
+
                                 System.out.println(doubles[0] + " " + doubles[1] + " " + doubles[2]);
 
                                 thrustP.setText("" + doubles[0]);
@@ -2798,7 +2803,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         System.out.println("FAILED TO GET PIDS");
                     }
                 });
-                System.out.println("asdf");
+
             }
         };
         PIDthread.start();
@@ -2900,29 +2905,43 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         return average;
     }
 
-    public void drawPolygon(ArrayList<LatLng> list,PolyArea area)
+    public void drawPolygon(PolyArea area,PolyArea.AreaType type)
     {
         final IconFactory mIconFactory = IconFactory.getInstance(this);
         Drawable mboundry = ContextCompat.getDrawable(context, R.drawable.boundary);
         final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
+
         area.updateTransect(currentTransectDist);
-        spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList); //some how is editing touchpointlist when used as the parameter
-        System.out.println("touchpoint" + touchpointList.size());
-        System.out.println("spiral size " + spiralWaypoints.size());
-        drawSmallerPolys(spiralWaypoints);
+
+        //waypointList = (ArrayList<LatLng>)area.getLawnmowerPath(waypointList,currentTransectDist*1/90000)[0];
+
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                //remove old annoations
+
+                if (Waypath != null) {
+                    mMapboxMap.removeAnnotation(Waypath);
+                    Waypath.remove();
+                }
+                if (Boundry != null)
+                {
+                    mMapboxMap.removeAnnotation(Boundry);
+                    Boundry.remove();
+                }
                 mMapboxMap.removeAnnotations(boundryList); //remove all markers //why the fuck is this not removing the markers..
-                boundryList.clear(); //clear list
-                for (LatLng i : touchpointList) { //add markers
-                    //boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry))); //add all elements to boundry list
+                boundryList.clear();
+
+                for (LatLng i : touchpointList) { //add markers for boundry
                     boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry)));
                 }
+                //add border polygon
                 PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.GREEN).fillColor(Color.YELLOW); //draw polygon
                 //border gets aa'd better than the fill causing gaps between border and fill...
                 poly.alpha((float) .5); //set interior opacity
                 Boundry = mMapboxMap.addPolygon(poly); //addpolygon
+                Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.YELLOW).width(5));
             }
         });
     }
@@ -2930,89 +2949,38 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         final IconFactory mIconFactory = IconFactory.getInstance(this);
         Drawable mboundry = ContextCompat.getDrawable(context, R.drawable.boundary);
         final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
-        if(spirallawn.isChecked() == true)
+        PolyArea area = new PolyArea();
+        waypointList.clear();
+        if (currentAreaType == PolyArea.AreaType.LAWNMOWER)
         {
-
-            if (Waypath != null) {
-                mMapboxMap.removeAnnotation(Waypath);
-                Waypath.remove();
-            }
-            if (Boundry != null)
-            {
-                mMapboxMap.removeAnnotation(Boundry);
-                Boundry.remove();
-            }
-            System.out.println("lawn called");
+            System.out.println("add point to region lawn");
             touchpointList.add(point);
-            PolyArea area = new PolyArea();
             if (touchpointList.size() >= 2)
             {
                 touchpointList = area.quickHull(touchpointList);
-                //touchpointList p= area.orderCCWUpRight(touchpointList);
             }
-            System.out.println(touchpointList);
-            //drawPolygon(touchpointList,area); //draws the polygon
-            ArrayList<LatLng> templist = (ArrayList<LatLng>)area.getLawnmowerPath(touchpointList,currentTransectDist*1/90000)[0];
-            //System.out.println("temp list" + templist.size());
-            ArrayList<LatLng> reverseList = new ArrayList<LatLng>();
+            waypointList = (ArrayList<LatLng>)area.getLawnmowerPath(touchpointList,currentTransectDist*1/90000)[0];
 
-            for (int i = templist.size()-1; i>=0; i--)
+        }
+        else if (currentAreaType == PolyArea.AreaType.SPIRAL){
+            System.out.println("add point to region spiral");
+            LatLng wpLoc = point;
+
+            touchpointList.add(wpLoc);
+            touchpointList = area.quickHull(touchpointList);
+            spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList); //some how is editing touchpointlist when used as the parameter
+
+            //add all waypoitns into the waypointlist
+            for (ArrayList<LatLng> i : spiralWaypoints)
             {
-                reverseList.add(templist.get(i)); //reverse order from ccw to cw
+             for (LatLng t : i)
+             {
+                 waypointList.add(t);
+             }
             }
-            waypointList.clear();
-            waypointList = reverseList;
-            System.out.println(waypointList);
-//            System.out.println(touchpointList.size() + "start touch");
-//            System.out.println(templist.size() + "start tpl");
-//            System.out.println(reverseList.size() + "start reverse");
-//            System.out.println(waypointList.size() + "start wplist\n");
-
-
-            //waypointList = templist;
-//            for (LatLng i : waypointList)
-//            {
-//                boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i)));
-//            }
-            mMapboxMap.removeAnnotations(boundryList);
-            for (LatLng i : touchpointList) { //add markers
-                boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).icon(Iboundry)));
-            }
-
-            PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.GREEN).fillColor(Color.YELLOW); //draw polygon
-            poly.alpha((float) .4); //set interior opacity
-            Boundry = mMapboxMap.addPolygon(poly);
-            if (waypointList.size()>2) {
-                Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GRAY).width(5));
-            }
-
-            return;
         }
-        //spiral
-        LatLng wpLoc = point;
-        if (Boundry != null) {
-            Boundry.remove();
-        }
-        for (Marker t : boundryList) {
-            t.remove();
-        }
-        touchpointList.add(wpLoc);
-
-        PolyArea area = new PolyArea();
-        touchpointList = area.quickHull(touchpointList);
-        spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList); //some how is editing touchpointlist when used as the parameter
-
-        if (touchpointList.contains(wpLoc)) {
-            lastAdded.add(wpLoc);
-        }
-
-        if (lastAdded.size() != touchpointList.size()) {
-            ArrayList<LatLng> tempLastAdded = new ArrayList<LatLng>(lastAdded);
-            tempLastAdded.removeAll(touchpointList);
-            //item that should be ommited
-            lastAdded.remove(tempLastAdded.get(0));
-        }
-        drawPolygon(touchpointList,area); //draws the polygon
+        System.out.println(currentAreaType.toString() + " " + waypointList.size());
+        drawPolygon(area, PolyArea.AreaType.SPIRAL); //draws the polygon
     }
 
     public void saveMap()
@@ -3069,7 +3037,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         // Create a bounding box for the offline region
         LatLngBounds latLngBounds = mMapboxMap.getProjection().getVisibleRegion().latLngBounds;
-        System.out.println("bounds: " + latLngBounds.toString());
+        //System.out.println("bounds: " + latLngBounds.toString());
 
 //        LatLngBounds latLngBounds = new LatLngBounds.Builder()
 //                .include(new LatLng(37.7897, -119.5073)) // Northeast
@@ -3170,8 +3138,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
                 location = LocationServices.FusedLocationApi.getLastLocation();
                 userloc.setPosition(new LatLng(location.getLatitude(),location.getLongitude()));
-                System.out.println(currentBoat.getLocation());
-                System.out.println(userloc);
+                //System.out.println(currentBoat.getLocation());
+                //System.out.println(userloc);
 
 //                System.out.println(location);
 //                System.out.println("user location is" + userloc);
@@ -3685,6 +3653,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         spirallawn = (ToggleButton) regionlayout.findViewById(R.id.region_spiralorlawn);
         //spirallawn.setEnabled(false);
         updateTransect = (Button) regionlayout.findViewById(R.id.region_transectButton);
+        if (spirallawn.isChecked())
+        {
+            currentAreaType = PolyArea.AreaType.LAWNMOWER;
+        }
+        else
+        {
+            currentAreaType = PolyArea.AreaType.SPIRAL;
+        }
+        spirallawn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!spirallawn.isChecked())
+                {
+                    System.out.println("set to spiral");
+                    currentAreaType = PolyArea.AreaType.SPIRAL;
+                }
+                else
+                {
+                    System.out.println("set to lawn");
+                    currentAreaType = PolyArea.AreaType.LAWNMOWER;
+                }
+                invalidate();
+            }
+        });
+
+
         updateTransect.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -3695,8 +3689,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     if (spirallawn.isChecked() == false) {
                         currentAreaType = PolyArea.AreaType.SPIRAL;
                         mMapboxMap.removeAnnotation(Boundry);
-                        drawPolygon(touchpointList, area);
+                        drawPolygon(area,currentAreaType);
                         drawSmallerPolys(spiralWaypoints);
+
+
                     }
                     else
                     {
@@ -3723,7 +3719,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             boundryList.add(mMapboxMap.addMarker(new MarkerOptions().position(i)));
                         }
                         mMapboxMap.removeAnnotation(Boundry);
-                        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.YELLOW).fillColor(Color.MAGENTA); //draw polygon
+                        PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.GRAY).fillColor(Color.MAGENTA); //draw polygon
                         poly.alpha((float) .4); //set interior opacity
                         //Boundry = mMapboxMap.addPolygon(poly); //addpolygon
 
@@ -3824,7 +3820,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     spiralList.clear();
                     spiralWaypoints.clear();
                     touchpointList.clear();
-                    lastAdded.clear();
+
                     waypointList.clear();
                 }
                 catch(Exception e)
@@ -4018,8 +4014,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                         try {
                             System.out.println("poly called");
-                            touchpointList.remove(touchpointList.indexOf(lastAdded.get(lastAdded.size() - 1)));
-                            lastAdded.remove(lastAdded.size() - 1);
+                            //touchpointList.remove(touchpointList.indexOf(lastAdded.get(lastAdded.size() - 1)));
+                            //lastAdded.remove(lastAdded.size() - 1);
 
                             Boundry.remove();
                             for (Marker a : boundryList) {
@@ -4073,42 +4069,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
      * back based on current data from lists.. sw*/
     public void invalidate()
     {
-        //teleop markers and waypath
-        if (waypointLayoutEnabled)
+
+        PolyArea area = new PolyArea();
+        waypointList.clear();
+        if (currentAreaType == PolyArea.AreaType.LAWNMOWER)
         {
-            mMapboxMap.removeAnnotations(markerList);
-            mMapboxMap.removeAnnotation(Waypath);
-            int sum = 0;
-            for (LatLng i : touchpointList)
-            {
-                markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(sum))));
-            }
+            waypointList = (ArrayList<LatLng>)area.getLawnmowerPath(touchpointList,currentTransectDist*1/90000)[0];
+
         }
-        else
-        {
-            if (currentAreaType == PolyArea.AreaType.SPIRAL)
+        else if (currentAreaType == PolyArea.AreaType.SPIRAL){
+            spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList); //some how is editing touchpointlist when used as the parameter
+            for (ArrayList<LatLng> i : spiralWaypoints)
             {
-                mMapboxMap.removeAnnotation(Boundry);
-                mMapboxMap.removeAnnotations(boundryList);
-
-                PolyArea area = new PolyArea();
-                touchpointList = area.quickHull(touchpointList);
-                spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList); //some how is editing touchpointlist when used as the parameter
-
-                if (lastAdded.size() != touchpointList.size()) {
-                    ArrayList<LatLng> tempLastAdded = new ArrayList<LatLng>(lastAdded);
-                    tempLastAdded.removeAll(touchpointList);
-                    //item that should be ommited
-                    lastAdded.remove(tempLastAdded.get(0));
+                for (LatLng t : i)
+                {
+                    waypointList.add(t);
                 }
-                drawPolygon(touchpointList,area); //draws the polygon
-            }
-
-            else if (currentAreaType == PolyArea.AreaType.LAWNMOWER)
-            {
-
             }
         }
+        drawPolygon(area,currentAreaType);
+//        else if (currentAreaType == PolyArea.AreaType.LAWNMOWER)
+//        {
+//            waypointList = (ArrayList<LatLng>)area.getLawnmowerPath(touchpointList,currentTransectDist*1/90000)[0];
+//            drawPolygon(area, PolyArea.AreaType.LAWNMOWER);
+//        }
+
+        //drawPolygon(area,currentAreaType);
     }
 }
 
