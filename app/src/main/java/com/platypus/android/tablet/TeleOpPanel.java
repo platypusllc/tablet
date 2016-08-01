@@ -188,7 +188,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Button loadWaypoints = null;
     Button advancedOptions = null;
     Button makeConvex = null; //for testing remove later
-    Button preimeter = null;
+    Button perimeter = null;
     Button mapButton = null;
     Button centerToBoat = null;
     Button startRegion = null;
@@ -461,6 +461,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     onLoadWaypointLayout();
                     waypointLayoutEnabled = true;
                 }
+                invalidate();
+                //switchModes(); //handles switching the lists
             }
         });
 
@@ -2626,7 +2628,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     .setNegativeButton("Tablet", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
 
-                            LatLng loc = new LatLng(mMapboxMap.getMyLocation());
+
+                            Location tempLocation = LocationServices.FusedLocationApi.getLastLocation();
+                            LatLng loc = new LatLng(tempLocation.getLatitude(),tempLocation.getLongitude());
+                            //LatLng loc = new LatLng(mMapboxMap.getMyLocation());
  
                             if (loc != null) {
                                 home = loc;
@@ -3644,7 +3649,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         startRegion = (Button) regionlayout.findViewById(R.id.region_start); //start button
         drawPoly = (ImageButton) regionlayout.findViewById(R.id.region_draw); //toggle adding points to region
-        preimeter = (Button) regionlayout.findViewById(R.id.region_perimeter); //perimeter* start perimeter? didnt write this
+        perimeter = (Button) regionlayout.findViewById(R.id.region_perimeter); //perimeter* start perimeter? didnt write this
         clearRegion = (Button) regionlayout.findViewById(R.id.region_clear); //region, not implemented yet
         Button stopButton = (Button) regionlayout.findViewById(R.id.stopButton);
         transectDistance = (EditText) regionlayout.findViewById(R.id.region_transect);
@@ -3691,6 +3696,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
 
+            }
+        });
+
+        perimeter.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addPointToRegion(currentBoat.getLocation());
             }
         });
 
@@ -3811,17 +3823,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         * */
 
 
-        preimeter.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (latlongloc != null) {
-                    LatLng point = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-                    addPointToRegion(point);
-                    //drawPolygon(point, Iboundry);
-                }
-            }
-        });
-
+//        preimeter.setOnClickListener(new OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (latlongloc != null) {
+//                    LatLng point = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+//                    addPointToRegion(point);
+//                    //drawPolygon(point, Iboundry);
+//                }
+//            }
+//        });
+//
     }
     //removes all annotations and readds them
 
@@ -3830,8 +3842,68 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
      * It should then based on which state the app is in (Teleop or if region
      * is it doing spiral or lawnmower) it should then add new annotations
      * back based on current data from lists.. sw*/
+    public void switchModes()
+    {
+        //contains code for switching, this should handle switching the lists for region and waypoint
+        //then it should call invalidate
+        if (waypointLayoutEnabled == true)//switching from region to waypoint
+        {
+            if (touchpointList.size() > 0)
+            {
+
+            }
+        }
+        else if (waypointLayoutEnabled == false) //waypoin to region
+        {
+            if (waypointList.size() > 0)
+            {
+                for (LatLng i : waypointList)
+                {
+                    addPointToRegion(i);
+                }
+                //touchpointList = waypointList;
+                //waypointList.clear();
+            }
+        }
+        //invalidate();
+    }
     public void invalidate()
     {
+//        if(waypointLayoutEnabled == true)
+//        {
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    //remove old annoations
+//
+//                    if (Waypath != null) {
+//                        mMapboxMap.removeAnnotation(Waypath);
+//                        Waypath.remove();
+//                    }
+//                    if (Boundry != null) {
+//                        mMapboxMap.removeAnnotation(Boundry);
+//                        Boundry.remove();
+//                    }
+//                    mMapboxMap.removeAnnotations(boundryList); //remove all markers //why the fuck is this not removing the markers..
+//                    boundryList.clear();
+//                    for (LatLng i : waypointList) { //add markers for boundry
+//                        markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i)));
+//                    }
+//                    //add border polygon
+//                    //PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.GREEN).fillColor(Color.YELLOW); //draw polygon
+//                    //border gets aa'd better than the fill causing gaps between border and fill...
+//                    //poly.alpha((float) .5); //set interior opacity
+//                    //Boundry = mMapboxMap.addPolygon(poly); //addpolygon
+//                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+//                }
+//            });
+
+//            for (LatLng i : waypointList) {
+//                markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(WPnum))));
+//            }
+//            Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+//            return;
+//        }
 
         PolyArea area = new PolyArea();
         waypointList.clear();
@@ -3842,6 +3914,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         else if (currentAreaType == PolyArea.AreaType.SPIRAL){
             touchpointList = area.quickHull(touchpointList);
+            area.updateTransect(Double.parseDouble(transectDistance.getText().toString()));
             spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList); //some how is editing touchpointlist when used as the parameter
             for (ArrayList<LatLng> i : spiralWaypoints)
             {
