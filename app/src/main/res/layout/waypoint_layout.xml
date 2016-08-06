@@ -16,15 +16,21 @@
         android:layout_height="wrap_content"
         android:text="Start Waypoints" />
 
-    <ToggleButton
+
+    <!--<ImageButton-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/"-->
+        <!--android:layout_marginLeft="10dp"-->
+        <!--android:layout_alignStart="@+id/removeMap" />-->
+
+    <ImageButton
         android:id="@+id/waypointButton"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:textOn="Add Waypoints"
-        android:textOff="Add Waypoints"
-        android:checked="false"/>
-
-
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+        <!--android:textOn="Add Waypoints"-->
+        <!--android:textOff="Add Waypoints"-->
+        <!--android:checked="false"/>-->
 
     <ToggleButton
         style="?android:attr/buttonStyleSmall"

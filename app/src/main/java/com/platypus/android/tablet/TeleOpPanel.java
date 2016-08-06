@@ -163,19 +163,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     TextView ipAddressBox = null;
     TextView mapInfo = null;
     RelativeLayout linlay = null;
-    CheckBox autonomous = null;
-
-    static TextView testIP = null;
     AsyncTask networkThread;
-    TextView test = null;
-    ToggleButton tiltButton = null;
-    ToggleButton waypointButton = null;
-    ToggleButton pauseWP = null;
-    ToggleButton setHome = null;
-    ToggleButton spirallawn;
-    ImageButton goHome = null;
-    ImageButton drawPoly = null;
 
+    ToggleButton pauseWP = null;
+    ToggleButton spirallawn;
+
+    ImageButton drawPoly = null;
+    ImageButton waypointButton = null;
 
 
     Button deleteWaypoint = null;
@@ -339,6 +333,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     private boolean longClick = false;
     private long startTime, endTime;
     private boolean startDraw = false;
+    private boolean startDrawWaypoints = false;
 
     boolean Mapping_S = false;
     //double[] low_tPID = {.2, .0, .0};
@@ -894,11 +889,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         return false;
                     }
                 });
-
                 mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
                     @Override
                     public void onMapLongClick(LatLng point) {
-                        if (waypointButton.isChecked() && startDraw == false) {
+                        if (startDrawWaypoints && startDraw == false) {
                             //System.out.println("waypoint button");
                             LatLng wpLoc = point;
                             if (Waypath != null) {
@@ -1615,9 +1609,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                 float bias = mv.getRotation();  // bias is the map orirentation
 
-                if (currentBoat != null && curLoc != null) {
+                try {
                     currentBoat.setLocation(curLoc);
                 }
+                catch(Exception e)
+                {
+
+                }
+
 
                 if (mMapboxMap != null) {
 
@@ -2958,15 +2957,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         waypointList.clear();
         if (currentAreaType == PolyArea.AreaType.LAWNMOWER)
         {
-            System.out.println("add point to region lawn");
-
             touchpointList.add(point);
             touchpointList = area.quickHull(touchpointList);
             waypointList = (ArrayList<LatLng>)area.getLawnmowerPath(touchpointList,currentTransectDist*1/90000)[0];
+            System.out.println("REGION: wypoint list " + waypointList.size());
         }
         //transect isnt getting updated here?
         else if (currentAreaType == PolyArea.AreaType.SPIRAL){
-            System.out.println("add point to region spiral");
             LatLng wpLoc = point;
             touchpointList.add(wpLoc);
             area.MAXDISTFROMSIDE = 20 * area.MAXDISTFROMSIDE * 2;
@@ -2978,11 +2975,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             //add all waypoitns into the waypointlist
             for (ArrayList<LatLng> i : spiralWaypoints)
             {
-             for (LatLng t : i)
-             {
-                 waypointList.add(t);
-             }
+                for (LatLng t : i)
+                {
+                    waypointList.add(t);
+                }
             }
+            System.out.println("REGION: wypoint list " + waypointList.size());
         }
         System.out.println(currentAreaType.toString() + " " + waypointList.size());
         drawPolygon(area, PolyArea.AreaType.SPIRAL); //draws the polygon
@@ -3212,8 +3210,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 if (currentBoat.getConnected() == true) {
                     checktest = true;
                     JSONObject JPose = new JSONObject();
-                    if (waypointList.size() > 0) {
+                    System.out.println("before if wp is: " + waypointList.size());
+                    try
+                    {
+                        Thread.currentThread().sleep(100);
+                    }
+                    catch(Exception e)
+                    {
 
+                    }
+                    if (waypointList.size() > 0) {
+                        System.out.println("REGION: starting");
                         //Convert all UTM to latlong
                         UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
                         waypointStatus = tempUtm.toString();
@@ -3284,10 +3291,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                             }
                         });
-                    } else {
+                    }
+                    else {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                System.out.println("wp list size: " + waypointList.size());
                                 Toast.makeText(getApplicationContext(), "Please Select Waypoints", Toast.LENGTH_LONG).show();
                             }
                         });
@@ -3407,7 +3416,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         LayoutInflater inflater = (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         waypointlayout = (LinearLayout) findViewById(R.id.relativeLayout_sensor);
         waypointregion = inflater.inflate(R.layout.waypoint_layout, waypointlayout);
-        waypointButton = (ToggleButton) waypointregion.findViewById(R.id.waypointButton);
+        waypointButton = (ImageButton) waypointregion.findViewById(R.id.waypointButton);
+        waypointButton.setBackgroundResource(R.drawable.draw_icon);
         deleteWaypoint = (Button) waypointregion.findViewById(R.id.waypointDeleteButton);
         pauseWP = (ToggleButton) waypointregion.findViewById(R.id.pause);
         startWaypoints = (Button) waypointregion.findViewById(R.id.waypointStartButton);
@@ -3459,9 +3469,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         waypointButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (!startDrawWaypoints) {
+                    startDrawWaypoints = true;
+                    waypointButton.setBackgroundResource(R.drawable.draw_icon2);
+                } else {
+                    startDrawWaypoints = false;
+                    waypointButton.setBackgroundResource(R.drawable.draw_icon);
+                    return;
+                }
+
                 Thread thread = new Thread() {
                     public void run() {
-                        if (waypointButton.isChecked()) {
+                        if (waypointButton.isActivated()) {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -3867,6 +3886,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         //invalidate();
     }
+    /*
+    * Not calling update transect
+    *
+    *
+    *
+    *
+    * */
     public void invalidate()
     {
 //        if(waypointLayoutEnabled == true)
@@ -3938,3 +3964,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 //
 //class
+
+
+
+//lowrence comes up as es2
+//lot of mapbox crashes, switch to stable..
