@@ -858,7 +858,6 @@ public class PolyArea {
         ArrayList<LatLng> flatList = new ArrayList<LatLng>();
         if (type == AreaType.LAWNMOWER)
         {
-
             Object[] output = getLawnmowerPath(area,SUBTRACTDIST);
             flatList = (ArrayList<LatLng>)output[0];
         }

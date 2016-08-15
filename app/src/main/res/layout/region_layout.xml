@@ -41,7 +41,16 @@
         android:layout_toEndOf="@+id/removeMap" />
 
 
-    <Button
+        <ToggleButton
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Additional Waypoint"
+            android:id="@+id/additionalWaypoint"
+            android:layout_gravity="center_horizontal"
+            android:checked="false" />
+
+        <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Clear"
