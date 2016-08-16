@@ -96,6 +96,9 @@ import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
 import com.mapzen.android.lost.api.LocationServices;
 
 
+import com.platypus.android.tablet.Path.AreaType;
+import com.platypus.android.tablet.Path.Path;
+import com.platypus.android.tablet.Path.Region;
 import com.platypus.crw.CrwNetworkUtils;
 import com.platypus.crw.SensorListener;
 import com.platypus.crw.VehicleServer;
@@ -359,6 +362,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     Icon Ihome;
 
+
+    Path boatPath = null;
     ArrayList<LatLng> touchpointList = new ArrayList<LatLng>();
     ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
     ArrayList<Marker> markerList = new ArrayList(); //List of all the
@@ -460,23 +465,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     waypointlayout.removeAllViews();
                     onLoadRegionLayout();
                     waypointLayoutEnabled = false;
-                    startDrawWaypoints = false;
-                    touchpointList.clear();
-                    waypointList.clear();
-                    mMapboxMap.removeAnnotations(markerList);
-                    markerList.clear();
-                    invalidate();
-
+                    //startDraw = true;
+                    if (boatPath == null)
+                    {
+                        boatPath = new Path();
+                    }
+                    boatPath = new Path(boatPath.getPoints());
                 }
                 else
                 {
                     regionlayout.removeAllViews();
                     onLoadWaypointLayout();
                     waypointLayoutEnabled = true;
-                    startDraw = false;
-                    touchpointList.clear();
-                    waypointList.clear();
-                    invalidate();
+                    //startDrawWaypoints = true;
+                    if (boatPath == null)
+                    {
+                        boatPath = new Region();
+                    }
+                    if (spirallawn.isChecked())
+                    {
+                        boatPath = new Region(touchpointList, AreaType.LAWNMOWER);
+                    }
+                    else
+                    {
+                        boatPath = new Region(touchpointList,AreaType.SPIRAL);
+                    }
+
                 }
                 invalidate();
                 //switchModes(); //handles switching the lists
@@ -873,39 +887,39 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 {
                                     return;
                                 }
-                                AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                                builder.setMessage("Delete this waypoint?")
-                                        .setCancelable(false)
-                                        .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                if (waypointLayoutEnabled == true) {
-                                                    if (markerList.size() == 0) {
-                                                        return;
-                                                    }
-                                                    markerList.remove(index);
-                                                    waypointList.remove(index);
-                                                    mMapboxMap.removeMarker(mark);
-                                                    mMapboxMap.removePolyline(Waypath);
-                                                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-                                                }
-                                                else //region
-                                                {
-                                                    //remove last added, no real use of this
-                                                    //System.out.println("tp " + touchpointList.size());
-                                                    System.out.println("mapbox " + currentAreaType.toString());
-                                                    touchpointList.remove(boundryList.get(indexR).getPosition());
-                                                    invalidate();
-                                                }
-                                            }
-                                        })
-                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                return;
-                                            }
-                                        });
-
-                                AlertDialog alert = builder.create();
-                                alert.show();
+//                                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+//                                builder.setMessage("Delete this waypoint?")
+//                                        .setCancelable(false)
+//                                        .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+//                                            public void onClick(DialogInterface dialog, int id) {
+//                                                if (waypointLayoutEnabled == true) {
+//                                                    if (markerList.size() == 0) {
+//                                                        return;
+//                                                    }
+//                                                    markerList.remove(index);
+//                                                    waypointList.remove(index);
+//                                                    mMapboxMap.removeMarker(mark);
+//                                                    mMapboxMap.removePolyline(Waypath);
+//                                                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+//                                                }
+//                                                else //region
+//                                                {
+//                                                    //remove last added, no real use of this
+//                                                    //System.out.println("tp " + touchpointList.size());
+//                                                    System.out.println("mapbox " + currentAreaType.toString());
+//                                                    touchpointList.remove(boundryList.get(indexR).getPosition());
+//                                                    invalidate();
+//                                                }
+//                                            }
+//                                        })
+//                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+//                                            public void onClick(DialogInterface dialog, int id) {
+//                                                return;
+//                                            }
+//                                        });
+//
+//                                AlertDialog alert = builder.create();
+//                                alert.show();
 
                             }
                         });
@@ -915,53 +929,26 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
                     @Override
                     public void onMapLongClick(LatLng point) {
-                        if (startDrawWaypoints && startDraw == false) {
-                            //System.out.println("waypoint button");
-                            LatLng wpLoc = point;
-                            if (Waypath != null) {
-                                Waypath.remove();
-                            }
-                            WPnum += 1;
-                            waypointList.add(wpLoc);
-                            if (touchpointList.size() == 0) {
-                                markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(wpLoc).title(Integer.toString(WPnum))));
-                                Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+
+
+                        if (startDrawWaypoints == true) {
+                            touchpointList.add(point);
+                            System.out.println(touchpointList.size());
+                            boatPath = new Path(touchpointList);
+                         }
+                        else if (startDraw)
+                        {
+                            touchpointList.add(point);
+                            if (spirallawn.isChecked())
+                            {
+                                boatPath = new Region(touchpointList, AreaType.LAWNMOWER);
                             }
                             else
                             {
-                                new AlertDialog.Builder(context)
-                                        .setTitle("Please Delete Region")
-                                        .setMessage("Please Press Delete Region First?")
-                                        .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int which) {
-                                            }
-                                        })
-                                        .show();
-
+                                boatPath = new Region(touchpointList,AreaType.SPIRAL);
                             }
                         }
-                        ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
-                            //drawPolygon(point, Iboundry); //add new point to polygon
-                            //if (switchView.isChecked())
-//                                if (!spirallawn.isChecked()) {
-                        if (regionWaypointButton != null && regionWaypointButton.isChecked() == false)
-                        {
-                            System.out.println("asdfasdf");
-                            if (startDraw == true) {
-                                addPointToRegion(point);
-                            }
-                        }
-                        else
-                        {
-                            startDraw = false;
-                            regionMarkerWaypointList.add(mMapboxMap.addMarker(new MarkerOptions().position(point)));
-                            regionWaypointList.add(point);
-                            waypointList.add(point);
-                            Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-
-                        }
-                        //addPointToPolygon(point,Iboundry);
-
+                        invalidate();
                     }
                 });
                 boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
@@ -2984,44 +2971,44 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         });
     }
-    private void addPointToRegion(LatLng point) {
-        final IconFactory mIconFactory = IconFactory.getInstance(this);
-        Drawable mboundry = ContextCompat.getDrawable(context, R.drawable.boundary);
-        final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
-        PolyArea area = new PolyArea();
-        area.updateTransect(currentTransectDist);
-        containsRegion = true;
-        waypointList.clear();
-        if (currentAreaType == PolyArea.AreaType.LAWNMOWER)
-        {
-            touchpointList.add(point);
-            touchpointList = area.quickHull(touchpointList);
-            waypointList = (ArrayList<LatLng>)area.getLawnmowerPath(touchpointList,currentTransectDist*1/90000)[0];
-            System.out.println("REGION: wypoint list " + waypointList.size());
-        }
-        //transect isnt getting updated here?
-        else if (currentAreaType == PolyArea.AreaType.SPIRAL){
-            LatLng wpLoc = point;
-            touchpointList.add(wpLoc);
-            area.MAXDISTFROMSIDE = 20 * area.MAXDISTFROMSIDE * 2;
-            area.SUBTRACTDIST = area.MAXDISTFROMSIDE / 2;
-            area.updateTransect(currentTransectDist);
-            touchpointList = area.quickHull(touchpointList); //have to quick hull after adding point..
-            spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList); //some how is editing touchpointlist when used as the parameter
-
-            //add all waypoitns into the waypointlist
-            for (ArrayList<LatLng> i : spiralWaypoints)
-            {
-                for (LatLng t : i)
-                {
-                    waypointList.add(t);
-                }
-            }
-        }
-        System.out.println("REGION: wypoint list " + waypointList.size());
-        System.out.println(currentAreaType.toString() + " " + waypointList.size());
-        drawPolygon(area, PolyArea.AreaType.SPIRAL); //draws the polygon
-    }
+//    private void addPointToRegion(LatLng point) {
+//        final IconFactory mIconFactory = IconFactory.getInstance(this);
+//        Drawable mboundry = ContextCompat.getDrawable(context, R.drawable.boundary);
+//        final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
+//        PolyArea area = new PolyArea();
+//        area.updateTransect(currentTransectDist);
+//        containsRegion = true;
+//        waypointList.clear();
+//        if (currentAreaType == PolyArea.AreaType.LAWNMOWER)
+//        {
+//            touchpointList.add(point);
+//            touchpointList = area.quickHull(touchpointList);
+//            waypointList = (ArrayList<LatLng>)area.getLawnmowerPath(touchpointList,currentTransectDist*1/90000)[0];
+//            System.out.println("REGION: wypoint list " + waypointList.size());
+//        }
+//        //transect isnt getting updated here?
+//        else if (currentAreaType == PolyArea.AreaType.SPIRAL){
+//            LatLng wpLoc = point;
+//            touchpointList.add(wpLoc);
+//            area.MAXDISTFROMSIDE = 20 * area.MAXDISTFROMSIDE * 2;
+//            area.SUBTRACTDIST = area.MAXDISTFROMSIDE / 2;
+//            area.updateTransect(currentTransectDist);
+//            touchpointList = area.quickHull(touchpointList); //have to quick hull after adding point..
+//            spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList); //some how is editing touchpointlist when used as the parameter
+//
+//            //add all waypoitns into the waypointlist
+//            for (ArrayList<LatLng> i : spiralWaypoints)
+//            {
+//                for (LatLng t : i)
+//                {
+//                    waypointList.add(t);
+//                }
+//            }
+//        }
+//        System.out.println("REGION: wypoint list " + waypointList.size());
+//        System.out.println(currentAreaType.toString() + " " + waypointList.size());
+//        drawPolygon(area, PolyArea.AreaType.SPIRAL); //draws the polygon
+//    }
 
     public void saveMap()
     {
@@ -3246,14 +3233,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     {
 
                     }
+                    waypointList = boatPath.getPoints();
                     if (waypointList.size() > 0) {
-                        System.out.println("REGION: starting");
                         //Convert all UTM to latlong
                         UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
                         waypointStatus = tempUtm.toString();
 
-                        //Confused now, this does same thing as whats below uncomment if needed
-                        //currentBoat.addWaypoint(tempUtm.pose, tempUtm.origin);
                         wpPose = new UtmPose[waypointList.size()];
                         synchronized (_waypointLock) {
                             //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
@@ -3497,14 +3482,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         waypointButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
+                System.out.println("called");
                 if (!startDrawWaypoints) {
-                    startDrawWaypoints = true;
                     waypointButton.setBackgroundResource(R.drawable.draw_icon2);
-                } else {
-                    startDrawWaypoints = false;
-                    waypointButton.setBackgroundResource(R.drawable.draw_icon);
-                    return;
                 }
+                else {
+                    waypointButton.setBackgroundResource(R.drawable.draw_icon);
+                }
+                startDrawWaypoints = !startDrawWaypoints;
+                System.out.println("startdraw wp is: " + startDrawWaypoints);
 
                 Thread thread = new Thread() {
                     public void run() {
@@ -3611,23 +3597,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
                 };
                 thread.start();
-                try
-                {
-                    mMapboxMap.removeAnnotations(markerList);
-                    Waypath.remove();
-                    waypointList.clear();
-                    //touchpointList.clear();
-                    boundryList.clear();
-                    WPnum = 0;
-                    N_waypoint = 0;
-
-                    mlogger.info(new JSONObject()
-                            .put("Time", sdf.format(d))
-                            .put("Delete", new JSONObject()
-                                    .put("WP_num", waypointList.size())));
-                }
-                catch (JSONException e) {
-                }
+                WPnum = 0;
+                boatPath = new Path();
+                touchpointList.clear();
+                invalidate();
                 //mMapboxMap.removeAnnotations();
             }
         });
@@ -3737,7 +3710,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     System.out.println("set to lawn");
                     currentAreaType = PolyArea.AreaType.LAWNMOWER;
                 }
-                invalidate();
+                //invalidate();
             }
         });
 
@@ -3751,7 +3724,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
 
                 currentTransectDist = Double.parseDouble(transectDistance.getText().toString());
-                invalidate();
+                //invalidate();
 
 
 
@@ -3761,7 +3734,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         perimeter.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                addPointToRegion(currentBoat.getLocation());
+                //addPointToRegion(currentBoat.getLocation());
             }
         });
 
@@ -3806,16 +3779,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     {
                         return;
                     }
-                    containsRegion = false;
-                    mMapboxMap.removeAnnotations(boundryList);
-                    mMapboxMap.removeAnnotations(spiralList);
-                    mMapboxMap.removeAnnotation(Boundry);
-                    mMapboxMap.removeAnnotation(Waypath);
-                    boundryList.clear();
-                    spiralList.clear();
-                    spiralWaypoints.clear();
-                    touchpointList.clear();
-                    waypointList.clear();
+//                    containsRegion = false;
+//                    mMapboxMap.removeAnnotations(boundryList);
+//                    mMapboxMap.removeAnnotations(spiralList);
+//                    mMapboxMap.removeAnnotation(Boundry);
+//                    mMapboxMap.removeAnnotation(Waypath);
+//                    boundryList.clear();
+//                    spiralList.clear();
+//                    spiralWaypoints.clear();
+//                    touchpointList.clear();
+//                    waypointList.clear();
                 }
                 catch(Exception e)
                 {
@@ -3860,12 +3833,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             @Override
             public void onClick(View v) {
                 if (startDraw == false) {
-                    startDraw = true;
                     drawPoly.setBackgroundResource(R.drawable.draw_icon2);
                 } else {
-                    startDraw = false;
                     drawPoly.setBackgroundResource(R.drawable.draw_icon);
                 }
+                startDraw = !startDraw;
             }
         });
         IconFactory mIconFactory = IconFactory.getInstance(this);
@@ -3918,7 +3890,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             {
                 for (LatLng i : waypointList)
                 {
-                    addPointToRegion(i);
+                    //addPointToRegion(i);
                 }
                 //touchpointList = waypointList;
                 //waypointList.clear();
@@ -3933,74 +3905,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     *
     *
     * */
-    public void invalidate()
-    {
-//        if(waypointLayoutEnabled == true)
-//        {
-//            runOnUiThread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    //remove old annoations
-//
-//                    if (Waypath != null) {
-//                        mMapboxMap.removeAnnotation(Waypath);
-//                        Waypath.remove();
-//                    }
-//                    if (Boundry != null) {
-//                        mMapboxMap.removeAnnotation(Boundry);
-//                        Boundry.remove();
-//                    }
-//                    mMapboxMap.removeAnnotations(boundryList); //remove all markers //why the fuck is this not removing the markers..
-//                    boundryList.clear();
-//                    for (LatLng i : waypointList) { //add markers for boundry
-//                        markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i)));
-//                    }
-//                    //add border polygon
-//                    //PolygonOptions poly = new PolygonOptions().addAll(touchpointList).strokeColor(Color.GREEN).fillColor(Color.YELLOW); //draw polygon
-//                    //border gets aa'd better than the fill causing gaps between border and fill...
-//                    //poly.alpha((float) .5); //set interior opacity
-//                    //Boundry = mMapboxMap.addPolygon(poly); //addpolygon
-//                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-//                }
-//            });
-
-//            for (LatLng i : waypointList) {
-//                markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(WPnum))));
-//            }
-//            Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-//            return;
-//        }
-
-        PolyArea area = new PolyArea();
-        waypointList.clear();
-        if (touchpointList.size() == 0)
+    public void invalidate() {
+        if (!(Waypath == null || markerList == null))
         {
-            return;
+            mMapboxMap.removeAnnotation(Waypath);
+            mMapboxMap.removeAnnotations(markerList);
         }
-        if (currentAreaType == PolyArea.AreaType.LAWNMOWER)
+        Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.GREEN).width(5));
+        for (LatLng i : boatPath.getOriginalPoints())
         {
-            waypointList = (ArrayList<LatLng>)area.getLawnmowerPath(touchpointList,currentTransectDist*1/90000)[0];
+            markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(markerList.size()))));
         }
-        else if (currentAreaType == PolyArea.AreaType.SPIRAL){
-            touchpointList = area.quickHull(touchpointList);
-            area.updateTransect(Double.parseDouble(transectDistance.getText().toString()));
-            spiralWaypoints = area.computeSpiralsPolygonOffset(touchpointList); //some how is editing touchpointlist when used as the parameter
-            for (ArrayList<LatLng> i : spiralWaypoints)
-            {
-                for (LatLng t : i)
-                {
-                    waypointList.add(t);
-                }
-            }
-        }
-        drawPolygon(area,currentAreaType);
-//        else if (currentAreaType == PolyArea.AreaType.LAWNMOWER)
-//        {
-//            waypointList = (ArrayList<LatLng>)area.getLawnmowerPath(touchpointList,currentTransectDist*1/90000)[0];
-//            drawPolygon(area, PolyArea.AreaType.LAWNMOWER);
-//        }
-
-        //drawPolygon(area,currentAreaType);
     }
 }
 
