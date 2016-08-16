@@ -2606,7 +2606,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 thread.start();
                 WPnum = 0;
                 boatPath = new Path();
-                //touchpointList.clear();
+                touchpointList.clear();
                 invalidate();
                 //mMapboxMap.removeAnnotations();
             }
@@ -2689,31 +2689,33 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         spirallawn = (ToggleButton) regionlayout.findViewById(R.id.region_spiralorlawn);
         updateTransect = (Button) regionlayout.findViewById(R.id.region_transectButton);
 
-/*
-        if (spirallawn.isChecked()) {
-            if (boatPath == null)
-            {
-                System.out.println("null boatpath");
-            }
-            boatPath = new Region(touchpointList, AreaType.LAWNMOWER);
-        }
-        else {
-            if (boatPath == null)
-            {
-                boatPath = new Region(touchpointList, AreaType.SPIRAL);
-            }
-            boatPath = new Region(touchpointList, AreaType.SPIRAL);
-        }
-  */
+
+//        if (spirallawn.isChecked()) {
+//            if (boatPath == null)
+//            {
+//                System.out.println("null boatpath");
+//            }
+//            boatPath = new Region(touchpointList, AreaType.LAWNMOWER,currentTransectDist);
+//        }
+//        else {
+//            if (boatPath == null)
+//            {
+//                boatPath = new Region(touchpointList, AreaType.SPIRAL);
+//            }
+//            boatPath = new Region(touchpointList, AreaType.SPIRAL,currentTransectDist);
+//        }
+
         spirallawn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!spirallawn.isChecked()) {
-                    System.out.println("set to spiral");
+                    ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
+                    boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
                 } else {
-                    System.out.println("set to lawn");
+                    ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
+                    boatPath = new Region(temp, AreaType.LAWNMOWER,currentTransectDist);
                 }
-                //invalidate();
+                invalidate();
             }
         });
 
@@ -2724,10 +2726,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 if (currentBoat == null) {
                     return;
                 }
+
                 currentTransectDist = Double.parseDouble(transectDistance.getText().toString());
-                //invalidate();
+                boatPath.updateTransect(currentTransectDist);
 
-
+                //boatPath = new Region(touchpointList,Are);
+                invalidate();
             }
         });
 
@@ -2780,7 +2784,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     if (touchpointList.size() == 0) {
                         return;
                     }
-                    //touchpointList.clear();
+                    touchpointList.clear();
                     invalidate();
                 } catch (Exception e) {
                     System.out.println(e.toString());

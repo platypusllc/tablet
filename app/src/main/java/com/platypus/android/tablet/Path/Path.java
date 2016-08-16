@@ -8,7 +8,8 @@ public class Path
 {
   protected ArrayList<LatLng> points = new ArrayList<LatLng>();
   double transectAngle = 0;
-
+  protected double transectDistance = .00000898*5; //10 meters, initial value
+  protected final double ONE_METER = transectDistance/10;
   public Path()
   {
   }
@@ -67,5 +68,13 @@ public class Path
     System.out.println("");
     System.out.println("plot(x,y)");
   }
+  public void updateTransect(double meters)
+  {
+    transectDistance = meters*ONE_METER;
+  }
 
+  public void updateRegionPoints()
+  {
+    //implemented in Region
+  }
 }

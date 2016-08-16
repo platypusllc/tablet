@@ -8,9 +8,9 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 public class Region extends Path
 {
 
-  private double transectDistance = .00000898; //10 meters, initial value
+
 //  private double transectDistance = .1; //testing
-  private final double oneMeter = transectDistance/10;
+private final double ONEMETER = transectDistance/10;
   AreaType regionType;// = AreaType.SPIRAL;
   private static final double LON_D_PER_M = 1.0 / 90000.0;
   private static final double LAT_D_PER_M = 1.0 / 110000.0;
@@ -35,7 +35,16 @@ public class Region extends Path
     updateRegionPoints();
 
   }
-//  public Region(Path path, AreaType type)
+  public Region(ArrayList<LatLng> list, AreaType type, Double transect) {
+    setPoints(list);
+    originalPoints = points;
+    regionType = type;
+    transectDistance = transect*ONE_METER;
+    updateRegionPoints();
+  }
+
+
+  //  public Region(Path path, AreaType type)
 //  {
 //    points = path.getPoints();
 //    originalPoints = points;
@@ -43,13 +52,13 @@ public class Region extends Path
 //
 //    updateRegionPoints();
 //  }
-//  public Region(Path path)
-//  {
-//    points = path.getPoints();
-//    originalPoints = points;
-//    regionType = AreaType.SPIRAL;
-//    updateRegionPoints();
-//  }
+  public Region(Path path)
+  {
+    points = path.getPoints();
+    originalPoints = points;
+    regionType = AreaType.SPIRAL;
+    updateRegionPoints();
+  }
 
 //  public void setAreaType(AreaType type)
 //  {
@@ -57,6 +66,11 @@ public class Region extends Path
 //    regionType = type;
 //    updateRegionPoints();
 //  }
+  public void setAreaType(AreaType type)
+  {
+    regionType = type;
+    updateRegionPoints();
+  }
   public AreaType getAreaType()
   {
     return regionType;
@@ -66,6 +80,11 @@ public class Region extends Path
     Any time you call setPoints or add/removePoint/clear the new
     regionPoints is generated.
   */
+  public void updateTransect(double submeters)
+  {
+    transectDistance = submeters*ONEMETER;
+    updateRegionPoints();
+  }
 
   public ArrayList<LatLng> getPoints()
   {
@@ -75,7 +94,7 @@ public class Region extends Path
   {
     return originalPoints;
   }
-  private void updateRegionPoints()
+  public void updateRegionPoints()
   {
     regionPoints.clear();
     if (regionType == AreaType.SPIRAL)
@@ -448,10 +467,10 @@ public class Region extends Path
 
   //this is not accurate since earth isnt flat.
 
-  // public void updateTransect(double submeters) {
-  //     transectDistance = submeters * ONE_METER * 2;
-  //     transectDistance/2 = transectDistance / 2;
-  // }
+//  public void updateTransect(double submeters) {
+//    transectDistance = submeters*ONEMETER;
+//    updateRegionPoints();
+//  }
 
 
   public void  getLawnmowerPath(double stepSize) {
