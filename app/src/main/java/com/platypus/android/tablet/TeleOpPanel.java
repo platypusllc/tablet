@@ -296,9 +296,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     ArrayList<LatLng> touchpointList = new ArrayList<LatLng>();
     ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
     ArrayList<Marker> markerList = new ArrayList(); //List of all the
-    ArrayList<Marker> boundryList = new ArrayList();
+    //ArrayList<Marker> boundryList = new ArrayList();
 
-    ArrayList<ArrayList<LatLng>> spiralWaypoints = new ArrayList<ArrayList<LatLng>>();
+
     ArrayList<UtmPose> allWaypointsSent = new ArrayList<UtmPose>();
     private Polyline Waypath;
     boolean isFirstWaypointCompleted = false;
@@ -387,15 +387,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     //startDrawWaypoints = true;
                     if (boatPath == null)
                     {
-                        boatPath = new Region(touchpointList,AreaType.SPIRAL);
+                        //boatPath = new Region(touchpointList,AreaType.SPIRAL);
                     }
                     if (spirallawn.isChecked())
                     {
-                        boatPath = new Region(touchpointList, AreaType.LAWNMOWER);
+                        //boatPath = new Region(touchpointList, AreaType.LAWNMOWER);
                     }
                     else
                     {
-                        boatPath = new Region(touchpointList,AreaType.SPIRAL);
+                        //boatPath = new Region(touchpointList,AreaType.SPIRAL);
                     }
 
                 }
@@ -408,145 +408,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             mlogger.close();
         }
         mlogger = new TabletLogger();
-
-
-        //**********************************************************************
-        //  faked sensor data
-        //***********************************************************************
-//                sensorData1.setText("6.56");
-//                sensorType1.setText("ATLAS_PH \n pH");
-//                sensorData2.setText("9.56");
-//                sensorType2.setText("ATLAS_DO \n mg/L");
-//                sensorData3.setText("305\n19.0");
-//                sensorType3.setText("ES2 \nEC(µS/cm)\nTE(°C)");
-//                battery.setText("16.566");
-
-        //Center map button
-//        startRegion.setOnClickListener(new OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Thread thread = new Thread() {
-//                    public void run() {
-//                        //if (currentBoat.isConnected() == true) {
-//                        ArrayList<LatLng> flatlist = new ArrayList<LatLng>();
-//                        System.out.println("wpsize + " + spiralWaypoints.size());
-//                        for (ArrayList<LatLng> list : spiralWaypoints)
-//                        {
-//                            for (LatLng wpoint : list)
-//                            {
-//                                flatlist.add(wpoint);
-//
-//                            }
-//                        }
-//                        if (currentBoat.getConnected() == true) {
-//                            checktest = true;
-//                            JSONObject JPose = new JSONObject();
-//                            if (flatlist.size() > 0) {
-//
-//                                //Convert all UTM to latlong
-//                                UtmPose tempUtm = convertLatLngUtm(flatlist.get(flatlist.size() - 1));
-//
-//                                waypointStatus = tempUtm.toString();
-//
-//                                //Confused now, this does same thing as whats below uncomment if needed
-//                                //currentBoat.addWaypoint(tempUtm.pose, tempUtm.origin);
-//                                wpPose = new UtmPose[flatlist.size()];
-//                                synchronized (_waypointLock) {
-//                                    //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
-//                                    for (int i = 0; i < flatlist.size(); i++) {
-//                                        wpPose[i] = convertLatLngUtm(flatlist.get(i));
-//                                    }
-//                                    tempPose = wpPose;
-//                                }
-//
-//                                currentBoat.returnServer().setAutonomous(true, new FunctionObserver<Void>() {
-//                                    @Override
-//                                    public void completed(Void aVoid) {
-//                                        Log.i(logTag, "Autonomy set to true");
-//                                    }
-//
-//                                    @Override
-//                                    public void failed(FunctionError functionError) {
-//                                        Log.i(logTag, "Failed to set autonomy");
-//                                    }
-//                                });
-//                                checkAndSleepForCmd();
-//                                currentBoat.returnServer().isAutonomous(new FunctionObserver<Boolean>() {
-//                                    @Override
-//                                    public void completed(Boolean aBoolean) {
-//                                        isAutonomous = aBoolean;
-//                                        Log.i(logTag, "isAutonomous: " + isAutonomous);
-//                                    }
-//
-//                                    @Override
-//                                    public void failed(FunctionError functionError) {
-//
-//                                    }
-//                                });
-//                                currentBoat.returnServer().startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>() {
-//                                    @Override
-//                                    public void completed(Void aVoid) {
-//
-//                                        isWaypointsRunning = true;
-//                                        System.out.println("startwaypoints - completed");
-//                                    }
-//
-//                                    @Override
-//                                    public void failed(FunctionError functionError) {
-//                                        isCurrentWaypointDone = false;
-//                                        System.out.println("startwaypoints - failed");
-//                                        runOnUiThread(new Runnable() {
-//                                            @Override
-//                                            public void run() {
-//                                                Toast.makeText(getApplicationContext(), "Failed to start waypoints, you may be using a too large region", Toast.LENGTH_LONG).show();
-//                                            }
-//                                        });
-//
-//                                        // = waypointStatus + "\n" + functionError.toString();
-//                                        // System.out.println(waypointStatus);
-//                                    }
-//                                });
-//                                currentBoat.returnServer().getWaypoints(new FunctionObserver<UtmPose[]>() {
-//                                    @Override
-//                                    public void completed(UtmPose[] wps) {
-//                                        for (UtmPose i : wps) {
-//                                            System.out.println("waypoints" + i.toString());
-//                                        }
-//                                    }
-//
-//                                    @Override
-//                                    public void failed(FunctionError functionError) {
-//
-//                                    }
-//                                });
-//                            } else {
-//                                runOnUiThread(new Runnable() {
-//                                    @Override
-//                                    public void run() {
-//                                        Toast.makeText(getApplicationContext(), "Please Select Waypoints", Toast.LENGTH_LONG).show();
-//                                    }
-//                                });
-//                            }
-//                            try {
-//
-//                                mlogger.info(new JSONObject()
-//                                        .put("Time", sdf.format(d))
-//                                        .put("startWP", new JSONObject()
-//                                                .put("WP_num", wpPose.length)
-//                                                .put("AddWaypoint", Auto)));
-//                            } catch (JSONException e) {
-//                                Log.w(logTag, "Failed to log startwaypoint");
-//                            } catch (Exception e) {
-//
-//                            }
-//
-//                        }
-//                    }
-//                };
-//                thread.start();
-//
-//            }
-//        });
 
 
         centerToBoat.setOnClickListener(new OnClickListener() {
@@ -784,7 +645,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     @Override
                     public boolean onMarkerClick(@NonNull Marker marker) {
                         final int index = markerList.indexOf(marker);
-                        final int indexR = boundryList.indexOf(marker);
+                        //final int indexR = boundryList.indexOf(marker);
 
                         final Marker mark = marker;
                         runOnUiThread(new Runnable() {
@@ -846,15 +707,25 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         else if (startDraw)
                         {
                             touchpointList.add(point);
-                            boatPath = new Region(touchpointList, AreaType.SPIRAL);
-//                            if (spirallawn.isChecked())
-//                            {
-//                                boatPath = new Region(touchpointList, AreaType.LAWNMOWER);
-//                            }
-//                            else
-//                            {
-//                                boatPath = new Region(touchpointList,AreaType.SPIRAL);
-//                            }
+                            if (spirallawn.isChecked())
+                            {
+                                //System.out.println(touchpointList.size());
+                                System.out.println("before tpl: " + touchpointList.size());
+                                ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
+                                boatPath = new Region(temp, AreaType.LAWNMOWER);
+                                System.out.println("after tpl: " + touchpointList.size());
+                                System.out.println("points: " + boatPath.getPoints().size());
+
+                            }
+                            else
+                            {
+                                System.out.println("before tpl: " + touchpointList.size());
+                                ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
+                                boatPath = new Region(temp,AreaType.SPIRAL);
+                                System.out.println("after tpl: " + touchpointList.size());
+                                System.out.println("points: " + boatPath.getPoints().size());
+
+                            }
                         }
                         invalidate();
                     }
@@ -2735,7 +2606,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 thread.start();
                 WPnum = 0;
                 boatPath = new Path();
-                touchpointList.clear();
+                //touchpointList.clear();
                 invalidate();
                 //mMapboxMap.removeAnnotations();
             }
@@ -2807,7 +2678,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         LayoutInflater inflater = (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         regionlayout = (LinearLayout) findViewById(R.id.relativeLayout_sensor);
         waypointregion = inflater.inflate(R.layout.region_layout, regionlayout);
-        //    public Button regionWaypointButton = null;
         regionWaypointButton = (ToggleButton) regionlayout.findViewById(R.id.additionalWaypoint);
         startRegion = (Button) regionlayout.findViewById(R.id.region_start); //start button
         drawPoly = (ImageButton) regionlayout.findViewById(R.id.region_draw); //toggle adding points to region
@@ -2817,39 +2687,31 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         transectDistance = (EditText) regionlayout.findViewById(R.id.region_transect);
         drawPoly.setBackgroundResource(R.drawable.draw_icon);
         spirallawn = (ToggleButton) regionlayout.findViewById(R.id.region_spiralorlawn);
-        //spirallawn.setEnabled(false);
         updateTransect = (Button) regionlayout.findViewById(R.id.region_transectButton);
 
-
+/*
         if (spirallawn.isChecked()) {
             if (boatPath == null)
             {
-                boatPath = new Region(touchpointList, AreaType.SPIRAL);
+                System.out.println("null boatpath");
             }
-            boatPath = new Region(boatPath.getOriginalPoints(), AreaType.LAWNMOWER);
+            boatPath = new Region(touchpointList, AreaType.LAWNMOWER);
         }
         else {
             if (boatPath == null)
             {
                 boatPath = new Region(touchpointList, AreaType.SPIRAL);
             }
-            boatPath = new Region(boatPath.getOriginalPoints(), AreaType.SPIRAL);
+            boatPath = new Region(touchpointList, AreaType.SPIRAL);
         }
-//        regionWaypointButton.setOnClickListener(new OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//
-//            }
-//        });
+  */
         spirallawn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!spirallawn.isChecked()) {
                     System.out.println("set to spiral");
-                    currentAreaType = PolyArea.AreaType.SPIRAL;
                 } else {
                     System.out.println("set to lawn");
-                    currentAreaType = PolyArea.AreaType.LAWNMOWER;
                 }
                 //invalidate();
             }
@@ -2862,7 +2724,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 if (currentBoat == null) {
                     return;
                 }
-
                 currentTransectDist = Double.parseDouble(transectDistance.getText().toString());
                 //invalidate();
 
@@ -2919,16 +2780,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     if (touchpointList.size() == 0) {
                         return;
                     }
-//                    containsRegion = false;
-//                    mMapboxMap.removeAnnotations(boundryList);
-//                    mMapboxMap.removeAnnotations(spiralList);
-//                    mMapboxMap.removeAnnotation(Boundry);
-//                    mMapboxMap.removeAnnotation(Waypath);
-//                    boundryList.clear();
-//                    spiralList.clear();
-//                    spiralWaypoints.clear();
-//                    touchpointList.clear();
-//                    waypointList.clear();
+                    //touchpointList.clear();
+                    invalidate();
                 } catch (Exception e) {
                     System.out.println(e.toString());
                 }
@@ -2970,15 +2823,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             mMapboxMap.removeAnnotations(markerList);
         }
 
-        System.out.println(touchpointList);
-        System.out.println();
+        //System.out.println(touchpointList);
+        //System.out.println();
 
         IconFactory mIconFactory = IconFactory.getInstance(this);
         Drawable mboundry = ContextCompat.getDrawable(this, R.drawable.boundary);
         final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
 
         Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.GREEN).width(5));
-        for (LatLng i : boatPath.getOriginalPoints())
+        //for (LatLng i : boatPath.getOriginalPoints())
+        for (LatLng i : touchpointList)
         {
             if(boatPath instanceof  Region) {
                 markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(markerList.size())).icon(Iboundry)));
@@ -2990,7 +2844,3 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
     }
 }
-
-
-
-

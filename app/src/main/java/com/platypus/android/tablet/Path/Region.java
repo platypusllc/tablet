@@ -4,55 +4,59 @@ import java.util.ArrayList;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
+
 public class Region extends Path
 {
 
-//    private double transectDistance = .00000898; //10 meters, initial value
-  private double transectDistance = .1; //testing
+  private double transectDistance = .00000898; //10 meters, initial value
+//  private double transectDistance = .1; //testing
   private final double oneMeter = transectDistance/10;
-  private AreaType regionType = AreaType.SPIRAL;
+  AreaType regionType;// = AreaType.SPIRAL;
   private static final double LON_D_PER_M = 1.0 / 90000.0;
   private static final double LAT_D_PER_M = 1.0 / 110000.0;
 
 
-	//Dont quickhull points, keep them original
-	private ArrayList<LatLng> editedPoints = new ArrayList<LatLng>();
+	//Dont quickhull points, keep them origina
+    private ArrayList<LatLng> originalPoints = new ArrayList<LatLng>();
   //Points will be the original points																																	 
   private ArrayList<LatLng> regionPoints = new ArrayList<LatLng>();
 
 
-  public Region()
-  {
-  }
-  public Region(ArrayList<LatLng> list)
-  {
+//  public Region(ArrayList<LatLng> list)
+//  {
+//    setPoints(list);
+//    originalPoints = points;
+//    updateRegionPoints();
+//  }
+  public Region(ArrayList<LatLng> list, AreaType type) {
     setPoints(list);
-  }
-  public Region(Path path, AreaType type)
-  {
-    points = path.getPoints();
+    originalPoints = points;
     regionType = type;
     updateRegionPoints();
-  }
-  public Region(ArrayList<LatLng> list, AreaType type)
-  {
-    points = list;
-    regionType = type;
-    updateRegionPoints();
-  }
-  public Region(Path path)
-  {
-    points = path.getPoints();
-    regionType = AreaType.SPIRAL;
-    updateRegionPoints();
-  }
 
-  public void setAreaType(AreaType type)
-  {
-		//quickHull();
-    regionType = type;
-    updateRegionPoints();
   }
+//  public Region(Path path, AreaType type)
+//  {
+//    points = path.getPoints();
+//    originalPoints = points;
+//    regionType = type;
+//
+//    updateRegionPoints();
+//  }
+//  public Region(Path path)
+//  {
+//    points = path.getPoints();
+//    originalPoints = points;
+//    regionType = AreaType.SPIRAL;
+//    updateRegionPoints();
+//  }
+
+//  public void setAreaType(AreaType type)
+//  {
+//    //quickHull();
+//    regionType = type;
+//    updateRegionPoints();
+//  }
   public AreaType getAreaType()
   {
     return regionType;
@@ -69,14 +73,14 @@ public class Region extends Path
   }
   public ArrayList<LatLng> getOriginalPoints()
   {
-    return points;
+    return originalPoints;
   }
-  public void updateRegionPoints()
+  private void updateRegionPoints()
   {
     regionPoints.clear();
     if (regionType == AreaType.SPIRAL)
     {
-      //quickHull();
+      quickHull();
       ArrayList<ArrayList<LatLng>> spiralPath = computeSpiralsPolygonOffset();
       for (ArrayList<LatLng> a : spiralPath)
       {
@@ -88,31 +92,32 @@ public class Region extends Path
     }
     if (regionType == AreaType.LAWNMOWER)
     {
+      quickHull();
       getLawnmowerPath(transectDistance/2);
+      //getLawnmowerPath(10*1/90000);
     }
-
   }
-  public void setPoints(ArrayList<LatLng> list)
-  {
-    points = list;
-    updateRegionPoints();
-  }
-  public void addPoint(LatLng point)
-  {
-    points.add(point);
-    updateRegionPoints();
-  }
-  public boolean removePoint(int index)
-  {
-		points.remove(index);
-		updateRegionPoints();
-		return true;
-  }
-  public void clearPoints()
-  {
-    points.clear();
-    regionPoints.clear();
-  }
+//  public void setPoints(ArrayList<LatLng> list)
+//  {
+//    points = list;
+//    updateRegionPoints();
+//  }
+//  public void addPoint(LatLng point)
+//  {
+//    points.add(point);
+//    updateRegionPoints();
+//  }
+//  public boolean removePoint(int index)
+//  {
+//		points.remove(index);
+//		updateRegionPoints();
+//		return true;
+//  }
+//  public void clearPoints()
+//  {
+//    points.clear();
+//    regionPoints.clear();
+//  }
   public boolean isEmpty()
   {
     return this.points.isEmpty() || regionPoints.isEmpty();
@@ -454,7 +459,6 @@ public class Region extends Path
     // Compute the bounding box
     /*Since we have to add the original point to the end we dont
      * want to edit the points arraylist */
-
     ArrayList<LatLng> area = new ArrayList<LatLng>(points);
     area.add(area.get(0)); //adds first point to end so the final vector can be computed...
     double minLat = 360;
@@ -477,6 +481,7 @@ public class Region extends Path
     }
     curLat = minLat;
     System.out.println(curLat);
+    System.out.println("called");
     double totalLength = 0.0;
     Double leftLon = null, rightLon = null; //locations
     ArrayList<LatLng> path = new ArrayList<LatLng>(); //can just
