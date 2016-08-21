@@ -7,6 +7,7 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 public class Path
 {
   protected ArrayList<LatLng> points = new ArrayList<LatLng>();
+  protected ArrayList<LatLng> quickHulledPoints = new ArrayList<LatLng>();
   double transectAngle = 0;
   protected double transectDistance = .00000898*5; //10 meters, initial value
   protected final double ONE_METER = transectDistance/10;
@@ -27,6 +28,7 @@ public class Path
   {
     return points;
   }
+
   public void setPoints(ArrayList<LatLng> list)
   {
     points = list;
@@ -74,7 +76,13 @@ public class Path
   }
 
   public void updateRegionPoints()
+  {}
+  public ArrayList<LatLng> getQuickHullList()
   {
-    //implemented in Region
+    if (points.size() < 3)
+    {
+      return points;
+    }
+    return quickHulledPoints;
   }
 }

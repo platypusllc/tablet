@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
-
+//TODO wtf is causing the random lines across the polygon that occur in spiral mode.
 public class Region extends Path
 {
 
@@ -97,6 +97,10 @@ private final double ONEMETER = transectDistance/10;
   public void updateRegionPoints()
   {
     regionPoints.clear();
+    if (points.size() == 0)
+    {
+      return;
+    }
     if (regionType == AreaType.SPIRAL)
     {
       quickHull();
@@ -108,6 +112,7 @@ private final double ONEMETER = transectDistance/10;
           regionPoints.add(p);
         }
       }
+      //outputPointsToOctave("sp","\"b\"");
     }
     if (regionType == AreaType.LAWNMOWER)
     {
@@ -193,6 +198,7 @@ private final double ONEMETER = transectDistance/10;
     hullSet(A, B, rightSet, convexHull);
     hullSet(B, A, leftSet, convexHull);
     points = new ArrayList<LatLng>(convexHull);
+      quickHulledPoints = points; //im such a bad programmer :(
   }
   public void hullSet(LatLng A, LatLng B, ArrayList<LatLng> set,
                       ArrayList<LatLng> hull) {
@@ -346,7 +352,7 @@ private final double ONEMETER = transectDistance/10;
 
   public ArrayList <ArrayList<LatLng>> computeSpiralsPolygonOffset() {
     ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
-		quickHull();
+    //quickHull(); //causing the fuckshit lines everywhere
     spirals.add(points); //add first polygon
     if (points.size() <= 2) {
       System.out.println("poly size <= 2 is: " + points.size());
@@ -357,6 +363,11 @@ private final double ONEMETER = transectDistance/10;
     while (!isNonAdjacentLessThan10Meters(spirals.get(spirals.size() - 1))) {
       counter++;
       ArrayList<LatLng> lastSpiral = spirals.get(spirals.size() - 1);
+      if (lastSpiral.size() < 3)
+      {
+        return spirals;
+      }
+
       LatLng centroid = computeCentroid(lastSpiral);
       for (LatLng p : lastSpiral) {
         LatLng temp = new LatLng(centroid.getLatitude() - p.getLatitude(), centroid.getLongitude() - p.getLongitude());
@@ -474,7 +485,10 @@ private final double ONEMETER = transectDistance/10;
 
 
   public void  getLawnmowerPath(double stepSize) {
-
+    if (points.size() == 0)
+    {
+      return;
+    }
     // Compute the bounding box
     /*Since we have to add the original point to the end we dont
      * want to edit the points arraylist */

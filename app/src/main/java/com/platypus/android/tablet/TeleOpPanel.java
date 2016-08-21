@@ -372,35 +372,53 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     waypointlayout.removeAllViews();
                     onLoadRegionLayout();
                     waypointLayoutEnabled = false;
-                    //startDraw = true;
-                    if (boatPath == null)
-                    {
+                    startDraw = startDrawWaypoints;
+                    startDrawWaypoints = false;
+
+                    if (!startDrawWaypoints) {
+                        waypointButton.setBackgroundResource(R.drawable.draw_icon2);
+                    }
+                    else {
+                        waypointButton.setBackgroundResource(R.drawable.draw_icon);
+                    }
+
+                    if (boatPath == null) {
                         boatPath = new Path();
                     }
-                    boatPath = new Path(boatPath.getPoints());
+                    ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
+                    if (spirallawn.isChecked()) {
+                        boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
+                        System.out.println("switched mode to lawnmower");
+                    } else {
+
+                        boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
+                        System.out.println("switched mode to spiral");
+                    }
+
+
                 }
-                else
-                {
+                else {
                     regionlayout.removeAllViews();
                     onLoadWaypointLayout();
                     waypointLayoutEnabled = true;
-                    //startDrawWaypoints = true;
-                    if (boatPath == null)
-                    {
-                        //boatPath = new Region(touchpointList,AreaType.SPIRAL);
+                    startDrawWaypoints = startDraw;
+                    startDraw = false;
+
+                    if (startDraw == false) {
+                        drawPoly.setBackgroundResource(R.drawable.draw_icon2);
+                    } else {
+                        drawPoly.setBackgroundResource(R.drawable.draw_icon);
                     }
-                    if (spirallawn.isChecked())
-                    {
-                        //boatPath = new Region(touchpointList, AreaType.LAWNMOWER);
+
+
+                    if (boatPath == null) {
+                        boatPath = new Path();
                     }
-                    else
-                    {
-                        //boatPath = new Region(touchpointList,AreaType.SPIRAL);
-                    }
+                    ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
+                    boatPath = new Path(temp);
 
                 }
                 invalidate();
-                //switchModes(); //handles switching the lists
             }
         });
 
@@ -698,33 +716,25 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     @Override
                     public void onMapLongClick(LatLng point) {
 
-
-                        if (startDrawWaypoints == true) {
+                        System.out.println("start draw waypoints: " + startDrawWaypoints);
+                        System.out.println("start draw region: " + startDraw);
+                        if (startDrawWaypoints == true && startDraw == false) {
                             touchpointList.add(point);
                             System.out.println(touchpointList.size());
                             boatPath = new Path(touchpointList);
                          }
-                        else if (startDraw)
+                        else if (startDraw && !startDrawWaypoints)
                         {
                             touchpointList.add(point);
                             if (spirallawn.isChecked())
                             {
-                                //System.out.println(touchpointList.size());
-                                System.out.println("before tpl: " + touchpointList.size());
                                 ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
                                 boatPath = new Region(temp, AreaType.LAWNMOWER);
-                                System.out.println("after tpl: " + touchpointList.size());
-                                System.out.println("points: " + boatPath.getPoints().size());
-
                             }
                             else
                             {
-                                System.out.println("before tpl: " + touchpointList.size());
                                 ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
                                 boatPath = new Region(temp,AreaType.SPIRAL);
-                                System.out.println("after tpl: " + touchpointList.size());
-                                System.out.println("points: " + boatPath.getPoints().size());
-
                             }
                         }
                         invalidate();
@@ -1111,6 +1121,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         @Override
         protected String doInBackground(String... arg0) {
 
+
             updateMarkers(); //Launch update markers thread
             currentBoat.isConnected();
             networkRun = new Runnable() {
@@ -1119,7 +1130,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     if (currentBoat != null) {
                         connected = currentBoat.getConnected();
 
-
+                        //System.out.println("update markers called from async");
 //                        if (old_thrust != thrustTemp) { //update velocity
 //                            //updateVelocity(currentBoat);
 //                        }
@@ -1183,7 +1194,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 // Log.i(logTag, "PlanarDistanceSq Error");
                             }
                         }
-
                         publishProgress();
                     }
                 }
@@ -2261,6 +2271,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         Runnable markerRun = new Runnable() {
             @Override
             public void run() {
+                System.out.println("updated");
                 Pointarrow Arrow = new Pointarrow();
                 int icon_Index;
                 int icon_Index_old = -1;
@@ -2284,11 +2295,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                 location = LocationServices.FusedLocationApi.getLastLocation();
                 userloc.setPosition(new LatLng(location.getLatitude(),location.getLongitude()));
+                System.out.println(userloc.toString());
+                System.out.println(location.toString());
+                System.out.println("called update markers");
+
             }
         };
         ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
         exec.scheduleAtFixedRate(markerRun, 0, 500, TimeUnit.MILLISECONDS);
-
     }
 
     //Change this to take a waypointlist in not sure global variable
@@ -2308,6 +2322,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     catch(Exception e)
                     {
 
+                    }
+                    if (boatPath.getPoints() == null)
+                    {
+                        System.out.println("null object dumbass fix this later");
+                        return;
                     }
                     waypointList = boatPath.getPoints();
                     if (waypointList.size() > 0) {
@@ -2823,20 +2842,35 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public void invalidate() {
         if (!(Waypath == null || markerList == null))
         {
+            //FUCKING LEAVE WHY WONT YOU DISAPPEAR FUCK YOU
             mMapboxMap.removeAnnotation(Waypath);
+            Waypath.remove();
             mMapboxMap.removeAnnotations(markerList);
+            for (Marker i : markerList)
+            {
+                i.remove();
+            }
         }
 
         //System.out.println(touchpointList);
         //System.out.println();
+        System.out.println("tp list: " + touchpointList.size());
+        System.out.println("marker list: " + markerList.size());
+        markerList.clear();
 
         IconFactory mIconFactory = IconFactory.getInstance(this);
         Drawable mboundry = ContextCompat.getDrawable(this, R.drawable.boundary);
         final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
+        if (boatPath.getPoints().size() > 0) {
+            Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.GREEN).width(5));
+        }
+        if (touchpointList.size() == 0 && Waypath != null)
+        {
+            Waypath.remove();
+            mMapboxMap.removeAnnotation(Waypath);
+        }
 
-        Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.GREEN).width(5));
-        //for (LatLng i : boatPath.getOriginalPoints())
-        for (LatLng i : touchpointList)
+        for (LatLng i : boatPath.getQuickHullList()) //touchpoint list will contain points that get quickhulled away...
         {
             if(boatPath instanceof  Region) {
                 markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(markerList.size())).icon(Iboundry)));
@@ -2846,5 +2880,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(markerList.size()))));
             }
         }
+        System.out.println("marker list after: " + markerList.size()+ "\n");
     }
 }
