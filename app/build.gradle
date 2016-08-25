@@ -42,6 +42,7 @@ android {
     }
     productFlavors {
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -66,15 +67,7 @@ dependencies {
 
 
 
-
-
-    //compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.0.1@aar') {
-    //compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.1.0-SNAPSHOT@aar') {
-    //compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.1.0-beta.1@aar'){
-    //compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.0-SNAPSHOT@aar'){
-    //compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.1.1@aar'){
-    compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.0-beta.1@aar'){
-    //compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.0-SNAPSHOT@aar') {
+    compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.0-beta.2@aar'){
         transitive=true
     }
     compile files('libs/activation.jar')
@@ -85,9 +78,12 @@ dependencies {
     compile files('libs/jscience.jar')
     compile 'com.android.support:support-v4:23.2.0'
     compile files('libs/platypus-core.jar')
+    compile 'com.google.firebase:firebase-crash:9.4.0'
+
 }
 
 repositories {
     mavenCentral()
     maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
 }
+apply plugin: 'com.google.gms.google-services'

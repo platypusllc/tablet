@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
 //TODO wtf is causing the random lines across the polygon that occur in spiral mode.
+//TODO ok caused by the previous polygon has poitns that get added for some reason
 public class Region extends Path
 {
-
 
 //  private double transectDistance = .1; //testing
 private final double ONEMETER = transectDistance/10;
@@ -94,6 +94,7 @@ private final double ONEMETER = transectDistance/10;
   {
     return originalPoints;
   }
+
   public void updateRegionPoints()
   {
     regionPoints.clear();
@@ -112,7 +113,8 @@ private final double ONEMETER = transectDistance/10;
           regionPoints.add(p);
         }
       }
-      //outputPointsToOctave("sp","\"b\"");
+        regionPoints.remove(regionPoints.size()-1);
+        outputPointsToOctave("sp","\"b\"");
     }
     if (regionType == AreaType.LAWNMOWER)
     {
@@ -198,7 +200,7 @@ private final double ONEMETER = transectDistance/10;
     hullSet(A, B, rightSet, convexHull);
     hullSet(B, A, leftSet, convexHull);
     points = new ArrayList<LatLng>(convexHull);
-      quickHulledPoints = points; //im such a bad programmer :(
+      quickHulledPoints = new ArrayList<LatLng>(points); //im such a bad programmer :(
   }
   public void hullSet(LatLng A, LatLng B, ArrayList<LatLng> set,
                       ArrayList<LatLng> hull) {
@@ -353,13 +355,14 @@ private final double ONEMETER = transectDistance/10;
   public ArrayList <ArrayList<LatLng>> computeSpiralsPolygonOffset() {
     ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
     //quickHull(); //causing the fuckshit lines everywhere
-    spirals.add(points); //add first polygon
+      spirals.add(points); //add first polygon
     if (points.size() <= 2) {
       System.out.println("poly size <= 2 is: " + points.size());
-      return spirals;
+        return spirals;
     }
 
     int counter = 0;
+      System.out.println("spiral start one polygon");
     while (!isNonAdjacentLessThan10Meters(spirals.get(spirals.size() - 1))) {
       counter++;
       ArrayList<LatLng> lastSpiral = spirals.get(spirals.size() - 1);
@@ -427,20 +430,22 @@ private final double ONEMETER = transectDistance/10;
       }
 
       for (int i = 0; i < nextPolygon.size() - 1; i++) {
-        LatLng lastPoint0 = lastSpiral.get(i);
-        LatLng nextPoint0 = nextPolygon.get(i);
-        LatLng lastPoint1 = lastSpiral.get(i + 1);
-        LatLng nextPoint1 = nextPolygon.get(i + 1);
-        if (linesIntersect(lastPoint0.getLatitude(), lastPoint0.getLongitude(), nextPoint0.getLatitude(), nextPoint0.getLongitude(), lastPoint1.getLatitude(), lastPoint1.getLongitude(), nextPoint1.getLatitude(), nextPoint1.getLongitude())) {
-          LatLng average = new LatLng((nextPoint0.getLatitude() + nextPoint1.getLatitude()) / 2, (nextPoint0.getLongitude() + nextPoint1.getLongitude()) / 2);
-          nextPolygon.set(i + 1, average);
-          nextPolygon.remove(i);
+          LatLng lastPoint0 = lastSpiral.get(i);
+          LatLng nextPoint0 = nextPolygon.get(i);
+          LatLng lastPoint1 = lastSpiral.get(i + 1);
+          LatLng nextPoint1 = nextPolygon.get(i + 1);
+          if (linesIntersect(lastPoint0.getLatitude(), lastPoint0.getLongitude(), nextPoint0.getLatitude(), nextPoint0.getLongitude(), lastPoint1.getLatitude(), lastPoint1.getLongitude(), nextPoint1.getLatitude(), nextPoint1.getLongitude())) {
+              LatLng average = new LatLng((nextPoint0.getLatitude() + nextPoint1.getLatitude()) / 2, (nextPoint0.getLongitude() + nextPoint1.getLongitude()) / 2);
+              nextPolygon.set(i + 1, average);
+              nextPolygon.remove(i);
 
-        }
+          }
       }
+        System.out.println("spiral size "+nextPolygon.size());
+
       spirals.add((nextPolygon));
     }
-    return spirals;
+      return spirals;
   }
 
   private static double relativeCCW(final double X1, final double Y1, double X2, double Y2, double PX,

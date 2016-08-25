@@ -41,6 +41,8 @@ import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
+
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.Polygon;
 import com.mapbox.mapboxsdk.annotations.Polyline;
@@ -142,6 +144,12 @@ import android.view.View.OnClickListener;
 import com.platypus.android.tablet.Joystick.*;
 
 
+/*
+   TODO somewhere invalidate is not getting called.
+   This is being caused by the points not being recalculated after adding a point
+ */
+
+//TODO somewhere an extra point is getitng added to the list or doesnt remove a point when calculating quickhull
 public class TeleOpPanel extends Activity implements SensorEventListener {
     final Context context = this;
     final double GPSDIST = 0.0000449;
@@ -317,15 +325,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     PolyArea.AreaType currentAreaType = PolyArea.AreaType.WAYPOINT;
     //static final String
 
-    /* TODO
-    * Boat speed on that toggle button thing (gains)
-    * make bottom area smaller
-    * Transect distance spacing parameter
-    * IMPORTANT STUFF
-    * Moving joystick should turn autonomy off then releasing should turn back on. Joystick click listener doesnt seem to work though
-    * Get back to that later ^
-    * polygon region
-    * */
 
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -333,6 +332,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         //this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
         this.setContentView(R.layout.tabletlayoutswitch);
+
 
         ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
         linlay = (RelativeLayout) this.findViewById(R.id.linlay);
@@ -722,21 +722,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             touchpointList.add(point);
                             System.out.println(touchpointList.size());
                             boatPath = new Path(touchpointList);
-                         }
-                        else if (startDraw && !startDrawWaypoints)
-                        {
+                        } else if (startDraw && !startDrawWaypoints) {
+                            System.out.println("tp list before add point: " + touchpointList.size());
                             touchpointList.add(point);
-                            if (spirallawn.isChecked())
-                            {
+                            System.out.println("tp list after add point: " + touchpointList.size());
+                            if (spirallawn.isChecked()) {
                                 ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
-                                boatPath = new Region(temp, AreaType.LAWNMOWER);
-                            }
-                            else
-                            {
+                                boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
+                                touchpointList = boatPath.getQuickHullList();
+                            } else {
                                 ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
-                                boatPath = new Region(temp,AreaType.SPIRAL);
+                                boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
+                                touchpointList = boatPath.getQuickHullList();
                             }
                         }
+                        System.out.println("tp list after quickhull: " + touchpointList.size());
                         invalidate();
                     }
                 });
@@ -2498,9 +2498,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   //              }
                 //if (currentBoat != null || currentBoat.getLocation() != null || mMapboxMap != null)
                 {
-                    waypointList.add(currentBoat.getLocation());
-                    markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(currentBoat.getLocation()).title(Integer.toString(WPnum))));
-                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+                    touchpointList.add(currentBoat.getLocation());
+                    System.out.println(touchpointList.size());
+                    boatPath = new Path(touchpointList);
+                    invalidate();
                 }
             }
         });
@@ -2840,46 +2841,43 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     *
     * */
     public void invalidate() {
-        if (!(Waypath == null || markerList == null))
-        {
+        if (!(Waypath == null || markerList == null)) {
             //FUCKING LEAVE WHY WONT YOU DISAPPEAR FUCK YOU
             mMapboxMap.removeAnnotation(Waypath);
             Waypath.remove();
             mMapboxMap.removeAnnotations(markerList);
-            for (Marker i : markerList)
-            {
-                i.remove();
-            }
+//            for (Marker i : markerList) {
+//                i.remove();
+//            }
         }
-
-        //System.out.println(touchpointList);
-        //System.out.println();
-        System.out.println("tp list: " + touchpointList.size());
-        System.out.println("marker list: " + markerList.size());
         markerList.clear();
-
         IconFactory mIconFactory = IconFactory.getInstance(this);
         Drawable mboundry = ContextCompat.getDrawable(this, R.drawable.boundary);
         final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
+        //touchpointList = boatPath.getQuickHullList();
+        boatPath.updateRegionPoints();
         if (boatPath.getPoints().size() > 0) {
             Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.GREEN).width(5));
         }
-        if (touchpointList.size() == 0 && Waypath != null)
-        {
+        if (touchpointList.size() == 0 && Waypath != null) {
             Waypath.remove();
             mMapboxMap.removeAnnotation(Waypath);
         }
 
-        for (LatLng i : boatPath.getQuickHullList()) //touchpoint list will contain points that get quickhulled away...
-        {
-            if(boatPath instanceof  Region) {
+        if (boatPath instanceof Region) {
+            for (LatLng i : boatPath.getQuickHullList()) {
                 markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(markerList.size())).icon(Iboundry)));
             }
-            else
+        }
+        else if (boatPath instanceof Path)
+        {
+            for (LatLng i : touchpointList)
             {
                 markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(markerList.size()))));
             }
+
         }
-        System.out.println("marker list after: " + markerList.size()+ "\n");
+        System.out.println("spiral full " + boatPath.getPoints().size());
+
     }
 }

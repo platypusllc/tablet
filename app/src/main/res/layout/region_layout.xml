@@ -10,6 +10,7 @@
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+
         android:id="@+id/region_draw"
         android:layout_marginLeft="10dp"
         android:layout_above="@+id/makeconvex"
@@ -74,7 +75,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="Transect Distance (Meters)"
+            android:text="Transect Distance"
             android:id="@+id/textView8"
             android:layout_marginLeft="5dp" />
 
