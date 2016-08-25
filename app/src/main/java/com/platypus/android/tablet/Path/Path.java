@@ -3,6 +3,7 @@ package com.platypus.android.tablet.Path;
 import java.util.ArrayList;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.platypus.android.tablet.PolyArea;
 
 public class Path
 {
@@ -84,5 +85,9 @@ public class Path
       return points;
     }
     return quickHulledPoints;
+  }
+  public AreaType getAreaType()
+  {
+    return null;
   }
 }

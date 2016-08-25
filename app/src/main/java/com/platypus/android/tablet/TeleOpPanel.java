@@ -32,6 +32,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import javax.measure.quantity.Area;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 
@@ -2805,8 +2806,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         return;
                     }
                     touchpointList.clear();
+                    if (boatPath.getAreaType() == AreaType.LAWNMOWER) {
+                        boatPath = new Region(touchpointList, AreaType.LAWNMOWER);
+                    }
+                    else
+                    {
+                        boatPath = new Region(touchpointList, AreaType.SPIRAL);
+                    }
                     invalidate();
                 } catch (Exception e) {
+                    System.out.println("clear region");
                     System.out.println(e.toString());
                 }
             }
