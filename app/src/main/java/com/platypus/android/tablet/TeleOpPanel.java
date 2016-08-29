@@ -647,7 +647,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         mv = (MapView) findViewById(R.id.mapview);
         //mv.setAccessToken(ApiAccess.getToken(this));
-        //mv.setAccessToken(getString(R.string.mapbox_access_token));//"pk.eyJ1Ijoic2hhbnRhbnV2IiwiYSI6ImNpZmZ0Zzd5Mjh4NW9zeG03NGMzNDI4ZGUifQ.QJgnm41kA9Wo3CJU-xZLTA");
+
         MapboxAccountManager.start(this,getString(R.string.mapbox_access_token));
         mv.onCreate(savedInstanceState);
         mv.getMapAsync(new OnMapReadyCallback() {

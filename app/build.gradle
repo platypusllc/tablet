@@ -30,7 +30,7 @@ android {
     buildToolsVersion '23'
     defaultConfig {
         applicationId "com.platypus.android.tablet"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 21
         multiDexEnabled true
     }
