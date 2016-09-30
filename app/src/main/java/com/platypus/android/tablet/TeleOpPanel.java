@@ -6,6 +6,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -208,6 +209,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   String saveName; //shouldnt be here?
   LatLng pHollowStartingPoint = new LatLng((float) 40.436871,
                                            (float) -79.948825);
+  LatLng initialPan = new LatLng(0,0);
   long lastTime = -1;
   String waypointStatus = "";
   double rudderTemp = 0;
@@ -639,6 +641,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         public void onMapReady(@NonNull MapboxMap mapboxMap) {
           System.out.println("mapboxmap ready");
           mMapboxMap = mapboxMap;
+          if (initialPan.getLatitude()!=0 || initialPan.getLongitude() != 0)
+          {
+            mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                    new CameraPosition.Builder()
+                            .target(initialPan)
+                            .zoom(16)
+                            .build()
+            ));
+          }
+
 
           mMapboxMap.setStyle(Style.MAPBOX_STREETS); //vector map
           //mMapboxMap.setStyle(Style.SATELLITE_STREETS); //satalite
@@ -885,6 +897,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   protected void onDestroy() {
     super.onDestroy();
     mv.onDestroy();
+    try {
+      System.out.println("saving session");
+      saveSession();
+    }
+    catch(Exception e)
+    {
+      System.out.println("session failed to save");
+      System.out.println(e.toString());
+    }
   }
 
   @Override
@@ -1046,7 +1067,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     // ConnectScreen.boat.setVelocity(thrust.getProgress(),
     // rudder.getProgress());
     //System.out.println("velocity update");
-    System.out.println("starting update velocity: " + System.currentTimeMillis());
+    //System.out.println("starting update velocity: " + System.currentTimeMillis());
     if (a.returnServer() != null) {
       //Twist twist = new Twist();
 
@@ -1058,11 +1079,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       } else {
         twist.drz(rudderTemp >= -1 & rudderTemp <= 1 ? rudderTemp : 0);
       }
-      System.out.println("twisty" + twist.dx());
-      System.out.println("twistx" + twist.drz());
+//      System.out.println("twisty" + twist.dx());
+//      System.out.println("twistx" + twist.drz());
       a.returnServer().setVelocity(twist, fobs);
     }
-    System.out.println("end update velocity: " + System.currentTimeMillis());
+    //System.out.println("end update velocity: " + System.currentTimeMillis());
   }
 
   /*
@@ -1120,7 +1141,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           public void run() {
             if (currentBoat != null) {
               connected = currentBoat.getConnected();
-              System.out.println("ran is connected");
+              //System.out.println("ran is connected");
               //System.out.println("update markers called from async");
               //                        if (old_thrust != thrustTemp) { //update velocity
               //                            //updateVelocity(currentBoat);
@@ -1148,7 +1169,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                       });
                 }
               }
-              System.out.println("sent vel");
+              //System.out.println("sent vel");
               if (stopWaypoints == true) {
                 currentBoat.returnServer().stopWaypoints(new FunctionObserver<Void>() {
                     @Override
@@ -1446,6 +1467,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     reg = (RadioButton) dialog.findViewById(R.id.reg);
     //ipAddress.setText("192.168.1.250");
     ipAddress.setText("127.0.0.1");
+    try {
+      System.out.println("loading session");
+      loadSession();
+    }
+    catch(Exception e)
+    {
+      System.out.println("session - failed to load");
+      System.out.println("session - " + e.toString());
+    }
     //ipAddress.setText("192.168.1.83");
 
 
@@ -1496,7 +1526,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             Log.i(logTag, "finding ip");
             FindIP();
           }
-
+          try {
+            saveSession(); //save ip address
+          }
+          catch(Exception e)
+          {}
           dialog.dismiss();
           dialogClose();
         }
@@ -1596,8 +1630,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         @Override
         public void onClick(View v) {
 
-
-          //NO NUMBERS OR SPACES LOL
           saveName = input.getText().toString();
 
           //if (!(saveName.contains(" ") || saveName.matches(".*\\d+.*"))) {
@@ -2881,5 +2913,28 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       }
     System.out.println("spiral full " + boatPath.getPoints().size());
 
+  }
+  public void loadSession() throws IOException
+  {
+    final File sessionFile = new File(getFilesDir() + "/session.txt");
+    Scanner scanner = new Scanner(sessionFile);
+    String ipad = scanner.nextLine();
+    if (!ipad.equals("") || ipad != null) {
+      ipAddress.setText(ipad);
+    }
+    //format of the mappan latlng
+    //initalPan = new LatLng...
+  }
+  public void saveSession() throws IOException
+  {
+    final File sessionFile = new File(getFilesDir() + "/session.txt");
+    BufferedWriter writer = new BufferedWriter(new FileWriter(sessionFile, false));
+    String tempaddr = currentBoat.getIpAddress().toString();
+    tempaddr = tempaddr.substring(1,tempaddr.indexOf(":"));
+    writer.write(tempaddr);
+    writer.write("\n");
+    writer.write(mMapboxMap.getCameraPosition().target.toString());
+    System.out.println(mMapboxMap.getCameraPosition().target.toString());
+    writer.close();
   }
 }
