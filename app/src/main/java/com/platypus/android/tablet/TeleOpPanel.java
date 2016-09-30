@@ -2924,6 +2924,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
     //format of the mappan latlng
     //initalPan = new LatLng...
+    initialPan = new LatLng(Double.parseDouble(scanner.nextLine()),Double.parseDouble(scanner.nextLine()));
   }
   public void saveSession() throws IOException
   {
@@ -2933,7 +2934,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     tempaddr = tempaddr.substring(1,tempaddr.indexOf(":"));
     writer.write(tempaddr);
     writer.write("\n");
-    writer.write(mMapboxMap.getCameraPosition().target.toString());
+    LatLng cameraPan = mMapboxMap.getCameraPosition().target;
+    writer.write(cameraPan.getLatitude() + "\n" + cameraPan.getLongitude());
     System.out.println(mMapboxMap.getCameraPosition().target.toString());
     writer.close();
   }
