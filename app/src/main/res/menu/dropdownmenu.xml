@@ -29,6 +29,11 @@
         android:id="@+id/loadwpbutton"
         android:title="Load Waypoints" />
     <item
+        android:id="@+id/loadWaypointFileButton"
+        android:title="Load Waypoint File"
+        />
+
+    <item
         android:id="@+id/updateRate"
         android:title="Update Command Rate" />
 

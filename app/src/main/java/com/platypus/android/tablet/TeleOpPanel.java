@@ -295,6 +295,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   ArrayList<Marker> markerList = new ArrayList(); //List of all the
   //ArrayList<Marker> boundryList = new ArrayList();
 
+  String waypointFileName = "";
 
   ArrayList<UtmPose> allWaypointsSent = new ArrayList<UtmPose>();
   private Polyline Waypath;
@@ -449,63 +450,70 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
               public boolean onMenuItemClick(MenuItem item) {
                 switch (item.toString()) {
-                case "Save Map": {
-                  Thread thread = new Thread()
-                    {
-                      @Override
-                      public void run() {
-                        saveMap();
-                      }
-                    };
-                  thread.start();
-                  break;
-                }
-                case "Satellite Map": {
-                  if (mMapboxMap != null)
-                    {
-                      mMapboxMap.setStyle(Style.SATELLITE);
+                    case "Save Map": {
+                        Thread thread = new Thread() {
+                            @Override
+                            public void run() {
+                                saveMap();
+                            }
+                        };
+                        thread.start();
+                        break;
                     }
-                  break;
-                }
-                case "Vector Map": {
-                  if (mMapboxMap != null)
+                    case "Satellite Map": {
+                        if (mMapboxMap != null) {
+                            mMapboxMap.setStyle(Style.SATELLITE);
+                        }
+                        break;
+                    }
+                    case "Vector Map": {
+                        if (mMapboxMap != null) {
+                            mMapboxMap.setStyle(Style.MAPBOX_STREETS);
+                        }
+                        break;
+                    }
+                    case "Set Home": {
+                        setHome();
+                        break;
+                    }
+                    case "Go Home": {
+                        goHome();
+                        break;
+                    }
+                    case "Set PID": {
+                        setPID();
+                        break;
+                    }
+                    case "Save Waypoints": {
+                        {
+                            try {
+                                SaveWaypointsToFile();
+                            } catch (Exception e) {
+                                System.out.println("failed to save waypoints from file");
+                            }
+                            break;
+                        }
+                    }
+                    case "Load Waypoints": {
+                        try {
+                            LoadWaypointsFromFile();
+                        } catch (Exception e) {
+                            System.out.println("failed to load file");
+                            System.out.println(e.toString());
+                        }
+                        break;
+                    }
+                    case "Load Waypoint File":
                     {
-                      mMapboxMap.setStyle(Style.MAPBOX_STREETS);
+                        try {
+                            loadWayointFiles();
+                        }
+                        catch(Exception e)
+                        {
+
+                        }
                     }
-                  break;
-                }
-                case "Set Home":
-                  {
-                    setHome();
-                    break;
-                  }
-                case "Go Home": {
-                  goHome();
-                  break;
-                }
-                case "Set PID": {
-                  setPID();
-                  break;
-                }
-                case "Save Waypoints": {
-                  {
-                    try {
-                      SaveWaypointsToFile();
-                    } catch (Exception e) {
-                      System.out.println("failed to save waypoints from file");
-                    }
-                    break;
-                  }
-                }
-                case "Load Waypoints": {
-                  try {
-                    LoadWaypointsFromFile();
-                  } catch (Exception e) {
-                    System.out.println("failed to load waypoints from file");
-                    System.out.println(e.toString());
-                  }
-                  break;
-                }
+
                 case "Update Command Rate": {
                   AlertDialog.Builder alertDialog = new AlertDialog.Builder(TeleOpPanel.this);
                   alertDialog.setTitle("Change Velocity Update Rate");
@@ -2984,7 +2992,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       public void onClick(View v) {
         dialog.dismiss();
         try {
-          LoadWaypointsFromFile(listOfFiles[currentselected].getCanonicalPath());
+            //LoadWaypointsFromFile(listOfFiles[currentselected].getCanonicalPath());
+            waypointFileName = listOfFiles[currentselected].getCanonicalPath();
         }
         catch(Exception e)
         {
