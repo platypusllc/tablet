@@ -61,6 +61,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.ConnectivityManager;
 
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.InputType;
@@ -290,6 +291,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   Path boatPath = null;
   ArrayList<LatLng> touchpointList = new ArrayList<LatLng>();
   ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
+  ArrayList<LatLng> savePointList = new ArrayList<LatLng>();
   ArrayList<Marker> markerList = new ArrayList(); //List of all the
   //ArrayList<Marker> boundryList = new ArrayList();
 
@@ -490,7 +492,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     try {
                       SaveWaypointsToFile();
                     } catch (Exception e) {
-
+                      System.out.println("failed to save waypoints from file");
                     }
                     break;
                   }
@@ -499,7 +501,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                   try {
                     LoadWaypointsFromFile();
                   } catch (Exception e) {
-
+                    System.out.println("failed to load waypoints from file");
+                    System.out.println(e.toString());
                   }
                   break;
                 }
@@ -1608,15 +1611,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   public void SaveWaypointsToFile() throws IOException {
     //nothing to
     // save if no waypoints
-    if (waypointList.isEmpty() == true) {
+    if (boatPath.getOriginalPoints().isEmpty() == true) {
       return;
     }
-
+    savePointList = new ArrayList<LatLng>(boatPath.getOriginalPoints());
 
     final BufferedWriter writer;
     try {
-      File waypointFile = new File(getFilesDir() + "/waypoints.txt");
-      writer = new BufferedWriter(new FileWriter(waypointFile, true));
+        File waypointFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/waypoints.txt");
+        writer = new BufferedWriter(new FileWriter(waypointFile, true));
     } catch (Exception e) {
       return;
     }
@@ -1641,7 +1644,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               writer.append("\n\" " + input.getText() + " \"");
               writer.flush();
               //writer.append(input.getText());
-              for (ILatLng i : waypointList) {
+              for (ILatLng i : savePointList) {
                 writer.append(" " + i.getLatitude() + " " + i.getLongitude());
                 writer.flush();
               }
@@ -1671,7 +1674,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   }
 
   public void LoadWaypointsFromFile() throws IOException {
-    final File waypointFile = new File(getFilesDir() + "/waypoints.txt");
+    LoadWaypointsFromFile("./waypoints.txt");
+  }
+
+  public void LoadWaypointsFromFile(String filename) throws IOException {
+    final File waypointFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + filename);//new File(getFilesDir() + "/waypoints.txt");
+
     //waypointFile.delete();
     Scanner fileScanner = new Scanner(waypointFile); //Scans each
     //line of the file
@@ -2922,13 +2930,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     if (!ipad.equals("") || ipad != null) {
       ipAddress.setText(ipad);
     }
-    //format of the mappan latlng
+      //format of the mappan latlng
     //initalPan = new LatLng...
     initialPan = new LatLng(Double.parseDouble(scanner.nextLine()),Double.parseDouble(scanner.nextLine()));
   }
   public void saveSession() throws IOException
   {
     final File sessionFile = new File(getFilesDir() + "/session.txt");
+      System.out.println(sessionFile.getAbsolutePath());
     BufferedWriter writer = new BufferedWriter(new FileWriter(sessionFile, false));
     String tempaddr = currentBoat.getIpAddress().toString();
     tempaddr = tempaddr.substring(1,tempaddr.indexOf(":"));
@@ -2938,5 +2947,51 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     writer.write(cameraPan.getLatitude() + "\n" + cameraPan.getLongitude());
     System.out.println(mMapboxMap.getCameraPosition().target.toString());
     writer.close();
+  }
+  public void loadWayointFiles() throws IOException
+  {
+    File waypointDir = new File(getFilesDir() + "/waypoints");
+    if (waypointDir.exists() == false)
+    {
+      waypointDir.mkdir();
+      Toast.makeText(getApplicationContext(), "Waypoint Directory is empty/DNE", Toast.LENGTH_LONG).show();
+    }
+    final File[] listOfFiles = waypointDir.listFiles();
+
+    final Dialog dialog = new Dialog(context);
+    dialog.setContentView(R.layout.waypointsavelistview);
+    dialog.setTitle("List of Waypoint Files");
+
+    final ListView fileList = (ListView) dialog.findViewById(R.id.waypointlistview);
+    Button submitButton = (Button) dialog.findViewById(R.id.submitsave);
+
+
+    final ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+            TeleOpPanel.this,
+            android.R.layout.select_dialog_singlechoice);
+    for (File i : listOfFiles)
+    {
+      adapter.add(i.getCanonicalPath());
+    }
+    fileList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+      @Override
+      public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        currentselected = position;
+      }
+    });
+    submitButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        dialog.dismiss();
+        try {
+          LoadWaypointsFromFile(listOfFiles[currentselected].getCanonicalPath());
+        }
+        catch(Exception e)
+        {
+          System.out.println("err loading file in waypoint file load");
+          System.out.println(e.toString());
+        }
+      }
+    });
   }
 }
