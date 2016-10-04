@@ -6,7 +6,6 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -295,7 +294,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   ArrayList<Marker> markerList = new ArrayList(); //List of all the
   //ArrayList<Marker> boundryList = new ArrayList();
 
-  String waypointFileName = "";
+  String waypointFileName = "waypoints.txt";
 
   ArrayList<UtmPose> allWaypointsSent = new ArrayList<UtmPose>();
   private Polyline Waypath;
@@ -353,7 +352,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     mapInfo.setText("Map Information \n Nothing Pending");
 
 
-    //load inital waypoint menu
+      //Create folder for the first time if it does not exist
+      File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
+//      File waypointDir = new File(getFilesDir() + "/waypoints"); //FOLDER CALLED WAYPOINTS
+      if (waypointDir.exists() == false)
+      {
+          waypointDir.mkdir();
+      }
+
+
+      //load inital waypoint menu
     onLoadWaypointLayout();
     switchView.setOnClickListener(new OnClickListener() {
         @Override
@@ -496,7 +504,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
                     case "Load Waypoints": {
                         try {
-                            LoadWaypointsFromFile();
+                            LoadWaypointsFromFile(waypointFileName);
                         } catch (Exception e) {
                             System.out.println("failed to load file");
                             System.out.println(e.toString());
@@ -512,6 +520,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         {
 
                         }
+                        break;
                     }
 
                 case "Update Command Rate": {
@@ -1620,15 +1629,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //nothing to
     // save if no waypoints
     if (boatPath.getOriginalPoints().isEmpty() == true) {
+        System.out.println("path empty returning");
       return;
     }
     savePointList = new ArrayList<LatLng>(boatPath.getOriginalPoints());
 
     final BufferedWriter writer;
     try {
-        File waypointFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/waypoints.txt");
+        //File waypointFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/waypoints.txt");
+        //File waypointFile = new File(Environment.getExternalStorageDirectory() + "/waypoints.txt");
+        File waypointFile = new File(Environment.getExternalStorageDirectory() + "/waypoints/" + waypointFileName);
         writer = new BufferedWriter(new FileWriter(waypointFile, true));
     } catch (Exception e) {
+        System.out.println("error saving path to fle");
+        System.out.println(e.toString());
       return;
     }
 
@@ -1682,15 +1696,23 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   }
 
   public void LoadWaypointsFromFile() throws IOException {
-    LoadWaypointsFromFile("./waypoints.txt");
+    //LoadWaypointsFromFile("/waypoints.txt");
+      System.out.println("is this getting called");
   }
 
   public void LoadWaypointsFromFile(String filename) throws IOException {
-    final File waypointFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + filename);//new File(getFilesDir() + "/waypoints.txt");
-
+      //final File waypointFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + filename);//new File(getFilesDir() + "/waypoints.txt");
+      final File waypointFile = new File(Environment.getExternalStorageDirectory() + "/waypoints/" + filename);//new File(getFilesDir() + "/waypoints.txt");
+      try
+      {
+          touchpointList.clear();
+          boatPath.clearPoints();
+          invalidate();
+      }
+      catch(Exception e)
+      {}
     //waypointFile.delete();
-    Scanner fileScanner = new Scanner(waypointFile); //Scans each
-    //line of the file
+    Scanner fileScanner = new Scanner(waypointFile); //Scans each//line of the file
     final ArrayList<ArrayList<ILatLng>> waypointsaves = new ArrayList<ArrayList<ILatLng>>();
     final ArrayList<String> saveName = new ArrayList<String>();
     /* scans each line of the file as a waypoint save
@@ -1768,7 +1790,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       wpsaves.setAdapter(adapter);
       for (String s : saveName) {
         adapter.add(s);
-        adapter.notifyDataSetChanged();
+          adapter.notifyDataSetChanged();
       }
       final int chosensave;
       wpsaves.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -2956,35 +2978,46 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     System.out.println(mMapboxMap.getCameraPosition().target.toString());
     writer.close();
   }
+
   public void loadWayointFiles() throws IOException
   {
-    File waypointDir = new File(getFilesDir() + "/waypoints");
+      File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
+    //File waypointDir = new File(getFilesDir() + "/waypoints"); //FOLDER CALLED WAYPOINTS
     if (waypointDir.exists() == false)
     {
       waypointDir.mkdir();
-      Toast.makeText(getApplicationContext(), "Waypoint Directory is empty/DNE", Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "Folder Does not Exist Creating Folder", Toast.LENGTH_LONG).show();
+        return;
     }
     final File[] listOfFiles = waypointDir.listFiles();
-
+      if (listOfFiles.length == 0)
+      {
+          Toast.makeText(getApplicationContext(), "Waypoint Directory is empty", Toast.LENGTH_LONG).show();
+          return;
+      }
     final Dialog dialog = new Dialog(context);
     dialog.setContentView(R.layout.waypointsavelistview);
     dialog.setTitle("List of Waypoint Files");
 
     final ListView fileList = (ListView) dialog.findViewById(R.id.waypointlistview);
     Button submitButton = (Button) dialog.findViewById(R.id.submitsave);
-
+      System.out.println("length s" + listOfFiles.length);
 
     final ArrayAdapter<String> adapter = new ArrayAdapter<String>(
             TeleOpPanel.this,
             android.R.layout.select_dialog_singlechoice);
+      fileList.setAdapter(adapter);
     for (File i : listOfFiles)
     {
-      adapter.add(i.getCanonicalPath());
+        //adapter.add(i.getCanonicalPath());
+        System.out.println(i.getName());
+        adapter.add(i.getName());
+        adapter.notifyDataSetChanged();
     }
-    fileList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+      fileList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
       @Override
       public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        currentselected = position;
+        currentselected = position; //Use a different variable, this is used by the list adapter in loading waypoints ..
       }
     });
     submitButton.setOnClickListener(new OnClickListener() {
@@ -2992,8 +3025,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       public void onClick(View v) {
         dialog.dismiss();
         try {
-            //LoadWaypointsFromFile(listOfFiles[currentselected].getCanonicalPath());
-            waypointFileName = listOfFiles[currentselected].getCanonicalPath();
+            waypointFileName = listOfFiles[currentselected].getName();
         }
         catch(Exception e)
         {
@@ -3002,5 +3034,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
       }
     });
+      dialog.show();
   }
 }
