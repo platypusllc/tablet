@@ -36,6 +36,11 @@
     <item
         android:id="@+id/updateRate"
         android:title="Update Command Rate" />
+    <item
+        android:id="@+id/preferences"
+        android:title="Preferences"
+       />
+
 
 
 </menu>

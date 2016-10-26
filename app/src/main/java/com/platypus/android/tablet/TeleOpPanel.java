@@ -54,6 +54,7 @@ import com.mapbox.mapboxsdk.offline.OfflineManager;
 import com.mapbox.mapboxsdk.offline.OfflineRegion;
 
 import android.app.AlertDialog;
+import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
@@ -61,6 +62,7 @@ import android.location.Location;
 import android.net.ConnectivityManager;
 
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.InputType;
@@ -523,57 +525,63 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         break;
                     }
 
-                case "Update Command Rate": {
-                  AlertDialog.Builder alertDialog = new AlertDialog.Builder(TeleOpPanel.this);
-                  alertDialog.setTitle("Change Velocity Update Rate");
-                  final EditText input = new EditText(TeleOpPanel.this);
-                  input.setText(updateRateMili+"");
-                  input.setInputType(InputType.TYPE_CLASS_NUMBER);
-                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                                                                               LinearLayout.LayoutParams.MATCH_PARENT,
-                                                                               LinearLayout.LayoutParams.MATCH_PARENT);
-                  input.setLayoutParams(lp);
-                  alertDialog.setView(input);
-                  alertDialog.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-                      public void onClick(DialogInterface dialog, int which) {
-                        updateRateMili = Integer.parseInt(input.getText().toString());
-                        //restart exec.
+                    case "Update Command Rate": {
+                        AlertDialog.Builder alertDialog = new AlertDialog.Builder(TeleOpPanel.this);
+                        alertDialog.setTitle("Change Velocity Update Rate");
+                        final EditText input = new EditText(TeleOpPanel.this);
+                        input.setText(updateRateMili+"");
+                        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.MATCH_PARENT);
+                        input.setLayoutParams(lp);
+                        alertDialog.setView(input);
+                        alertDialog.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                updateRateMili = Integer.parseInt(input.getText().toString());
+                                //restart exec.
 
-                        future.cancel(true);
-                        future = exec.scheduleAtFixedRate(networkRun, 0, updateRateMili, TimeUnit.MILLISECONDS);
+                                future.cancel(true);
+                                future = exec.scheduleAtFixedRate(networkRun, 0, updateRateMili, TimeUnit.MILLISECONDS);
 
 
-                        dialog.cancel();
-                      }
-                    });
-                  alertDialog.show();
-                  break;
+                                dialog.cancel();
+                            }
+                        });
+                        alertDialog.show();
+                        break;
+                    }
+                    case "Preferences":
+                    {
+                        Intent intent = new Intent(context, SettingsActivity.class);
+                        context.startActivity(intent);
+                        break;
+                    }
                 }
-                }
-                return true;
+                  return true;
               }
-            });
-          popup.show(); //showing popup menu
+          });
+            popup.show(); //showing popup menu
         }
-      });
+    });
 
 
-    // *****************//
-    //      Joystick   //
-    // ****************//
+      // *****************//
+      //      Joystick   //
+      // ****************//
 
-    joystick.setYAxisInverted(false);
+      joystick.setYAxisInverted(false);
 
-    //*****************************************************************************
-    //  Initialize Poselistener
-    //*****************************************************************************
-    pl = new PoseListener() { //gets the location of the boat
+      //*****************************************************************************
+      //  Initialize Poselistener
+      //*****************************************************************************
+      pl = new PoseListener() { //gets the location of the boat
         public void receivedPose(UtmPose upwcs) {
 
-          _pose = upwcs.clone();
-          {
-            xValue = _pose.pose.getX();
-            yValue = _pose.pose.getY();
+            _pose = upwcs.clone();
+            {
+                xValue = _pose.pose.getX();
+                yValue = _pose.pose.getY();
             zValue = _pose.pose.getZ();
             rotation = String.valueOf(Math.PI / 2
                                       - _pose.pose.getRotation().toYaw());

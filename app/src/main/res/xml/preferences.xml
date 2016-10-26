@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:key="pref_category"
+        android:title="App Prefrences">
+        <EditTextPreference
+            android:defaultValue="192.168.1.250"
+            android:key="pref_boat_ip"
+            android:summary="Current IP"
+            android:title="Boat IP Address" />
+        <EditTextPreference
+            android:defaultValue="11411"
+            android:key="pref_port"
+            android:summary="Current Port"
+            android:title="Boat Port"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_waypoint_file"
+        android:title="Waypoint Files">
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_tablet_options"
+        android:title="Tablet Stuff">
+        <EditTextPreference
+            android:defaultValue="500"
+            android:key="pref_command_update_rate"
+            android:summary="current update rate"
+            android:title="Update Rate of Commands (ms)"/>
+    </PreferenceCategory>
+
+
+</PreferenceScreen>
