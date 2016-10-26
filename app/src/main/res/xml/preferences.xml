@@ -26,7 +26,7 @@
         <EditTextPreference
             android:defaultValue="500"
             android:key="pref_command_update_rate"
-            android:summary="current update rate"
+            android:summary="current update ratooe"
             android:title="Update Rate of Commands (ms)"/>
     </PreferenceCategory>
 
