@@ -1239,7 +1239,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
     @Override
       protected void onProgressUpdate(Integer... result) {
-      mapInfo.setText("Rot is: "+ rot);
+        //mapInfo.setText("Rot is: "+ rot);
       LatLng curLoc;
       //if (latlongloc != null & counter_M > 5) {
       if (latlongloc != null) {
@@ -2330,12 +2330,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       });
   }
   public void updateMarkers() {
-
     //curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
     Runnable markerRun = new Runnable() {
         @Override
         public void run() {
-          System.out.println("updated");
           Pointarrow Arrow = new Pointarrow();
           int icon_Index;
           int icon_Index_old = -1;
@@ -2361,8 +2359,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           userloc.setPosition(new LatLng(location.getLatitude(),location.getLongitude()));
           System.out.println(userloc.toString());
           System.out.println(location.toString());
-          System.out.println("called update markers");
-
         }
       };
     ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
