@@ -26,9 +26,61 @@
         <EditTextPreference
             android:defaultValue="500"
             android:key="pref_command_update_rate"
-            android:summary="current update ratooe"
+            android:summary="current update rate"
             android:title="Update Rate of Commands (ms)"/>
     </PreferenceCategory>
+    <PreferenceCategory
+        android:key="pref_tablet_map_location"
+        android:title="Tablet Stuff">
+        <EditTextPreference
+            android:key="pref_latitude"
+            android:summary="lat"
+            android:title="Initial Map Location Latitude"/>
+        <EditTextPreference
+            android:key="pref_longitude"
+            android:summary="lon"
+            android:title="Initial Map Location Longitude"/>
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:summary="Save last location"
+            android:key="pref_save_location"/>
+            <!--android:Title="Save last location?"-->
 
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:key="pref_pids_thrust"
+        android:title="Thrust PIDS">
+        <EditTextPreference
+            android:key="pref_pid_thrust_p"
+            android:summary="p"
+            android:title="Thrust P Value"/>
+        <EditTextPreference
+            android:key="pref_pid_thrust_i"
+            android:summary="i"
+            android:title="Thrust I Value"/>
+        <EditTextPreference
+            android:key="pref_pid_thrust_d"
+            android:summary="d"
+            android:title="Thrust D Value"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_pids_rudder"
+        android:title="Rudder PIDS">
+        <EditTextPreference
+            android:key="pref_pid_rudder_p"
+            android:summary="p"
+            android:title="Rudder P Value"/>
+        <EditTextPreference
+            android:key="pref_pid_rudder_i"
+            android:summary="i"
+            android:title="Rudder I Value"/>
+        <EditTextPreference
+            android:key="pref_pid_rudder_d"
+            android:summary="d"
+            android:title="Rudder D Value"/>
+    </PreferenceCategory>
 
 </PreferenceScreen>

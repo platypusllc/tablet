@@ -252,6 +252,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
   public ToggleButton regionWaypointButton = null;
   public static String textIpAddress;
+    public static String boatPort = "11411";
   public static Boat currentBoat;
   public static InetSocketAddress address;
   public CheckBox autoBox;
@@ -324,6 +325,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
     this.setContentView(R.layout.tabletlayoutswitch);
 
+      savePrefrencesA();
 
     ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
     linlay = (RelativeLayout) this.findViewById(R.id.linlay);
@@ -1543,9 +1545,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           //System.out.println("IP Address entered is: " + textIpAddress);
           if (direct.isChecked()) {
             if (ipAddress.getText() == null || ipAddress.getText().equals("")) {
-              address = CrwNetworkUtils.toInetSocketAddress("127.0.0.1" + ":11411");
+              address = CrwNetworkUtils.toInetSocketAddress("127.0.0.1:" + boatPort);
             }
-            address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":11411");
+            address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":" + boatPort);
             // address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
             //                    log.append("\n" + address.toString());
             //currentBoat = new Boat(address);
@@ -3040,4 +3042,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     });
       dialog.show();
   }
+    public void loadPreferences()
+    {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
+    }
+    public void savePrefrencesA()
+    {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        if (currentBoat != null )//|| currentBoat.getIpAddress() != null)
+        {
+            System.out.println("pref: boat IP" + currentBoat.getIpAddress());
+        }
+        System.out.println("pref: boat port " + boatPort);
+        System.out.println("pref: low thrust PID " + low_tPID[0] + " "+ low_tPID[1] + " " + low_tPID[2]);
+        System.out.println("pref: normal thrust PID " + tPID[0] + " "+ tPID[1] + " " + tPID[2]);
+        System.out.println("pref: low rudder PID " + low_rPID[0] + " "+ low_rPID[1] + " " + low_rPID[2]);
+        System.out.println("pref: normal thrust PID " + rPID[0] + " "+ rPID[1] + " " + rPID[2]);
+        System.out.println("pref: thrust min " + THRUST_MIN);
+        System.out.println("pref: thrust max " + THRUST_MAX);
+        System.out.println("pref: rudder min " + RUDDER_MIN);
+        System.out.println("pref: rudder max " + RUDDER_MAX);
+
+        //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,"192.168.1.123");
+        editor.commit();
+        String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
+        //System.out.println("default ip: " + defaultIP);
+    }
 }
