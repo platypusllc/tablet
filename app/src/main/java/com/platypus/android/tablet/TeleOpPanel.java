@@ -59,6 +59,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.media.audiofx.BassBoost;
 import android.net.ConnectivityManager;
 
 import android.os.Environment;
@@ -237,10 +238,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   Sensor senAccelerometer;
   public boolean stopWaypoints = true;
 
-  public static final double THRUST_MIN = -1.0;
-  public static final double THRUST_MAX = .3;
-  public static final double RUDDER_MIN = 1.0;
-  public static final double RUDDER_MAX = -1.0;
+    public static double THRUST_MIN = -1.0;
+    public static double THRUST_MAX = .3;
+  public static double RUDDER_MIN = 1.0;
+  public static double RUDDER_MAX = -1.0;
 
   public EditText ipAddress = null;
   public EditText color = null;
@@ -352,6 +353,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     final ToggleButton switchView = (ToggleButton) this.findViewById(R.id.switchviewbutton);
 
     mapInfo.setText("Map Information \n Nothing Pending");
+
 
 
       //Create folder for the first time if it does not exist
@@ -1561,6 +1563,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           {}
           dialog.dismiss();
           dialogClose();
+            saveDefaultSettings();
         }
       });
     dialog.show();
@@ -3044,15 +3047,38 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
+        //set ip and port
+
+
+        tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_P,""));
+        tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_I,""));
+        tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_D,""));
+
+        rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_P,""));
+        rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_I,""));
+        rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_D,""));
+
+        low_tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_P,""));
+        low_tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_I,""));
+        low_tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_D,""));
+
+        low_rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_P,""));
+        low_rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_I,""));
+        low_rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_D,""));
+
+        THRUST_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MIN,""));
+        THRUST_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MAX,""));
+
+        RUDDER_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MIN,""));
+        RUDDER_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MAX,""));
+
+
     }
-    public void savePreferences()
+    public void saveDefaultSettings()
     {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sharedPref.edit();
-        if (currentBoat != null )//|| currentBoat.getIpAddress() != null)
-        {
-            System.out.println("pref: boat IP" + currentBoat.getIpAddress());
-        }
+        System.out.println("pref: boat IP" + currentBoat.getIpAddress().toString());
         System.out.println("pref: boat port " + boatPort);
         System.out.println("pref: low thrust PID " + low_tPID[0] + " "+ low_tPID[1] + " " + low_tPID[2]);
         System.out.println("pref: normal thrust PID " + tPID[0] + " "+ tPID[1] + " " + tPID[2]);
@@ -3063,8 +3089,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         System.out.println("pref: rudder min " + RUDDER_MIN);
         System.out.println("pref: rudder max " + RUDDER_MAX);
 
-        
         //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,"192.168.1.123");
+        editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().toString());
+        editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().toString().substring(currentBoat.getIpAddress().toString().indexOf(":"),currentBoat.getIpAddress().toString().length()));
+        //see if thrust values save automatically if theyre edited in the settings activity
+        //add latlng
+
         editor.commit();
         //String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
         //System.out.println("default ip: " + defaultIP);
