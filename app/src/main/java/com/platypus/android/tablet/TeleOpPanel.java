@@ -325,8 +325,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
     this.setContentView(R.layout.tabletlayoutswitch);
 
-      savePrefrencesA();
-
     ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
     linlay = (RelativeLayout) this.findViewById(R.id.linlay);
     //tiltButton = (ToggleButton) this.findViewById(R.id.tiltButton);
@@ -3047,7 +3045,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
     }
-    public void savePrefrencesA()
+    public void savePreferences()
     {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sharedPref.edit();
@@ -3065,9 +3063,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         System.out.println("pref: rudder min " + RUDDER_MIN);
         System.out.println("pref: rudder max " + RUDDER_MAX);
 
+        
         //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,"192.168.1.123");
         editor.commit();
-        String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
+        //String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
         //System.out.println("default ip: " + defaultIP);
     }
 }

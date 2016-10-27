@@ -47,6 +47,35 @@
             <!--android:Title="Save last location?"-->
 
     </PreferenceCategory>
+    <PreferenceCategory
+        android:key="pref_thrust"
+        android:title="Joystick Thrust Range">
+        <EditTextPreference
+            android:key="pref_thrust_min"
+            android:summary="thrustmin"
+            android:title="Thrust MIN"
+            />
+        <EditTextPreference
+            android:key="pref_thrust_max"
+            android:summary="thrustmax"
+            android:title="Thrust MAX"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_rudder"
+        android:title="Joystick Rudder Range">
+        <EditTextPreference
+            android:key="pref_rudder_min"
+            android:summary="ruddermin"
+            android:title="Rudder MIN"
+            />
+        <EditTextPreference
+            android:key="pref_rudder_max"
+            android:summary="ruddermax"
+            android:title="Rudder MAX"
+            />
+    </PreferenceCategory>
 
 
     <PreferenceCategory
@@ -82,5 +111,37 @@
             android:summary="d"
             android:title="Rudder D Value"/>
     </PreferenceCategory>
+    <PreferenceCategory
+        android:key="pref_pids_low_thrust"
+        android:title="Low Thrust PIDS">
+        <EditTextPreference
+            android:key="pref_pid_low_thrust_p"
+            android:summary="p"
+            android:title="Low Thrust P Value"/>
+        <EditTextPreference
+            android:key="pref_pid_low_thrust_i"
+            android:summary="i"
+            android:title="Low Thrust I Value"/>
+        <EditTextPreference
+            android:key="pref_pid_low_thrust_d"
+            android:summary="d"
+            android:title="Low Thrust D Value"/>
+    </PreferenceCategory>
 
+    <PreferenceCategory
+        android:key="pref_pids_low_rudder"
+        android:title="Low Rudder PIDS">
+        <EditTextPreference
+            android:key="pref_pid_low_rudder_p"
+            android:summary="p"
+            android:title="Low Rudder P Value"/>
+        <EditTextPreference
+            android:key="pref_pid_low_rudder_i"
+            android:summary="i"
+            android:title="Low Rudder I Value"/>
+        <EditTextPreference
+            android:key="pref_pid_low_rudder_d"
+            android:summary="d"
+            android:title="Low Rudder D Value"/>
+    </PreferenceCategory>
 </PreferenceScreen>
