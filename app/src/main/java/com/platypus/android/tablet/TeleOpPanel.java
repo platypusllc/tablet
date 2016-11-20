@@ -441,6 +441,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             Toast.makeText(getApplicationContext(), "Boat still finding GPS location", Toast.LENGTH_LONG).show();
             return;
           }
+            System.out.println("center to boat: " + currentBoat.getLocation());
+            System.out.println(currentBoat.getLocation() == boat2.getPosition());
           mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                                                                       new CameraPosition.Builder()
                                                                       .target(currentBoat.getLocation())
@@ -740,9 +742,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                   System.out.println(touchpointList.size());
                   boatPath = new Path(touchpointList);
                 } else if (startDraw && !startDrawWaypoints) {
-                  System.out.println("tp list before add point: " + touchpointList.size());
+                    //System.out.println("tp list before add point: " + touchpointList.size());
                   touchpointList.add(point);
-                  System.out.println("tp list after add point: " + touchpointList.size());
+                  //System.out.println("tp list after add point: " + touchpointList.size());
                   if (spirallawn.isChecked()) {
                     ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
                     boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
@@ -753,7 +755,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     touchpointList = boatPath.getQuickHullList();
                   }
                 }
-                System.out.println("tp list after quickhull: " + touchpointList.size());
+                  //System.out.println("tp list after quickhull: " + touchpointList.size());
                 invalidate();
               }
             });
@@ -977,8 +979,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //    System.out.println("called");
         thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
         rudderTemp = fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX);
-        System.out.println(thrustTemp);
-        System.out.println(rudderTemp);
+        //System.out.println(thrustTemp);
+        //System.out.println(rudderTemp);
         //            if (currentBoat != null) {
         //                //does this need to be in seperate thread?
         //                Thread thread = new Thread() {
@@ -1152,14 +1154,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     @Override
       protected String doInBackground(String... arg0) {
-
-
-      updateMarkers(); //Launch update markers thread
+        updateMarkers(); //Launch update markers thread
       currentBoat.isConnected();
       networkRun = new Runnable() {
           @Override
           public void run() {
             if (currentBoat != null) {
+        //        System.out.println("do in background RUN");
               connected = currentBoat.getConnected();
               //System.out.println("ran is connected");
               //System.out.println("update markers called from async");
@@ -1175,16 +1176,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               {
                 //System.out.println("vel ran:");
                 if (old_thrust != thrustTemp || old_rudder!=rudderTemp) {
-                  System.out.println("Starting update velocity function observer: " + System.currentTimeMillis()); 
+                    //System.out.println("Starting update velocity function observer: " + System.currentTimeMillis());
                     updateVelocity(currentBoat, new FunctionObserver<Void>() {
                         @Override
                           public void completed(Void aVoid) {
                           System.out.println("twist completed");
-													System.out.println("ending update velocity function observer: " + System.currentTimeMillis()); 
+//													System.out.println("ending update velocity function observer: " + System.currentTimeMillis());
                         }
                         @Override
                           public void failed(FunctionError functionError) {
-													System.out.println("ending update velocity function observer: " + System.currentTimeMillis()); 
+//													System.out.println("ending update velocity function observer: " + System.currentTimeMillis());
                         }
                       });
                 }
@@ -1725,7 +1726,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       while (fileScanner.hasNext()) {
         final ArrayList<ILatLng> currentSave = new ArrayList<ILatLng>();
         String s = fileScanner.nextLine();
-        System.out.println(s);
+        //System.out.println(s);
         final Scanner stringScanner = new Scanner(s);
 
         //get save name
@@ -1796,7 +1797,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       wpsaves.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
           @Override
           public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
-            System.out.println("on long click");
+            //System.out.println("on long click");
             final Dialog confirmdialog = new Dialog(context);
             confirmdialog.setContentView(R.layout.confirmdeletewaypoints);
             confirmdialog.setTitle("Delete This Waypoint Path?");
@@ -2128,9 +2129,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
           final Thread thread = new Thread() {
               public void run() {
-                System.out.println("pids");
+                //System.out.println("pids");
                 for (double i : thrustPID) {
-                  System.out.println(i);
+                  //System.out.println(i);
                 }
                 currentBoat.returnServer().setGains(THRUST_GAIN_AXIS, thrustPID, new FunctionObserver<Void>() {
                     @Override
@@ -2248,9 +2249,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     final String JSON_CHARSET = "UTF-8";
     final String JSON_FIELD_REGION_NAME = "FIELD_REGION_NAME";
-    System.out.println("zoom min" + mMapboxMap.getMinZoom());
-    System.out.println("zoom max" + mMapboxMap.getMaxZoom());
-    System.out.println("zoom current " + mMapboxMap.getCameraPosition().zoom);
+    //System.out.println("zoom min" + mMapboxMap.getMinZoom());
+    //System.out.println("zoom max" + mMapboxMap.getMaxZoom());
+    //System.out.println("zoom current " + mMapboxMap.getCameraPosition().zoom);
     // Define the offline region
     //change zoom to 15 if need be
 
@@ -2334,15 +2335,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Runnable markerRun = new Runnable() {
         @Override
         public void run() {
+            System.out.println("RUN");
+
           Pointarrow Arrow = new Pointarrow();
           int icon_Index;
           int icon_Index_old = -1;
           IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
           BitmapFactory.Options options = new BitmapFactory.Options();
 
+            System.out.println("marker update");
+            System.out.println(currentBoat.getLocation() == null);
           if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null) {
+            System.out.println("marker update called");
             boat2.setPosition(currentBoat.getLocation());
           }
+
           float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
           degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
           if (mMapboxMap != null) {
@@ -2355,10 +2362,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
           }
 
-          location = LocationServices.FusedLocationApi.getLastLocation();
-          userloc.setPosition(new LatLng(location.getLatitude(),location.getLongitude()));
-          System.out.println(userloc.toString());
-          System.out.println(location.toString());
+            location = LocationServices.FusedLocationApi.getLastLocation();
+            System.out.println(location);
+            if (location != null) { //occurs when gps is off or no lock
+                userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+            }
+            /* start
+          //System.out.println(userloc.toString());
+          //System.out.println(location.toString());
+
+          */
         }
       };
     ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
