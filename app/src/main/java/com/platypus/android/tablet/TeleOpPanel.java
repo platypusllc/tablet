@@ -233,12 +233,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
   SensorManager senSensorManager;
   Sensor senAccelerometer;
+  Sensor senOrientation;
+  float[] rotationMatrix = new float[9];
+  double tablet_yaw;
   public boolean stopWaypoints = true;
 
   public static final double THRUST_MIN = -1.0;
   public static final double THRUST_MAX = .3;
-  public static final double RUDDER_MIN = 1.0;
-  public static final double RUDDER_MAX = -1.0;
+  //public static final double RUDDER_MIN = 1.0;
+  //public static final double RUDDER_MAX = -1.0;
 
   public EditText ipAddress = null;
   public EditText color = null;
@@ -646,8 +649,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
     senAccelerometer = senSensorManager
       .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+    senOrientation = senSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
     senSensorManager.registerListener(this, senAccelerometer,
                                       SensorManager.SENSOR_DELAY_NORMAL);
+    senSensorManager.registerListener(this, senOrientation, SensorManager.SENSOR_DELAY_NORMAL);
 
     final IconFactory mIconFactory = IconFactory.getInstance(this);
     Drawable mhome = ContextCompat.getDrawable(this, R.drawable.home1);
@@ -976,34 +981,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   private JoystickMovedListener _listener = new JoystickMovedListener() {
       @Override
       public void OnMoved(int x, int y) {
-        //    System.out.println("called");
-        thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
-        rudderTemp = fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX);
-        //System.out.println(thrustTemp);
-        //System.out.println(rudderTemp);
-        //            if (currentBoat != null) {
-        //                //does this need to be in seperate thread?
-        //                Thread thread = new Thread() {
-        //                    public void run() {a
-        //                        if (currentBoat.getConnected() == true) {
-        //                            updateVelocity(currentBoat, null);
-        //                        }
-        //                    }
-        //                };
-        //                thread.start();
-        //            }
-        //Instead add the update to async loop and give option to change that update rate
-        //            Log.i(logTag, "Y:" + y + "\tX:" + x);
-        //            Log.i(logTag, "Thrust" + thrustTemp + "\t Rudder" + rudderTemp);
-        //            try {
-        //                mlogger.info(new JSONObject()
-        //                        .put("Time", sdf.format(d))
-        //                        .put("Joystick", new JSONObject()
-        //                                .put("Thrust", thrustTemp)
-        //                                .put("Rudder", rudderTemp)));
-        //            } catch (JSONException e) {
-        //
-        //            }
+          //    System.out.println("called");
+          System.out.println("x = "  + Integer.toString(x) + "  y = " + Integer.toString(y));
+
+          //thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
+          //rudderTemp = fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX);
+          // TODO: use x and y to create an angle.
+          // TODO: get state of button that switches from global and body frames
+          // TODO: depending on the state of that button, adjust angle by boat's angle
+          // TODO: get thrustTemp from a different slider entirely
+          // TODO: change RUDDER_MIN and RUDDER_MAX to be in degrees, cover unit circle
+          // TODO: set rudderTemp to the appropriate angle in degrees
+          rudderTemp = 180.0/Math.PI*Math.atan2(y, x);
+          thrustTemp = (Math.pow((double) x, 2.) + Math.pow((double) y, 2.))/100.0;
       }
 
       @Override
@@ -1086,26 +1076,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   /* Function observer is passed as parameter since it is needed when
    * the joystick is being moved but not when it is released  */
   public void updateVelocity(Boat a, FunctionObserver<Void> fobs) { //taken right from desktop client for updating velocity
-    // ConnectScreen.boat.setVelocity(thrust.getProgress(),
-    // rudder.getProgress());
-    //System.out.println("velocity update");
-    //System.out.println("starting update velocity: " + System.currentTimeMillis());
+
     if (a.returnServer() != null) {
       //Twist twist = new Twist();
 
       twist.dx(thrustTemp >= -1 & thrustTemp <= 1 ? thrustTemp : 0);
-      if (Math.abs(rudderTemp - 0) < .05) {
-        tempThrustValue = 0;
-        twist.drz(fromProgressToRange((int) tempThrustValue, RUDDER_MIN,
-                                      RUDDER_MAX));
-      } else {
-        twist.drz(rudderTemp >= -1 & rudderTemp <= 1 ? rudderTemp : 0);
-      }
-//      System.out.println("twisty" + twist.dx());
-//      System.out.println("twistx" + twist.drz());
+      twist.drz(rudderTemp);
+
       a.returnServer().setVelocity(twist, fobs);
     }
-    //System.out.println("end update velocity: " + System.currentTimeMillis());
   }
 
   /*
@@ -1461,6 +1440,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
       long curTime = System.currentTimeMillis();
 
+    }
+    else if (mySensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+        SensorManager.getRotationMatrixFromVector(rotationMatrix, sensorEvent.values);
+        tablet_yaw = Math.atan2(-rotationMatrix[5], -rotationMatrix[2]);
     }
   }
 
