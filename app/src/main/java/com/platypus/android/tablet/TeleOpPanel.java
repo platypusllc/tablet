@@ -444,8 +444,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             Toast.makeText(getApplicationContext(), "Boat still finding GPS location", Toast.LENGTH_LONG).show();
             return;
           }
-            System.out.println("center to boat: " + currentBoat.getLocation());
-            System.out.println(currentBoat.getLocation() == boat2.getPosition());
+
           mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                                                                       new CameraPosition.Builder()
                                                                       .target(currentBoat.getLocation())
@@ -981,19 +980,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   private JoystickMovedListener _listener = new JoystickMovedListener() {
       @Override
       public void OnMoved(int x, int y) {
-          //    System.out.println("called");
-          System.out.println("x = "  + Integer.toString(x) + "  y = " + Integer.toString(y));
-
-          //thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
-          //rudderTemp = fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX);
           // TODO: use x and y to create an angle.
           // TODO: get state of button that switches from global and body frames
           // TODO: depending on the state of that button, adjust angle by boat's angle
           // TODO: get thrustTemp from a different slider entirely
           // TODO: change RUDDER_MIN and RUDDER_MAX to be in degrees, cover unit circle
           // TODO: set rudderTemp to the appropriate angle in degrees
-          rudderTemp = 180.0/Math.PI*Math.atan2(y, x);
+          rudderTemp = 180.0/Math.PI*Math.atan2(y, x); // degrees
           thrustTemp = (Math.pow((double) x, 2.) + Math.pow((double) y, 2.))/100.0;
+          System.out.println("x = "  + x + "  y = " + y);
+          System.out.println("rudderTemp = " + rudderTemp + "   thrustTemp = " + thrustTemp);
       }
 
       @Override
@@ -1009,6 +1005,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         if (currentBoat != null) {
           Thread thread = new Thread() {
               public void run() {
+                  /*
                 updateVelocity(currentBoat, new FunctionObserver<Void>() {
                     @Override
                       public void completed(Void aVoid) {
@@ -1018,6 +1015,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                       public void failed(FunctionError functionError) {
                     }
                   });
+                  */
               }
             };
           thread.start();
@@ -1080,7 +1078,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     if (a.returnServer() != null) {
       //Twist twist = new Twist();
 
-      twist.dx(thrustTemp >= -1 & thrustTemp <= 1 ? thrustTemp : 0);
+      System.out.println("calling updateVelocity()...");
+      twist.dx((thrustTemp > 1. || thrustTemp < -1.) ? Math.signum(thrustTemp)*1.0 : thrustTemp);
       twist.drz(rudderTemp);
 
       a.returnServer().setVelocity(twist, fobs);
@@ -1139,37 +1138,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           @Override
           public void run() {
             if (currentBoat != null) {
-        //        System.out.println("do in background RUN");
               connected = currentBoat.getConnected();
-              //System.out.println("ran is connected");
-              //System.out.println("update markers called from async");
-              //                        if (old_thrust != thrustTemp) { //update velocity
-              //                            //updateVelocity(currentBoat);
-              //                        }
-              //
-              //                        if (old_rudder != rudderTemp) { //update rudder
-              //                            //updateVelocity(currentBoat);
-              //                        }
 
-              //if (currentBoat.getConnected() == true)
-              {
-                //System.out.println("vel ran:");
-                if (old_thrust != thrustTemp || old_rudder!=rudderTemp) {
-                    //System.out.println("Starting update velocity function observer: " + System.currentTimeMillis());
-                    updateVelocity(currentBoat, new FunctionObserver<Void>() {
-                        @Override
-                          public void completed(Void aVoid) {
-                          System.out.println("twist completed");
-//													System.out.println("ending update velocity function observer: " + System.currentTimeMillis());
-                        }
-                        @Override
-                          public void failed(FunctionError functionError) {
-//													System.out.println("ending update velocity function observer: " + System.currentTimeMillis());
-                        }
-                      });
-                }
+              if (old_thrust != thrustTemp || old_rudder!=rudderTemp) {
+                updateVelocity(currentBoat, new FunctionObserver<Void>() {
+                  @Override
+                    public void completed(Void aVoid) {
+                    System.out.println("twist completed");
+                  }
+                  @Override
+                    public void failed(FunctionError functionError) {
+                  }
+                });
               }
-              //System.out.println("sent vel");
+                old_thrust = thrustTemp;
+                old_rudder = rudderTemp;
+
               if (stopWaypoints == true) {
                 currentBoat.returnServer().stopWaypoints(new FunctionObserver<Void>() {
                     @Override
@@ -1185,8 +1169,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                   });
                 stopWaypoints = false;
               }
-              old_thrust = thrustTemp;
-              old_rudder = rudderTemp;
 
               //what is this?
               if (tempPose != null) {
@@ -1444,6 +1426,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     else if (mySensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
         SensorManager.getRotationMatrixFromVector(rotationMatrix, sensorEvent.values);
         tablet_yaw = Math.atan2(-rotationMatrix[5], -rotationMatrix[2]);
+        System.out.println("Tablet yaw = " + tablet_yaw);
+
     }
   }
 
@@ -2318,7 +2302,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Runnable markerRun = new Runnable() {
         @Override
         public void run() {
-            System.out.println("RUN");
 
           Pointarrow Arrow = new Pointarrow();
           int icon_Index;
@@ -2326,10 +2309,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
           BitmapFactory.Options options = new BitmapFactory.Options();
 
-            System.out.println("marker update");
-            System.out.println(currentBoat.getLocation() == null);
           if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null) {
-            System.out.println("marker update called");
             boat2.setPosition(currentBoat.getLocation());
           }
 
@@ -2346,15 +2326,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           }
 
             location = LocationServices.FusedLocationApi.getLastLocation();
-            System.out.println(location);
             if (location != null) { //occurs when gps is off or no lock
                 userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
             }
-            /* start
-          //System.out.println(userloc.toString());
-          //System.out.println(location.toString());
-
-          */
         }
       };
     ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
