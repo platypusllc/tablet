@@ -1151,8 +1151,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                   }
                 });
               }
-                old_thrust = thrustTemp;
-                old_rudder = rudderTemp;
+              old_thrust = thrustTemp;
+              old_rudder = rudderTemp;
 
               if (stopWaypoints == true) {
                 currentBoat.returnServer().stopWaypoints(new FunctionObserver<Void>() {

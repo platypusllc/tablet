@@ -52,7 +52,7 @@
 
     <RelativeLayout
         android:id="@+id/relativeLayout_map"
-        android:layout_height="wrap_content"
+        android:layout_height="575dp"
         android:layout_width="fill_parent"
         android:layout_weight="0.5"
         android:layout_below="@+id/printIpAddress"
@@ -64,24 +64,35 @@
 
             <com.mapbox.mapboxsdk.maps.MapView
                 android:id="@+id/mapview"
-                android:layout_width="fill_parent"
-                android:layout_height="600dp"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentStart="true"
                 mapbox:style_url="@string/style_mapbox_streets"
-                mapbox:access_token="pk.eyJ1IjoicGxhdHlwdXNsbGMiLCJhIjoiY2lsM3p5bjJyM3U0N3Z5bTNxbmFpZXNwaSJ9.YWzXSt3aXtpoBrdMPmLE3Q"/>
+                mapbox:access_token="pk.eyJ1IjoicGxhdHlwdXNsbGMiLCJhIjoiY2lsM3p5bjJyM3U0N3Z5bTNxbmFpZXNwaSJ9.YWzXSt3aXtpoBrdMPmLE3Q"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
+                <Button
+                    style="?android:attr/buttonStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/centermap"
+                    android:text="Center"
+                    android:layout_below="@+id/controlScreenEnter"
+                    android:layout_toEndOf="@+id/connectButton" />
+                  
+            </com.mapbox.mapboxsdk.maps.MapView>
 
-            <Button
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/centermap"
-                android:text="Center"
-                android:layout_alignTop="@id/mapview"
-                android:layout_alignLeft="@id/mapview"/>
 
         </RelativeLayout>
+
+        <android.widget.VerticalSeekBar
+            android:id="@+id/seekBar1"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"
+            android:progress="50" />        
+
+
     </RelativeLayout>
 
 
@@ -340,6 +351,7 @@ android:layout_marginLeft="1dp"
         android:layout_alignParentStart="true"
         android:layout_toStartOf="@+id/relativeLayout_map"
         android:text="Map Information" />
+
     <!--     <Button
         android:id="@+id/mapButton"
         android:layout_width="match_parent"
