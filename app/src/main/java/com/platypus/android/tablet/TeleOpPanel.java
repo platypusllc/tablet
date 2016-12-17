@@ -350,6 +350,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     mapInfo.setText("Map Information \n Nothing Pending");
 
+      sensorData1.setText("Waiting");
+      sensorData2.setText("Waiting");
+      sensorData3.setText("Waiting");
+
 
       //Create folder for the first time if it does not exist
       File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
@@ -1343,9 +1347,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             case 9:
               break;
             default:
-              sensorData1.setText("Waiting");
-              sensorData2.setText("Waiting");
-              sensorData3.setText("Waiting");
+//              sensorData1.setText("Waiting");
+//              sensorData2.setText("Waiting");
+//              sensorData3.setText("Waiting");
             }
 
           }
