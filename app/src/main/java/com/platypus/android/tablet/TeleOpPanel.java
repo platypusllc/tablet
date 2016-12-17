@@ -319,9 +319,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     super.onCreate(savedInstanceState);
     //this.setContentView(R.layout.tabletlayout_nexus7);  // layout for LG GpadF 8
     //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-    //this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
-    this.setContentView(R.layout.tabletlayoutswitch);
-
+      //this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
+      this.setContentView(R.layout.tabletlayoutswitch);
 
     ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
     linlay = (RelativeLayout) this.findViewById(R.id.linlay);
@@ -2332,46 +2331,34 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   }
   public void updateMarkers() {
     //curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+      final IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
+      BitmapFactory.Options options = new BitmapFactory.Options();
     Runnable markerRun = new Runnable() {
         @Override
         public void run() {
-            System.out.println("RUN");
-
           Pointarrow Arrow = new Pointarrow();
           int icon_Index;
           int icon_Index_old = -1;
-          IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
-          BitmapFactory.Options options = new BitmapFactory.Options();
 
-            System.out.println("marker update");
-            System.out.println(currentBoat.getLocation() == null);
           if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null) {
-            System.out.println("marker update called");
-            boat2.setPosition(currentBoat.getLocation());
+              boat2.setPosition(currentBoat.getLocation());
           }
 
           float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
           degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
           if (mMapboxMap != null) {
-
             icon_Index = Arrow.getIcon(degree);
             if (icon_Index != icon_Index_old) {
               boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
               icon_Index_old = icon_Index;
-            } else {
             }
           }
 
             location = LocationServices.FusedLocationApi.getLastLocation();
-            System.out.println(location);
+            //System.out.println(location);
             if (location != null) { //occurs when gps is off or no lock
                 userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
             }
-            /* start
-          //System.out.println(userloc.toString());
-          //System.out.println(location.toString());
-
-          */
         }
       };
     ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
@@ -2771,7 +2758,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     LayoutInflater inflater = (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     regionlayout = (LinearLayout) findViewById(R.id.relativeLayout_sensor);
     waypointregion = inflater.inflate(R.layout.region_layout, regionlayout);
-    regionWaypointButton = (ToggleButton) regionlayout.findViewById(R.id.additionalWaypoint);
+      //regionWaypointButton = (ToggleButton) regionlayout.findViewById(R.id.additionalWaypoint);
     startRegion = (Button) regionlayout.findViewById(R.id.region_start); //start button
     drawPoly = (ImageButton) regionlayout.findViewById(R.id.region_draw); //toggle adding points to region
     perimeter = (Button) regionlayout.findViewById(R.id.region_perimeter); //perimeter* start perimeter? didnt write this
