@@ -15,7 +15,7 @@ import java.util.Map;
 import static com.platypus.android.tablet.R.id.map;
 
 
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     public static final String KEY_PREF_DEFAULT_IP = "pref_boat_ip";
     public static final String KEY_PREF_PORT = "pref_boat_port";
@@ -65,4 +65,29 @@ public class SettingsActivity extends PreferenceActivity {
             }
         }
     }
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,String key)
+    {
+        System.out.println("sharedpref: " + sharedPreferences.getString("pref_pid_low_rudder_p","0.4"));
+        System.out.println("key is" + key);
+        Preference pref = findPreference(key);
+        pref.setSummary(sharedPreferences.getString(key,"default"));
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Set up a listener whenever a key changes
+        getPreferenceScreen().getSharedPreferences()
+                .registerOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Unregister the listener whenever a key changes
+        getPreferenceScreen().getSharedPreferences()
+                .unregisterOnSharedPreferenceChangeListener(this);
+    }
+
 }
+

@@ -930,7 +930,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     try {
       System.out.println("saving session");
       saveSession();
-        saveDefaultSettings();
+        //saveDefaultSettings();
     }
     catch(Exception e)
     {
@@ -1500,7 +1500,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     ipAddress.setText("127.0.0.1");
     try {
       System.out.println("loading session");
-      loadSession();
+        //loadSession();
     }
     catch(Exception e)
     {
@@ -3049,7 +3049,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public void loadPreferences()
     {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
+        final SharedPreferences.Editor editor = sharedPref.edit();
+        sharedPref.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+                System.out.println("LISTENER KEY" + s);
+            }
+        });
+
+        //String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
         //set ip and port
 
         /*
