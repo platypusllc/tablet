@@ -1,8 +1,19 @@
 package com.platypus.android.tablet;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.app.Activity;
+import android.preference.EditTextPreference;
 import android.preference.PreferenceActivity;
+import android.preference.ListPreference;
+import android.preference.Preference;
+import android.preference.PreferenceFragment;
+import android.preference.PreferenceManager;
+
+import java.util.Map;
+
+import static com.platypus.android.tablet.R.id.map;
+
 
 public class SettingsActivity extends PreferenceActivity {
 
@@ -38,6 +49,20 @@ public class SettingsActivity extends PreferenceActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
-    }
+        Preference pref = findPreference("pref_category");
+        SharedPreferences sharedpref = pref.getSharedPreferences();
+        System.out.println("sharedpref: " + sharedpref.getString("pref_pid_low_rudder_p","0.4"));
 
+        Map<String, ?> listOfPref = sharedpref.getAll();
+
+        for (Map.Entry<String, ?> entry : listOfPref.entrySet())
+        {
+            System.out.println("Key : " + entry.getKey() + " Value : " + entry.getValue());
+            Preference currentPref = findPreference(entry.getKey());
+            if (currentPref instanceof EditTextPreference)
+            {
+                currentPref.setSummary(entry.getValue().toString());
+            }
+        }
+    }
 }

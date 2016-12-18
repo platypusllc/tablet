@@ -3,6 +3,7 @@
     <PreferenceCategory
         android:key="pref_category"
         android:title="App Prefrences">
+
         <EditTextPreference
             android:defaultValue="192.168.1.250"
             android:key="pref_boat_ip"
@@ -13,6 +14,7 @@
             android:key="pref_port"
             android:summary="Current Port"
             android:title="Boat Port"/>
+
     </PreferenceCategory>
 
     <PreferenceCategory
