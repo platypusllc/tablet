@@ -31,9 +31,10 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     public static final String KEY_PREF_SAVE_MAP = "pref_save_location";
 
     public static final String KEY_PREF_THRUST_MIN = "pref_thrust_min";
-    public static final String KEY_PREF_THRUST_MAX = "pref_thrust_MAX";
-    public static final String KEY_PREF_RUDDER_MAX = "pref_rudder_MAX";
+    public static final String KEY_PREF_THRUST_MAX = "pref_thrust_max";
+
     public static final String KEY_PREF_RUDDER_MIN = "pref_rudder_min";
+    public static final String KEY_PREF_RUDDER_MAX = "pref_rudder_max";
 
     public static final String KEY_PREF_PID_THRUST_P = "pref_pid_thrust_p";
     public static final String KEY_PREF_PID_THRUST_I= "pref_pid_thrust_i";
@@ -67,6 +68,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
             Preference currentPref = findPreference(entry.getKey());
             if (currentPref instanceof EditTextPreference)
             {
+                System.out.println("key instance: " + entry.getKey());
                 currentPref.setSummary(entry.getValue().toString());
             }
         }

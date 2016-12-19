@@ -249,8 +249,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     public static double THRUST_MIN = -1.0;
     public static double THRUST_MAX = .3;
-  public static double RUDDER_MIN = 1.0;
-  public static double RUDDER_MAX = -1.0;
+    public static double RUDDER_MIN = 1.0;
+    public static double RUDDER_MAX = -1.0;
 
   public EditText ipAddress = null;
   public EditText color = null;
@@ -3104,16 +3104,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         low_rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_D,".15"));
 
         THRUST_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MIN,"-1"));
-        THRUST_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MAX,".3"));
+        THRUST_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MAX,"0.3"));
 
         RUDDER_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_RUDDER_MIN,"-1"));
-        RUDDER_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_RUDDER_MAX,"1"));
+        RUDDER_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_RUDDER_MAX,".3"));
 
         updateRateMili = Integer.parseInt(sharedPref.getString(SettingsActivity.KEY_PREF_COMMAND_RATE,"500"));
         Double initialPanLat = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_LAT,"0"));
         Double initialPanLon = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_LON,"0"));
         initialPan = new LatLng(initialPanLat,initialPanLon);
         setInitialPan = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SAVE_MAP,true);
+
+        //REMEMBER TO SEND PIDS WHEN CONNECTING TO THE BOAT
         //boolean for should there be an initial pan
     }
     public void saveDefaultSettings()
@@ -3147,10 +3149,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         editor.putString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_P,Double.toString(low_rPID[0]));
         editor.putString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_I,Double.toString(low_rPID[1]));
         editor.putString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_D,Double.toString(low_rPID[2]));
+
         editor.putString(SettingsActivity.KEY_PREF_THRUST_MIN,Double.toString(THRUST_MIN));
         editor.putString(SettingsActivity.KEY_PREF_THRUST_MAX,Double.toString(THRUST_MAX));
-        editor.putString(SettingsActivity.KEY_PREF_THRUST_MIN,Double.toString(RUDDER_MIN));
-        editor.putString(SettingsActivity.KEY_PREF_THRUST_MAX,Double.toString(RUDDER_MAX));
+
+        editor.putString(SettingsActivity.KEY_PREF_RUDDER_MIN,Double.toString(RUDDER_MIN));
+        editor.putString(SettingsActivity.KEY_PREF_RUDDER_MAX,Double.toString(RUDDER_MAX));
 
 
 
