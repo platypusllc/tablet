@@ -221,6 +221,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   LatLng pHollowStartingPoint = new LatLng((float) 40.436871,
                                            (float) -79.948825);
   LatLng initialPan = new LatLng(0,0);
+    boolean setInitialPan = true;
   long lastTime = -1;
   String waypointStatus = "";
   double rudderTemp = 0;
@@ -679,7 +680,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         public void onMapReady(@NonNull MapboxMap mapboxMap) {
           System.out.println("mapboxmap ready");
           mMapboxMap = mapboxMap;
-          if (initialPan.getLatitude()!=0 || initialPan.getLongitude() != 0)
+          if (setInitialPan == true && initialPan.getLatitude()!=0 || initialPan.getLongitude() != 0)
           {
             mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                     new CameraPosition.Builder()
@@ -939,10 +940,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
       SharedPreferences.Editor editor = sharedPref.edit();
       editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().getAddress().toString());
-      System.out.println("current ip" + currentBoat.getIpAddress().getAddress().toString());
+      editor.putString(SettingsActivity.KEY_PREF_LAT,Double.toString(currentBoat.getLocation().getLatitude()));
+      editor.putString(SettingsActivity.KEY_PREF_LON,Double.toString(currentBoat.getLocation().getLongitude()));
       editor.apply();
       editor.commit();
-      System.out.println("current ip sp" + sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP,""));
       //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().toString());
 
 //    try {
@@ -2994,6 +2995,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       //format of the mappan latlng
     //initalPan = new LatLng...
     initialPan = new LatLng(Double.parseDouble(scanner.nextLine()),Double.parseDouble(scanner.nextLine()));
+      //initial pan has to be broken up into 2 floats god damit
   }
   public void saveSession() throws IOException
   {
@@ -3085,30 +3087,34 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         //set ip and port
 
-        /*
-        tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_P,""));
-        tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_I,""));
-        tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_D,""));
+        tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_P,".2"));
+        tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_I,"0"));
+        tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_D,"0"));
 
-        rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_P,""));
-        rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_I,""));
-        rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_D,""));
+        rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_P,"1"));
+        rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_I,"0"));
+        rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_D,".2"));
 
-        low_tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_P,""));
-        low_tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_I,""));
-        low_tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_D,""));
+        low_tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_P,".06"));
+        low_tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_I,"0"));
+        low_tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_D,"0"));
 
-        low_rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_P,""));
-        low_rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_I,""));
-        low_rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_D,""));
+        low_rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_P,".35"));
+        low_rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_I,"0"));
+        low_rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_D,".15"));
 
-        THRUST_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MIN,""));
-        THRUST_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MAX,""));
+        THRUST_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MIN,"-1"));
+        THRUST_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MAX,".3"));
 
-        RUDDER_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MIN,""));
-        RUDDER_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MAX,""));
-*/
+        RUDDER_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_RUDDER_MIN,"-1"));
+        RUDDER_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_RUDDER_MAX,"1"));
 
+        updateRateMili = Integer.parseInt(sharedPref.getString(SettingsActivity.KEY_PREF_COMMAND_RATE,"500"));
+        Double initialPanLat = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_LAT,"0"));
+        Double initialPanLon = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_LON,"0"));
+        initialPan = new LatLng(initialPanLat,initialPanLon);
+        setInitialPan = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SAVE_MAP,true);
+        //boolean for should there be an initial pan
     }
     public void saveDefaultSettings()
     {
