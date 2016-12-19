@@ -1,5 +1,13 @@
 package com.platypus.android.tablet;
 
+/*
+TODO
+figure out loadPreferences
+Why is it crashing when you set that ipaddress text view
+set other variables on loading 
+test
+ */
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.BufferedWriter;
@@ -325,7 +333,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
     //this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
     this.setContentView(R.layout.tabletlayoutswitch);
-      loadPreferences();
+
     ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
     linlay = (RelativeLayout) this.findViewById(R.id.linlay);
     //tiltButton = (ToggleButton) this.findViewById(R.id.tiltButton);
@@ -352,8 +360,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     mapInfo = (TextView) this.findViewById(R.id.mapinfo);
     final ToggleButton switchView = (ToggleButton) this.findViewById(R.id.switchviewbutton);
 
-    mapInfo.setText("Map Information \n Nothing Pending");
-
+      mapInfo.setText("Map Information \n Nothing Pending");
+      loadPreferences();
 
 
       //Create folder for the first time if it does not exist
@@ -364,7 +372,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           waypointDir.mkdir();
       }
 
-
+      //loadPreferences();
       //load inital waypoint menu
     onLoadWaypointLayout();
     switchView.setOnClickListener(new OnClickListener() {
@@ -927,16 +935,26 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   protected void onDestroy() {
     super.onDestroy();
     mv.onDestroy();
-    try {
-      System.out.println("saving session");
-      saveSession();
-        //saveDefaultSettings();
-    }
-    catch(Exception e)
-    {
-      System.out.println("session failed to save");
-      System.out.println(e.toString());
-    }
+
+      SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+      SharedPreferences.Editor editor = sharedPref.edit();
+      editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().getAddress().toString());
+      System.out.println("current ip" + currentBoat.getIpAddress().getAddress().toString());
+      editor.apply();
+      editor.commit();
+      System.out.println("current ip sp" + sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP,""));
+      //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().toString());
+
+//    try {
+//      System.out.println("saving session");
+//      saveSession();
+//        //saveDefaultSettings();
+//    }
+//    catch(Exception e)
+//    {
+//      System.out.println("session failed to save");
+//      System.out.println(e.toString());
+//    }
   }
 
   @Override
@@ -1496,18 +1514,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     direct = (RadioButton) dialog.findViewById(R.id.wifi);
     reg = (RadioButton) dialog.findViewById(R.id.reg);
-    //ipAddress.setText("192.168.1.250");
-    ipAddress.setText("127.0.0.1");
-    try {
-      System.out.println("loading session");
-        //loadSession();
-    }
-    catch(Exception e)
-    {
-      System.out.println("session - failed to load");
-      System.out.println("session - " + e.toString());
-    }
-    //ipAddress.setText("192.168.1.83");
+      System.out.println("ipaddr " + textIpAddress);
+      //ipAddress.setText("127.0.0.1");
+      loadPreferences();
+      //textIpAddress = textIpAddress.replace("/",""); //that forward slash causes a network on main thread excep
+      ipAddress.setText(textIpAddress);
+//    try {
+//      System.out.println("loading session");
+//        //loadSession();
+//    }
+//    catch(Exception e)
+//    {
+//      System.out.println("session - failed to load");
+//      System.out.println("session - " + e.toString());
+//    }
+//    //ipAddress.setText("192.168.1.83");
 
 
     direct.setOnClickListener(new OnClickListener() {
@@ -1548,7 +1569,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             if (ipAddress.getText() == null || ipAddress.getText().equals("")) {
               address = CrwNetworkUtils.toInetSocketAddress("127.0.0.1:" + boatPort);
             }
-            address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":" + boatPort);
+              address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":" + boatPort);
             // address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
             //                    log.append("\n" + address.toString());
             //currentBoat = new Boat(address);
@@ -3050,14 +3071,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         final SharedPreferences.Editor editor = sharedPref.edit();
-        sharedPref.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-                System.out.println("LISTENER KEY" + s);
-            }
-        });
 
-        //String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
+        String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "192.168.259");
+        String defaultPort = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_PORT,"11411");
+
+        textIpAddress = defaultIP;
+        textIpAddress = textIpAddress.replace("/",""); //network on main thread error if this doesnt happen
+        boatPort = defaultPort;
+        System.out.println("load pref: " + defaultIP);
+        System.out.println("load pref: " + defaultPort);
+        ipAddressBox.setText("IP Address: " + textIpAddress);
+        //ipAddress.setText("192.168.1.77:11411");
+
         //set ip and port
 
         /*
@@ -3101,7 +3126,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         System.out.println("pref: rudder max " + RUDDER_MAX);
 
         //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,"192.168.1.123");
-        editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().toString());
+        editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().getAddress().toString());
+        System.out.println("BLAHBLAH: " + sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP,""));
         //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_PORT,currentBoat.getIpAddress().toString().substring(currentBoat.getIpAddress().toString().indexOf(":"),currentBoat.getIpAddress().toString().length()));
         editor.putString(SettingsActivity.KEY_PREF_PID_THRUST_P,Double.toString(tPID[0]));
         editor.putString(SettingsActivity.KEY_PREF_PID_THRUST_I,Double.toString(tPID[1]));

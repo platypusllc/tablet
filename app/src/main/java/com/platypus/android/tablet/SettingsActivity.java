@@ -14,11 +14,17 @@ import java.util.Map;
 
 import static com.platypus.android.tablet.R.id.map;
 
+/*
+* Only things that should be automatically saved from the teleop panel activity when its closed:
+* IP Address
+* Port
+* Map Center location (where map autopans to on next connect)
+* */
 
 public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     public static final String KEY_PREF_DEFAULT_IP = "pref_boat_ip";
-    public static final String KEY_PREF_PORT = "pref_boat_port";
+    public static final String KEY_PREF_DEFAULT_PORT = "pref_boat_port";
     public static final String KEY_PREF_COMMAND_RATE = "pref_command_update_rate";
     public static final String KEY_PREF_LAT = "pref_latitude";
     public static final String KEY_PREF_LON = "pref_longitude";
@@ -51,7 +57,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
         addPreferencesFromResource(R.xml.preferences);
         Preference pref = findPreference("pref_category");
         SharedPreferences sharedpref = pref.getSharedPreferences();
-        System.out.println("sharedpref: " + sharedpref.getString("pref_pid_low_rudder_p","0.4"));
+        //System.out.println("sharedpref: " + sharedpref.getString("pref_pid_low_rudder_p","0.4"));
 
         Map<String, ?> listOfPref = sharedpref.getAll();
 
