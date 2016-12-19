@@ -55,12 +55,12 @@
         <EditTextPreference
             android:key="pref_thrust_min"
             android:summary="thrustmin"
-            android:title="Thrust MIN"
+            android:title="Thrust Minimum"
             />
         <EditTextPreference
             android:key="pref_thrust_max"
             android:summary="thrustmax"
-            android:title="Thrust MAX"
+            android:title="Thrust Maximum"
             />
     </PreferenceCategory>
 
@@ -70,12 +70,12 @@
         <EditTextPreference
             android:key="pref_rudder_min"
             android:summary="ruddermin"
-            android:title="Rudder MIN"
+            android:title="Rudder Minimum"
             />
         <EditTextPreference
             android:key="pref_rudder_max"
             android:summary="ruddermax"
-            android:title="Rudder MAX"
+            android:title="Rudder Maximum"
             />
     </PreferenceCategory>
 

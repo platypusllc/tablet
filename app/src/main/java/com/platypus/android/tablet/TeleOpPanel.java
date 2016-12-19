@@ -3084,8 +3084,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         textIpAddress = defaultIP;
         textIpAddress = textIpAddress.replace("/",""); //network on main thread error if this doesnt happen
         boatPort = defaultPort;
-        System.out.println("load pref: " + defaultIP);
-        System.out.println("load pref: " + defaultPort);
         ipAddressBox.setText("IP Address: " + textIpAddress);
         //ipAddress.setText("192.168.1.77:11411");
 
@@ -3126,20 +3124,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sharedPref.edit();
-        System.out.println("pref: boat IP" + currentBoat.getIpAddress().toString());
-        System.out.println("pref: boat port " + boatPort);
-        System.out.println("pref: low thrust PID " + low_tPID[0] + " "+ low_tPID[1] + " " + low_tPID[2]);
-        System.out.println("pref: normal thrust PID " + tPID[0] + " "+ tPID[1] + " " + tPID[2]);
-        System.out.println("pref: low rudder PID " + low_rPID[0] + " "+ low_rPID[1] + " " + low_rPID[2]);
-        System.out.println("pref: normal thrust PID " + rPID[0] + " "+ rPID[1] + " " + rPID[2]);
-        System.out.println("pref: thrust min " + THRUST_MIN);
-        System.out.println("pref: thrust max " + THRUST_MAX);
-        System.out.println("pref: rudder min " + RUDDER_MIN);
-        System.out.println("pref: rudder max " + RUDDER_MAX);
-
         //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,"192.168.1.123");
         editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().getAddress().toString());
-        System.out.println("BLAHBLAH: " + sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP,""));
         //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_PORT,currentBoat.getIpAddress().toString().substring(currentBoat.getIpAddress().toString().indexOf(":"),currentBoat.getIpAddress().toString().length()));
         editor.putString(SettingsActivity.KEY_PREF_PID_THRUST_P,Double.toString(tPID[0]));
         editor.putString(SettingsActivity.KEY_PREF_PID_THRUST_I,Double.toString(tPID[1]));

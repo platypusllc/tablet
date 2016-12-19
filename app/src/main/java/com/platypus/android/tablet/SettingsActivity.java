@@ -59,16 +59,12 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
         Preference pref = findPreference("pref_category");
         SharedPreferences sharedpref = pref.getSharedPreferences();
         //System.out.println("sharedpref: " + sharedpref.getString("pref_pid_low_rudder_p","0.4"));
-
         Map<String, ?> listOfPref = sharedpref.getAll();
-
         for (Map.Entry<String, ?> entry : listOfPref.entrySet())
         {
-            System.out.println("Key : " + entry.getKey() + " Value : " + entry.getValue());
             Preference currentPref = findPreference(entry.getKey());
             if (currentPref instanceof EditTextPreference)
             {
-                System.out.println("key instance: " + entry.getKey());
                 currentPref.setSummary(entry.getValue().toString());
             }
         }
@@ -76,8 +72,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,String key)
     {
-        System.out.println("sharedpref: " + sharedPreferences.getString("pref_pid_low_rudder_p","0.4"));
-        System.out.println("key is" + key);
         Preference pref = findPreference(key);
         pref.setSummary(sharedPreferences.getString(key,"default"));
     }
