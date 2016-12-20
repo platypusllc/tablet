@@ -998,12 +998,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               double mag = Math.pow((double) x, 2.) + Math.pow((double) y, 2.);
               // System.out.println("x = "  + x + "  y = " + y + "  mag = " + mag);
               if (mag > 16.0) { // at least one of x or y >= 4. Less sensitive around center that way.
-                  rudderTemp = 180.0 / Math.PI * Math.atan2(y, x); // degrees
+                  double raw_joystick = Math.atan2(y, x); // degrees
+                  rudderTemp = 180.0/Math.PI*(tablet_yaw + raw_joystick - Math.PI/2.0);
                   thrustTemp = thrustSlider.getValue();
               }
           }
       }
-
 
 
       @Override
@@ -1090,10 +1090,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   public void updateVelocity(Boat a, FunctionObserver<Void> fobs) { //taken right from desktop client for updating velocity
 
     if (a.returnServer() != null) {
-      //Twist twist = new Twist();
-
-      System.out.println("calling updateVelocity()...");
-      System.out.println("rudderTemp = " + rudderTemp + "   thrustTemp = " + thrustTemp);
+      //System.out.println("calling updateVelocity()...");
+      //System.out.println("rudderTemp = " + rudderTemp + "   thrustTemp = " + thrustTemp);
 
       twist.dx((thrustTemp > 1. || thrustTemp < -1.) ? Math.signum(thrustTemp)*1.0 : thrustTemp);
       twist.drz(rudderTemp);
@@ -1160,7 +1158,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 updateVelocity(currentBoat, new FunctionObserver<Void>() {
                   @Override
                     public void completed(Void aVoid) {
-                    System.out.println("twist completed");
+                    //System.out.println("twist completed");
                   }
                   @Override
                     public void failed(FunctionError functionError) {
@@ -1441,9 +1439,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
     else if (mySensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
         SensorManager.getRotationMatrixFromVector(rotationMatrix, sensorEvent.values);
-        tablet_yaw = Math.atan2(-rotationMatrix[5], -rotationMatrix[2]);
-        System.out.println("Tablet yaw = " + tablet_yaw);
-
+        tablet_yaw = Math.atan2(-rotationMatrix[5], -rotationMatrix[2]) + Math.PI; // tablet off by PI
+        while (Math.abs(tablet_yaw) > Math.PI) { // get back into [-PI,PI]
+            tablet_yaw -= 2*Math.PI*Math.signum(tablet_yaw);
+        }
+        //System.out.println("Tablet yaw = " + tablet_yaw);
     }
   }
 
@@ -1681,7 +1681,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
   public void LoadWaypointsFromFile() throws IOException {
     //LoadWaypointsFromFile("/waypoints.txt");
-      System.out.println("is this getting called");
+      //System.out.println("is this getting called");
   }
 
   public void LoadWaypointsFromFile(String filename) throws IOException {
