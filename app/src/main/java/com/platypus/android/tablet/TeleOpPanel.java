@@ -507,8 +507,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         goHome();
                         break;
                     }
-                    case "Set PID": {
-                        setPID();
+                    case "Send PIDs": {
+                        //setPID();
+                        //replace this with send pids
+                        sendPID();
                         break;
                     }
                     case "Save Waypoints": {
@@ -542,32 +544,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         break;
                     }
 
-                    case "Update Command Rate": {
-                        AlertDialog.Builder alertDialog = new AlertDialog.Builder(TeleOpPanel.this);
-                        alertDialog.setTitle("Change Velocity Update Rate");
-                        final EditText input = new EditText(TeleOpPanel.this);
-                        input.setText(updateRateMili+"");
-                        input.setInputType(InputType.TYPE_CLASS_NUMBER);
-                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.MATCH_PARENT,
-                                LinearLayout.LayoutParams.MATCH_PARENT);
-                        input.setLayoutParams(lp);
-                        alertDialog.setView(input);
-                        alertDialog.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                updateRateMili = Integer.parseInt(input.getText().toString());
-                                //restart exec.
-
-                                future.cancel(true);
-                                future = exec.scheduleAtFixedRate(networkRun, 0, updateRateMili, TimeUnit.MILLISECONDS);
-
-
-                                dialog.cancel();
-                            }
-                        });
-                        alertDialog.show();
-                        break;
-                    }
+//                    case "Update Command Rate": {
+//                        AlertDialog.Builder alertDialog = new AlertDialog.Builder(TeleOpPanel.this);
+//                        alertDialog.setTitle("Change Velocity Update Rate");
+//                        final EditText input = new EditText(TeleOpPanel.this);
+//                        input.setText(updateRateMili+"");
+//                        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+//                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+//                                LinearLayout.LayoutParams.MATCH_PARENT,
+//                                LinearLayout.LayoutParams.MATCH_PARENT);
+//                        input.setLayoutParams(lp);
+//                        alertDialog.setView(input);
+//                        alertDialog.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                updateRateMili = Integer.parseInt(input.getText().toString());
+//                                //restart exec.
+//
+//                                future.cancel(true);
+//                                future = exec.scheduleAtFixedRate(networkRun, 0, updateRateMili, TimeUnit.MILLISECONDS);
+//
+//
+//                                dialog.cancel();
+//                            }
+//                        });
+//                        alertDialog.show();
+//                        break;
+//                }
                     case "Preferences":
                     {
                         Intent intent = new Intent(context, SettingsActivity.class);
@@ -2086,6 +2088,39 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
   }
 
+    public void sendPID()
+    {
+        final Thread thread = new Thread() {
+            public void run() {
+                final int THRUST_GAIN_AXIS = 0;
+                final int RUDDER_GAIN_AXIS = 5;
+
+                currentBoat.returnServer().setGains(THRUST_GAIN_AXIS, tPID, new FunctionObserver<Void>() {
+                    @Override
+                    public void completed(Void aVoid) {
+                        Log.i(logTag, "Setting thrust PID completed.");
+                    }
+
+                    @Override
+                    public void failed(FunctionError functionError) {
+                        Log.i(logTag, "Setting thrust PID failed: " + functionError);
+                    }
+                });
+                currentBoat.returnServer().setGains(RUDDER_GAIN_AXIS, rPID, new FunctionObserver<Void>() {
+                    @Override
+                    public void completed(Void aVoid) {
+                        Log.i(logTag, "Setting rudder PID completed ");
+                    }
+
+                    @Override
+                    public void failed(FunctionError functionError) {
+                        Log.i(logTag, "Setting rudder PID failed: " + functionError);
+                    }
+                });
+            }
+        };
+        thread.start();
+    }
   public void setPID() {
     if (currentBoat == null) {
       Log.i(logTag, "No boat connected, cant set PID");
@@ -2167,7 +2202,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           final double thrustPID[] = {Double.parseDouble(thrustP.getText().toString()), Double.parseDouble(thrustI.getText().toString()), Double.parseDouble(thrustD.getText().toString())};
           final double rudderPID[] = {Double.parseDouble(rudderP.getText().toString()), Double.parseDouble(rudderI.getText().toString()), Double.parseDouble(rudderD.getText().toString())};
 
-          final Thread thread = new Thread() {
+            final Thread thread = new Thread() {
               public void run() {
                 //System.out.println("pids");
                 for (double i : thrustPID) {
