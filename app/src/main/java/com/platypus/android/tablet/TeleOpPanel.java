@@ -66,6 +66,7 @@ import android.support.v4.content.ContextCompat;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.graphics.Matrix;
 
@@ -127,6 +128,8 @@ import com.platypus.crw.data.UtmPose;
 import android.app.Dialog;
 
 import android.view.View.OnClickListener;
+import android.widget.VerticalSeekBar;
+
 import com.platypus.android.tablet.Joystick.*;
 
 
@@ -181,7 +184,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
   ToggleButton sensorvalueButton = null;
   JoystickView joystick;
+  boolean joystick_released = false;
   Switch speed = null;
+  VerticalSeekBar thrustSlider;
 
   int updateRateMili = 50;
   boolean checktest;
@@ -213,7 +218,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   long lastTime = -1;
   String waypointStatus = "";
   double rudderTemp = 0;
-  double thrustTemp = 0;
+  double thrustTemp = 0.1;
   double old_rudder = 0;
   double old_thrust = 0;
   double rot;
@@ -351,6 +356,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     centerToBoat = (Button) this.findViewById(R.id.centermap);
     mapInfo = (TextView) this.findViewById(R.id.mapinfo);
     final ToggleButton switchView = (ToggleButton) this.findViewById(R.id.switchviewbutton);
+    thrustSlider = (VerticalSeekBar) this.findViewById(R.id.thrustSlider);
 
     mapInfo.setText("Map Information \n Nothing Pending");
 
@@ -428,6 +434,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
     mlogger = new TabletLogger();
 
+    thrustSlider.setOnTouchListener(new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            boolean result = thrustSlider.onTouchEvent(event);
+            //thrustTemp = thrustSlider.getValue(); // do this in the joystick listener instead
+            return result;
+        }
+    });
 
     centerToBoat.setOnClickListener(new OnClickListener() {
         @Override
@@ -980,32 +994,31 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   private JoystickMovedListener _listener = new JoystickMovedListener() {
       @Override
       public void OnMoved(int x, int y) {
-          // TODO: use x and y to create an angle.
-          // TODO: get state of button that switches from global and body frames
-          // TODO: depending on the state of that button, adjust angle by boat's angle
-          // TODO: get thrustTemp from a different slider entirely
-          // TODO: change RUDDER_MIN and RUDDER_MAX to be in degrees, cover unit circle
-          // TODO: set rudderTemp to the appropriate angle in degrees
-          rudderTemp = 180.0/Math.PI*Math.atan2(y, x); // degrees
-          thrustTemp = (Math.pow((double) x, 2.) + Math.pow((double) y, 2.))/100.0;
-          System.out.println("x = "  + x + "  y = " + y);
-          System.out.println("rudderTemp = " + rudderTemp + "   thrustTemp = " + thrustTemp);
+          if (!joystick_released) {
+              double mag = Math.pow((double) x, 2.) + Math.pow((double) y, 2.);
+              // System.out.println("x = "  + x + "  y = " + y + "  mag = " + mag);
+              if (mag > 16.0) { // at least one of x or y >= 4. Less sensitive around center that way.
+                  rudderTemp = 180.0 / Math.PI * Math.atan2(y, x); // degrees
+                  thrustTemp = thrustSlider.getValue();
+              }
+          }
       }
+
+
 
       @Override
       public void OnReleased() {
-        //System.out.println("released");
+          thrustTemp = 0.;
+          joystick_released = true; // until it returns to center, no calls to updateVelocity
       }
 
       @Override
       public void OnReturnedToCenter() {
-        //System.out.println("returned to center");
-        thrustTemp = 0;
-        rudderTemp = 0;
+        joystick_released = false;
+          /*
         if (currentBoat != null) {
           Thread thread = new Thread() {
               public void run() {
-                  /*
                 updateVelocity(currentBoat, new FunctionObserver<Void>() {
                     @Override
                       public void completed(Void aVoid) {
@@ -1015,11 +1028,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                       public void failed(FunctionError functionError) {
                     }
                   });
-                  */
+
               }
             };
           thread.start();
         }
+        */
       }
     };
 
@@ -1079,6 +1093,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       //Twist twist = new Twist();
 
       System.out.println("calling updateVelocity()...");
+      System.out.println("rudderTemp = " + rudderTemp + "   thrustTemp = " + thrustTemp);
+
       twist.dx((thrustTemp > 1. || thrustTemp < -1.) ? Math.signum(thrustTemp)*1.0 : thrustTemp);
       twist.drz(rudderTemp);
 
@@ -1140,7 +1156,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             if (currentBoat != null) {
               connected = currentBoat.getConnected();
 
-              if (old_thrust != thrustTemp || old_rudder!=rudderTemp) {
+              if (old_rudder != rudderTemp || old_thrust != thrustTemp) {
                 updateVelocity(currentBoat, new FunctionObserver<Void>() {
                   @Override
                     public void completed(Void aVoid) {

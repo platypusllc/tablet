@@ -58,4 +58,8 @@ public class VerticalSeekBar extends android.widget.SeekBar {
         }
         return true;
     }
+
+    public double getValue() {
+        return (double) (getProgress() - 50.)/50.;
+    }
 }
