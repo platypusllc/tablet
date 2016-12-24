@@ -37,5 +37,9 @@
         android:id="@+id/updateRate"
         android:title="Update Command Rate" />
 
+    <item
+        android:id="@+id/GrabSampler"
+        android:title="GrabSampler" />
+
 
 </menu>

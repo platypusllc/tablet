@@ -550,6 +550,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                   alertDialog.show();
                   break;
                 }
+
+                case "GrabSampler":{
+                    ctrlGrabSampler();
+                    break;
+                }
                 }
                 return true;
               }
@@ -3032,4 +3037,93 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     });
       dialog.show();
   }
+    public void ctrlGrabSampler() {
+        if (currentBoat == null) {
+            Log.i(logTag, "No boat connected, cant set GrabSampler");
+            return;
+        }
+
+        final int gs_tag = 7; //Tag for passing data through setGains
+
+        final Dialog gsDialog = new Dialog(context);
+        gsDialog.setContentView(R.layout.gsctrl);
+        gsDialog.setTitle("Set Active Sampling Motors");
+
+        Button updateGS = (Button) gsDialog.findViewById(R.id.updateGS);
+        final CheckBox cb[] = new CheckBox[4];
+        cb[0] = (CheckBox) gsDialog.findViewById(R.id.checkbox1);
+        cb[1] = (CheckBox) gsDialog.findViewById(R.id.checkbox2);
+        cb[2] = (CheckBox) gsDialog.findViewById(R.id.checkbox3);
+        cb[3] = (CheckBox) gsDialog.findViewById(R.id.checkbox4);
+
+        Thread GSthread = new Thread()
+        {
+            @Override
+            public void run()
+            {
+                currentBoat.returnServer().getGains(gs_tag, new FunctionObserver<double[]>() {
+                    @Override
+                    public void completed(final double[] dstatus) {
+                        //serverPIDThrust = doubles;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                System.out.println( dstatus[0] + " " + dstatus[1] + " " +
+                                        dstatus[2] + " " + dstatus[3]);
+
+                                for(int i = 0; i < cb.length && i < dstatus.length; i++)
+                                    cb[i].setChecked(dstatus[i]!=0.0);
+
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void failed(FunctionError functionError) {
+                        System.out.println("FAILED TO GET GrabSampler Status");
+                    }
+                });
+
+
+            }
+        };
+        GSthread.start();
+
+
+        //there is probably a better way to do this (without setting them to 0 in xml page)
+        updateGS.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final double dstatus[] = new double[cb.length];
+                for(int i = 0; i < cb.length; i++)
+                    dstatus[i] = cb[i].isChecked() ? 1.0 : 0.0;
+
+                final Thread thread = new Thread() {
+                    public void run() {
+                        System.out.println("GrabSampler Status");
+                        for (double i : dstatus) {
+                            System.out.println(i);
+                        }
+                        currentBoat.returnServer().setGains(gs_tag,dstatus,new FunctionObserver<Void>() {
+                            @Override
+                            public void completed(Void aVoid) {
+                                Log.i(logTag, "Setting GrabSampler completed.");
+                            }
+
+                            @Override
+                            public void failed(FunctionError functionError) {
+                                Log.i(logTag, "Setting GrabSampler failed: " + functionError);
+                            }
+                        });
+
+                    }
+                };
+                thread.start();
+                gsDialog.dismiss();
+            }
+
+        });
+        gsDialog.show();
+    }
 }
