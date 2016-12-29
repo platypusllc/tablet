@@ -181,6 +181,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   TextView sensorType1 = null;
   TextView sensorType2 = null;
   TextView sensorType3 = null;
+    String sensorText1 = "ATLAS_DO \\n mg/L";
+    String sensorText2 = "ATLAS_PH";
+    String sensorText3 = "ES2 \n" +
+            "EC(µS/cm)\n" +
+            "T(°C)";
   TextView battery = null;
   TextView Title = null;
   TextView waypointInfo = null;
@@ -1347,8 +1352,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               break;
             case 1:
               sensorData1.setText(sensorV);
-              //sensorType1.setText(Data.type + "\n" + unit(Data.type));
-              sensorType1.setText("ATLAS_DO \n mg/L");
+              //sensorType1.setText(Data.type + "\n" + unit(Data.type))
+                // sensorType1.setText("ATLAS_DO \n mg/L");
+                sensorType1.setText(sensorText1);
               sensorData1.setTextColor(isAverage(Data, sensorV));
               value = (Double.parseDouble(sensorV) + getAverage(Data)) / 2;
 
@@ -1359,7 +1365,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             case 2:
               sensorData2.setText(sensorV);
               //sensorType2.setText(Data.type+ "\n"+unit(Data.type));
-              sensorType2.setText("ATLAS_PH");
+                //sensorType2.setText("ATLAS_PH");
+                sensorType2.setText(sensorText2);
               sensorData2.setTextColor(isAverage(Data, sensorV));
               value = (Double.parseDouble(sensorV) + getAverage(Data)) / 2;
 
@@ -1370,7 +1377,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             case 3:
               sensorData3.setText(sensorV);
               // sensorType3.setText(Data.type+ "\n"+unit(Data.type));
-              sensorType3.setText("ES2 \nEC(µS/cm)\nT(°C)");
+                //sensorType3.setText("ES2 \nEC(µS/cm)\nT(°C)");
+                sensorType3.setText(sensorText3);
               //                            sensorData3.setTextColor(isAverage(Data, sensorV));
               //                            value = (Double.parseDouble(sensorV) + getAverage(Data))/2;
               //
@@ -3152,7 +3160,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         initialPan = new LatLng(initialPanLat,initialPanLon);
         setInitialPan = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SAVE_MAP,true);
 
-        //REMEMBER TO SEND PIDS WHEN CONNECTING TO THE BOAT
+        sensorText1 = sharedPref.getString(SettingsActivity.KEY_PREF_SENSOR1,"ATLAS_DO \\n mg/L");
+        sensorText2 = sharedPref.getString(SettingsActivity.KEY_PREF_SENSOR2,"ATLAS_PH");
+        sensorText3 = sharedPref.getString(SettingsActivity.KEY_PREF_SENSOR3,"ES2 \nEC(µS/cm)\nT(°C)");
+        System.out.println("sensor called");
+        System.out.println("sensor : " + sensorText1);
+        System.out.println("sensor : " + sensorText2);
+        System.out.println("sensor : " + sensorText3);
+
+                //REMEMBER TO SEND PIDS WHEN CONNECTING TO THE BOAT
         //boolean for should there be an initial pan
     }
     public void saveDefaultSettings()
@@ -3181,6 +3197,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         editor.putString(SettingsActivity.KEY_PREF_RUDDER_MIN,Double.toString(RUDDER_MIN));
         editor.putString(SettingsActivity.KEY_PREF_RUDDER_MAX,Double.toString(RUDDER_MAX));
 
+        editor.putString(SettingsActivity.KEY_PREF_SENSOR1,sensorText1);
+        editor.putString(SettingsActivity.KEY_PREF_SENSOR2,sensorText2);
+        editor.putString(SettingsActivity.KEY_PREF_SENSOR3,sensorText3);
 
 
         //see if thrust values save automatically if theyre edited in the settings activity

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
-        android:key="pref_category"
+        android:key="pref_ipstuff"
         android:title="App Prefrences">
 
         <EditTextPreference
@@ -146,4 +146,25 @@
             android:summary="d"
             android:title="Low Rudder D Value"/>
     </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_sensor"
+        android:title="Sensor Types">
+
+        <EditTextPreference
+            android:key="pref_sensor_one"
+            android:summary="p"
+            android:title="Sensor One"/>
+        <EditTextPreference
+            android:key="pref_sensor_two"
+            android:summary=""
+            android:title="Sensor Two"/>
+        <EditTextPreference
+            android:key="pref_sensor_three"
+            android:summary=""
+            android:title="Sensor Three"/>
+
+
+    </PreferenceCategory>
+
 </PreferenceScreen>
