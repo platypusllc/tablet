@@ -61,6 +61,7 @@ import android.location.Location;
 import android.net.ConnectivityManager;
 
 import android.os.Environment;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.InputType;
@@ -162,6 +163,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   Button startRegion = null;
   Button clearRegion = null;
   Button updateTransect = null;
+
+    Button grabsampler1 = null;
+    Button grabsampler2 = null;
+    Button grabsampler3 = null;
+    Button grabsampler4 = null;
 
   TextView sensorData1 = null;
   TextView sensorData2 = null;
@@ -277,6 +283,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   double[] low_rPID = {.35, 0, .15};
   double[] rPID = {1, 0, .2};
 
+  int[] grabSamplerStates = new int[4]; //00 is open to use, 01 is completed, 11 or 10 is timed out
   private UtmPose _pose;
   private UtmPose[] wpPose = null, tempPose = null;
   private int N_waypoint = 0;
@@ -348,9 +355,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     mapInfo = (TextView) this.findViewById(R.id.mapinfo);
     final ToggleButton switchView = (ToggleButton) this.findViewById(R.id.switchviewbutton);
 
+      grabsampler1 = (Button) this.findViewById(R.id.grabsampler_1);
+      grabsampler2 = (Button) this.findViewById(R.id.grabsampler_2);
+      grabsampler3 = (Button) this.findViewById(R.id.grabsampler_3);
+      grabsampler4 = (Button) this.findViewById(R.id.grabsampler_4);
+
+
     mapInfo.setText("Map Information \n Nothing Pending");
 
-
+     //getGrabSampler();
       //Create folder for the first time if it does not exist
       File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
 //      File waypointDir = new File(getFilesDir() + "/waypoints"); //FOLDER CALLED WAYPOINTS
@@ -361,6 +374,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
 
       //load inital waypoint menu
+
+
     onLoadWaypointLayout();
     switchView.setOnClickListener(new OnClickListener() {
         @Override
@@ -450,6 +465,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                                                       ));
         }
       });
+
+
     //Options menu
     advancedOptions.setOnClickListener(new OnClickListener() {
         @Override
@@ -550,13 +567,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                   alertDialog.show();
                   break;
                 }
-
-                case "GrabSampler":{
-                    ctrlGrabSampler();
-                    break;
+                    case "GrabSampler":{
+                        ctrlGrabSampler();
+                        setGrabSampler();
+                        break;
+                    }
                 }
-                }
-                return true;
+                  return true;
               }
             });
           popup.show(); //showing popup menu
@@ -1049,7 +1066,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //if (getBoatType() == true)
     {
 
-      networkThread = new NetworkAsync().execute(); //launch networking asnyc task
+        networkThread = new NetworkAsync().execute(); //launch networking asnyc task
 
     }
     //        else if (getBoatType() == false) {
@@ -1163,6 +1180,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       networkRun = new Runnable() {
           @Override
           public void run() {
+
+              grabSamplerStates = getGrabSampler();
             if (currentBoat != null) {
         //        System.out.println("do in background RUN");
               connected = currentBoat.getConnected();
@@ -3069,7 +3088,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             @Override
                             public void run() {
 
-                                System.out.println( dstatus[0] + " " + dstatus[1] + " " +
+                                System.out.println("grab sampler: " + dstatus[0] + " " + dstatus[1] + " " +
                                         dstatus[2] + " " + dstatus[3]);
 
                                 for(int i = 0; i < cb.length && i < dstatus.length; i++)
@@ -3103,20 +3122,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     public void run() {
                         System.out.println("GrabSampler Status");
                         for (double i : dstatus) {
-                            System.out.println(i);
+                            System.out.println("Grab: " + i);
                         }
                         currentBoat.returnServer().setGains(gs_tag,dstatus,new FunctionObserver<Void>() {
                             @Override
                             public void completed(Void aVoid) {
                                 Log.i(logTag, "Setting GrabSampler completed.");
                             }
-
-                            @Override
+                             @Override
                             public void failed(FunctionError functionError) {
                                 Log.i(logTag, "Setting GrabSampler failed: " + functionError);
                             }
                         });
-
                     }
                 };
                 thread.start();
@@ -3125,5 +3142,222 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         });
         gsDialog.show();
+    }
+
+    public int[] getGrabSampler()
+    {
+        final int gs_tag = 7;
+        final int[] returnvals = new int[4];
+
+        Thread GSthread = new Thread()
+        {
+            @Override
+            public void run() {
+                currentBoat.returnServer().getGains(gs_tag, new FunctionObserver<double[]>() {
+                    @Override
+                    public void completed(final double[] dstatus) {
+                        //serverPIDThrust = doubles;
+                        //runOnUiThread(new Runnable() {
+
+
+                                System.out.println("grab sampler: " + dstatus[0] + " " + dstatus[1] + " " +
+                                        dstatus[2] + " " + dstatus[3]);
+
+                                for (int i = 0; i < 3; i++)
+                                    if (dstatus[i] != 0) //if grab sampler is 01 10 or 11 it shouldnt be set
+                                    {
+                                        returnvals[i] = 1;
+
+                                        if (dstatus[i] == 01) {
+                                            //turn to checkmark
+                                            final int t = i;
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    if (t == 0)
+                                                    {
+                                                        grabsampler1.setText("✔");
+                                                        grabsampler1.setEnabled(false);
+                                                    }
+                                                    if (t == 1)
+                                                    {
+                                                        grabsampler2.setText("✔");
+                                                        grabsampler2.setEnabled(false);
+                                                    }
+                                                    if (t == 0)
+                                                    {
+                                                        grabsampler3.setText("✔");
+                                                        grabsampler3.setEnabled(false);
+                                                    }
+                                                    if (t == 3)
+                                                    {
+                                                        grabsampler4.setText("✔");
+                                                        grabsampler4.setEnabled(false);
+                                                    }
+                                                }
+                                            });
+                                        }
+                                        if (dstatus[i] == 10 || dstatus[i] == 11) //gray out
+                                        {
+                                            final int t = i;
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    if (t == 0)
+                                                    {
+                                                        grabsampler1.setEnabled(false);
+                                                    }
+                                                    if (t == 1)
+                                                    {
+                                                        grabsampler2.setEnabled(false);
+                                                    }
+                                                    if (t == 2)
+                                                    {
+                                                        grabsampler3.setEnabled(false);
+                                                    }
+                                                    if (t == 3)
+                                                    {
+                                                        grabsampler4.setEnabled(false);
+                                                    }
+                                                }
+                                    });
+                            }};
+                    }
+
+                    @Override
+                    public void failed(FunctionError functionError) {
+                        System.out.println("FAILED TO GET GrabSampler Status");
+                    }
+                });
+            }};
+        GSthread.start();
+//        for (int i = 0; i < 4; i++)
+//        {
+//            System.out.println("grab sampler - " + i + ": " + returnvals[i]);
+//        }
+        return returnvals;
+    }
+    public void setGrabSampler()
+    {
+        /*
+         Need list of grab samplers and their states (00 01 1X)
+         if button is pressed for sampler N
+         if samplers[n] == 0
+         send samplers[n] == 1
+          */
+        System.out.println("called");
+        final int gs_tag = 7; //Tag for passing data through setGains
+
+
+        grabsampler1.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println("called");
+                if (grabSamplerStates[0] == 0) {
+
+                    Thread thread = new Thread() {
+                        @Override
+                        public void run() {
+                            grabSamplerStates = getGrabSampler(); //get all grab sampler data puts 00 01 10 11 for each grab sampler in int array
+                            final double dstatus[] = {1, 0, 0, 0};
+                            currentBoat.returnServer().setGains(gs_tag, dstatus, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
+                                @Override
+                                public void completed(Void aVoid) {
+                                    Log.i(logTag, "Setting GrabSampler completed.");
+                                }
+
+                                @Override
+                                public void failed(FunctionError functionError) {
+                                    Log.i(logTag, "Setting GrabSampler failed: " + functionError);
+                                }
+                            });
+                        }};
+                    thread.start();
+
+
+                }
+            }
+        });
+
+        grabsampler2.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (grabSamplerStates[1] == 0)
+                {
+                    Thread thread = new Thread() {
+                        @Override
+                        public void run() {
+                            grabSamplerStates = getGrabSampler(); //get all grab sampler data puts 00 01 10 11 for each grab sampler in int array
+                            final double dstatus[] = {0, 1, 0, 0};
+                            currentBoat.returnServer().setGains(gs_tag, dstatus, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
+                                @Override
+                                public void completed(Void aVoid) {
+                                    Log.i(logTag, "Setting GrabSampler completed.");
+                                }
+
+                                @Override
+                                public void failed(FunctionError functionError) {
+                                    Log.i(logTag, "Setting GrabSampler failed: " + functionError);
+                                }
+                            });
+                        }};
+                    thread.start();
+                }
+            }
+        });
+
+        grabsampler3.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (grabSamplerStates[2] == 0)
+                {
+                    Thread thread = new Thread() {
+                        @Override
+                        public void run() {
+                            grabSamplerStates = getGrabSampler(); //get all grab sampler data puts 00 01 10 11 for each grab sampler in int array
+                            final double dstatus[] = {0, 0, 1, 0};
+                            currentBoat.returnServer().setGains(gs_tag, dstatus, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
+                                @Override
+                                public void completed(Void aVoid) {
+                                    Log.i(logTag, "Setting GrabSampler completed.");
+                                }
+
+                                @Override
+                                public void failed(FunctionError functionError) {
+                                    Log.i(logTag, "Setting GrabSampler failed: " + functionError);
+                                }
+                            });
+                        }};
+                    thread.start();
+                }
+            }
+        });
+
+        grabsampler4.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (grabSamplerStates[3] == 0)
+                {
+                    Thread thread = new Thread() {
+                        @Override
+                        public void run() {
+                            grabSamplerStates = getGrabSampler(); //get all grab sampler data puts 00 01 10 11 for each grab sampler in int array
+                            final double dstatus[] = {0, 0, 0, 1};
+                            currentBoat.returnServer().setGains(gs_tag, dstatus, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
+                                @Override
+                                public void completed(Void aVoid) {
+                                    Log.i(logTag, "Setting GrabSampler completed.");
+                                }
+
+                                @Override
+                                public void failed(FunctionError functionError) {
+                                    Log.i(logTag, "Setting GrabSampler failed: " + functionError);
+                                }
+                            });
+                        }};
+                    thread.start();
+                }
+            }
+        });
     }
 }
