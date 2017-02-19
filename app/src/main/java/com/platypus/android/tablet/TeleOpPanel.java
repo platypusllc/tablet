@@ -53,6 +53,9 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.offline.OfflineManager;
 import com.mapbox.mapboxsdk.offline.OfflineRegion;
 
+import android.animation.ObjectAnimator;
+import android.animation.TypeEvaluator;
+import android.animation.ValueAnimator;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -129,6 +132,7 @@ import android.app.Dialog;
 
 import android.view.View.OnClickListener;
 import com.platypus.android.tablet.Joystick.*;
+import com.platypus.crw.vbs.Vbs2Constants;
 
 
 /*
@@ -283,7 +287,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   double[] low_rPID = {.35, 0, .15};
   double[] rPID = {1, 0, .2};
 
-  int[] grabSamplerStates = new int[4]; //00 is open to use, 01 is completed, 11 or 10 is timed out
+    double[] grabSamplerStates = new double[4]; //00 is open to use, 01 is completed, 11 or 10 is timed out
   private UtmPose _pose;
   private UtmPose[] wpPose = null, tempPose = null;
   private int N_waypoint = 0;
@@ -569,7 +573,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
                     case "GrabSampler":{
                         ctrlGrabSampler();
-                        setGrabSampler();
+                        //setGrabSampler();
                         break;
                     }
                 }
@@ -580,7 +584,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
       });
 
-
+      setGrabSampler();
     // *****************//
     //      Joystick   //
     // ****************//
@@ -682,110 +686,116 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     mv.getMapAsync(new OnMapReadyCallback() {
         @Override
         public void onMapReady(@NonNull MapboxMap mapboxMap) {
-          System.out.println("mapboxmap ready");
-          mMapboxMap = mapboxMap;
-          if (initialPan.getLatitude()!=0 || initialPan.getLongitude() != 0)
-          {
-            mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-                    new CameraPosition.Builder()
-                            .target(initialPan)
-                            .zoom(16)
-                            .build()
-            ));
-          }
+            System.out.println("mapboxmap ready");
+            mMapboxMap = mapboxMap;
+            if (initialPan.getLatitude() != 0 || initialPan.getLongitude() != 0) {
+                mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+                        new CameraPosition.Builder()
+                                .target(initialPan)
+                                .zoom(16)
+                                .build()
+                ));
+            }
 
 
-          mMapboxMap.setStyle(Style.MAPBOX_STREETS); //vector map
-          //mMapboxMap.setStyle(Style.SATELLITE_STREETS); //satalite
-          //mMapboxMap.setMyLocationEnabled(true); //show current location
-          mMapboxMap.getUiSettings().setRotateGesturesEnabled(false); //broken on mapbox side, currently fixing issue 4635 https://github.com/mapbox/mapbox-gl-native/issues/4635
-          mMapboxMap.setOnMarkerClickListener(new MapboxMap.OnMarkerClickListener() {
-              @Override
-              public boolean onMarkerClick(@NonNull Marker marker) {
-                final int index = markerList.indexOf(marker);
-                //final int indexR = boundryList.indexOf(marker);
+            mMapboxMap.setStyle(Style.MAPBOX_STREETS); //vector map
+            //mMapboxMap.setStyle(Style.SATELLITE_STREETS); //satalite
+            //mMapboxMap.setMyLocationEnabled(true); //show current location
+            mMapboxMap.getUiSettings().setRotateGesturesEnabled(false); //broken on mapbox side, currently fixing issue 4635 https://github.com/mapbox/mapbox-gl-native/issues/4635
+            mMapboxMap.setOnMarkerClickListener(new MapboxMap.OnMarkerClickListener() {
+                @Override
+                public boolean onMarkerClick(@NonNull Marker marker) {
+                    final int index = markerList.indexOf(marker);
+                    //final int indexR = boundryList.indexOf(marker);
 
-                final Marker mark = marker;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                      if (mark == boat2 || mark == userloc)
-                        {
-                          return;
+                    final Marker mark = marker;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mark == boat2 || mark == userloc) {
+                                return;
+                            }
+                            //                                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                            //                                builder.setMessage("Delete this waypoint?")
+                            //                                        .setCancelable(false)
+                            //                                        .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                            //                                            public void onClick(DialogInterface dialog, int id) {
+                            //                                                if (waypointLayoutEnabled == true) {
+                            //                                                    if (markerList.size() == 0) {
+                            //                                                        return;
+                            //                                                    }
+                            //                                                    markerList.remove(index);
+                            //                                                    waypointList.remove(index);
+                            //                                                    mMapboxMap.removeMarker(mark);
+                            //                                                    mMapboxMap.removePolyline(Waypath);
+                            //                                                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+                            //                                                }
+                            //                                                else //region
+                            //                                                {
+                            //                                                    //remove last added, no real use of this
+                            //                                                    //System.out.println("tp " + touchpointList.size());
+                            //                                                    System.out.println("mapbox " + currentAreaType.toString());
+                            //                                                    touchpointList.remove(boundryList.get(indexR).getPosition());
+                            //                                                    invalidate();
+                            //                                                }
+                            //                                            }
+                            //                                        })
+                            //                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            //                                            public void onClick(DialogInterface dialog, int id) {
+                            //                                                return;
+                            //                                            }
+                            //                                        });
+                            //
+                            //                                AlertDialog alert = builder.create();
+                            //                                alert.show();
+
                         }
-                      //                                AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                      //                                builder.setMessage("Delete this waypoint?")
-                      //                                        .setCancelable(false)
-                      //                                        .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-                      //                                            public void onClick(DialogInterface dialog, int id) {
-                      //                                                if (waypointLayoutEnabled == true) {
-                      //                                                    if (markerList.size() == 0) {
-                      //                                                        return;
-                      //                                                    }
-                      //                                                    markerList.remove(index);
-                      //                                                    waypointList.remove(index);
-                      //                                                    mMapboxMap.removeMarker(mark);
-                      //                                                    mMapboxMap.removePolyline(Waypath);
-                      //                                                    Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-                      //                                                }
-                      //                                                else //region
-                      //                                                {
-                      //                                                    //remove last added, no real use of this
-                      //                                                    //System.out.println("tp " + touchpointList.size());
-                      //                                                    System.out.println("mapbox " + currentAreaType.toString());
-                      //                                                    touchpointList.remove(boundryList.get(indexR).getPosition());
-                      //                                                    invalidate();
-                      //                                                }
-                      //                                            }
-                      //                                        })
-                      //                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                      //                                            public void onClick(DialogInterface dialog, int id) {
-                      //                                                return;
-                      //                                            }
-                      //                                        });
-                      //
-                      //                                AlertDialog alert = builder.create();
-                      //                                alert.show();
-
-                    }
-                  });
-                return false;
-              }
-            });
-          mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
-              @Override
-              public void onMapLongClick(LatLng point) {
-
-                System.out.println("start draw waypoints: " + startDrawWaypoints);
-                System.out.println("start draw region: " + startDraw);
-                if (startDrawWaypoints == true && startDraw == false) {
-                  touchpointList.add(point);
-                  System.out.println(touchpointList.size());
-                  boatPath = new Path(touchpointList);
-                } else if (startDraw && !startDrawWaypoints) {
-                    //System.out.println("tp list before add point: " + touchpointList.size());
-                  touchpointList.add(point);
-                  //System.out.println("tp list after add point: " + touchpointList.size());
-                  if (spirallawn.isChecked()) {
-                    ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
-                    boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
-                    touchpointList = boatPath.getQuickHullList();
-                  } else {
-                    ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
-                    boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
-                    touchpointList = boatPath.getQuickHullList();
-                  }
+                    });
+                    return false;
                 }
-                  //System.out.println("tp list after quickhull: " + touchpointList.size());
-                invalidate();
-              }
             });
-          boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
-                                       .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
+            mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
+                @Override
+                public void onMapLongClick(LatLng point) {
 
-          Drawable userDraw = ContextCompat.getDrawable(context, R.drawable.userloc);
-          Icon userIcon  = mIconFactory.fromDrawable(userDraw);
-          userloc = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Your Location").icon(userIcon));
+                    System.out.println("start draw waypoints: " + startDrawWaypoints);
+                    System.out.println("start draw region: " + startDraw);
+                    if (startDrawWaypoints == true && startDraw == false) {
+                        touchpointList.add(point);
+                        System.out.println(touchpointList.size());
+                        boatPath = new Path(touchpointList);
+                    } else if (startDraw && !startDrawWaypoints) {
+                        //System.out.println("tp list before add point: " + touchpointList.size());
+                        touchpointList.add(point);
+                        //System.out.println("tp list after add point: " + touchpointList.size());
+                        if (spirallawn.isChecked()) {
+                            ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
+                            boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
+                            touchpointList = boatPath.getQuickHullList();
+                        } else {
+                            ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
+                            boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
+                            touchpointList = boatPath.getQuickHullList();
+                        }
+                    }
+                    //System.out.println("tp list after quickhull: " + touchpointList.size());
+                    invalidate();
+                }
+            });
+            boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
+                    .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
+
+
+            Drawable userDraw = ContextCompat.getDrawable(context, R.drawable.userloc);
+            Icon userIcon = mIconFactory.fromDrawable(userDraw);
+            userloc = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Your Location").icon(userIcon));
+
+            updateMarkers();
+//            ValueAnimator markerAnimator = ObjectAnimator.ofObject(boat2, "position",
+//                    new LatLngEvaluator(), boat2.getPosition(), currentBoat.getLocation());
+//            markerAnimator.setDuration(2000);
+//            markerAnimator.start();
+
 
         }
       });
@@ -1175,14 +1185,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     @Override
       protected String doInBackground(String... arg0) {
-        updateMarkers(); //Launch update markers thread
+        //updateMarkers(); //Launch update markers thread
       currentBoat.isConnected();
       networkRun = new Runnable() {
           @Override
           public void run() {
 
               grabSamplerStates = getGrabSampler();
-            if (currentBoat != null) {
+              if (currentBoat != null) {
         //        System.out.println("do in background RUN");
               connected = currentBoat.getConnected();
               //System.out.println("ran is connected");
@@ -1287,7 +1297,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
           icon_Index = Arrow.getIcon(degree);
           if (icon_Index != icon_Index_old) {
-            boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
+              //boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
             icon_Index_old = icon_Index;
           } else {
           }
@@ -2364,8 +2374,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           int icon_Index;
           int icon_Index_old = -1;
 
-          if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null) {
-              boat2.setPosition(currentBoat.getLocation());
+            if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null)
+          {
+              //boat2.setPosition(currentBoat.getLocation());
           }
 
           float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
@@ -2373,7 +2384,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           if (mMapboxMap != null) {
             icon_Index = Arrow.getIcon(degree);
             if (icon_Index != icon_Index_old) {
-              boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
+                boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
               icon_Index_old = icon_Index;
             }
           }
@@ -2381,7 +2392,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             location = LocationServices.FusedLocationApi.getLastLocation();
             //System.out.println(location);
             if (location != null) { //occurs when gps is off or no lock
-                userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+                //userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
             }
         }
       };
@@ -3144,11 +3155,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         gsDialog.show();
     }
 
-    public int[] getGrabSampler()
+    public double[] getGrabSampler()
     {
         final int gs_tag = 7;
-        final int[] returnvals = new int[4];
-
         Thread GSthread = new Thread()
         {
             @Override
@@ -3159,48 +3168,49 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         //serverPIDThrust = doubles;
                         //runOnUiThread(new Runnable() {
 
+                        grabSamplerStates = dstatus;
+                        //System.out.println("my grab sampler: " + dstatus[0] + " " + dstatus[1] + " " +
+                        //dstatus[2] + " " + dstatus[3]);
+                        //returnvals = dstatus;
+                        for (int i = 0; i < 4; i++)
+                            if (dstatus[i] != 0) //if grab sampler is 01 10 or 11 it shouldnt be set
+                            {
+                                //returnvals[i] = 1;
 
-                                System.out.println("grab sampler: " + dstatus[0] + " " + dstatus[1] + " " +
-                                        dstatus[2] + " " + dstatus[3]);
-
-                                for (int i = 0; i < 3; i++)
-                                    if (dstatus[i] != 0) //if grab sampler is 01 10 or 11 it shouldnt be set
-                                    {
-                                        returnvals[i] = 1;
-
-                                        if (dstatus[i] == 01) {
-                                            //turn to checkmark
-                                            final int t = i;
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    if (t == 0)
-                                                    {
-                                                        grabsampler1.setText("✔");
-                                                        grabsampler1.setEnabled(false);
-                                                    }
-                                                    if (t == 1)
-                                                    {
-                                                        grabsampler2.setText("✔");
-                                                        grabsampler2.setEnabled(false);
-                                                    }
-                                                    if (t == 0)
-                                                    {
-                                                        grabsampler3.setText("✔");
-                                                        grabsampler3.setEnabled(false);
-                                                    }
-                                                    if (t == 3)
-                                                    {
-                                                        grabsampler4.setText("✔");
-                                                        grabsampler4.setEnabled(false);
-                                                    }
-                                                }
-                                            });
+                                if (dstatus[i] == 01) {
+                                    //turn to checkmark
+                                    final int t = i;
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if (t == 0)
+                                            {
+                                                grabsampler1.setText("✔");
+                                                grabsampler1.setEnabled(false);
+                                            }
+                                            if (t == 1)
+                                            {
+                                                grabsampler2.setText("✔");
+                                                grabsampler2.setEnabled(false);
+                                            }
+                                            if (t == 2)
+                                            {
+                                                grabsampler3.setText("✔");
+                                                grabsampler3.setEnabled(false);
+                                            }
+                                            if (t == 3)
+                                            {
+                                                //System.out.println("four got called?!?!?");
+                                                grabsampler4.setText("✔");
+                                                grabsampler4.setEnabled(false);
+                                            }
                                         }
-                                        if (dstatus[i] == 10 || dstatus[i] == 11) //gray out
-                                        {
-                                            final int t = i;
-                                            runOnUiThread(new Runnable() {
+                                    });
+                                }
+                                if (dstatus[i] == 10 || dstatus[i] == 11) //gray out
+                                {
+                                    final int t = i;
+                                    runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
                                                     if (t == 0)
@@ -3233,9 +3243,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         GSthread.start();
 //        for (int i = 0; i < 4; i++)
 //        {
-//            System.out.println("grab sampler - " + i + ": " + returnvals[i]);
+//            //System.out.println("grab sampler - " + i + ": " + returnvals[i]);
 //        }
-        return returnvals;
+        //return returnvals;
+        return grabSamplerStates;
     }
     public void setGrabSampler()
     {
@@ -3245,22 +3256,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
          if samplers[n] == 0
          send samplers[n] == 1
           */
-        System.out.println("called");
         final int gs_tag = 7; //Tag for passing data through setGains
 
 
         grabsampler1.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                System.out.println("called");
                 if (grabSamplerStates[0] == 0) {
 
                     Thread thread = new Thread() {
                         @Override
                         public void run() {
                             grabSamplerStates = getGrabSampler(); //get all grab sampler data puts 00 01 10 11 for each grab sampler in int array
-                            final double dstatus[] = {1, 0, 0, 0};
-                            currentBoat.returnServer().setGains(gs_tag, dstatus, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
+                            //final double dstatus[] = {1.0, 0, 0, 0};
+                            grabSamplerStates[0] = 1;
+                            currentBoat.returnServer().setGains(gs_tag, grabSamplerStates, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
                                 @Override
                                 public void completed(Void aVoid) {
                                     Log.i(logTag, "Setting GrabSampler completed.");
@@ -3288,8 +3298,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         @Override
                         public void run() {
                             grabSamplerStates = getGrabSampler(); //get all grab sampler data puts 00 01 10 11 for each grab sampler in int array
-                            final double dstatus[] = {0, 1, 0, 0};
-                            currentBoat.returnServer().setGains(gs_tag, dstatus, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
+
+                            //final double dstatus[] = {0, 1, 0, 0};
+                            grabSamplerStates[1] = 1;
+                            currentBoat.returnServer().setGains(gs_tag, grabSamplerStates, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
                                 @Override
                                 public void completed(Void aVoid) {
                                     Log.i(logTag, "Setting GrabSampler completed.");
@@ -3315,8 +3327,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         @Override
                         public void run() {
                             grabSamplerStates = getGrabSampler(); //get all grab sampler data puts 00 01 10 11 for each grab sampler in int array
-                            final double dstatus[] = {0, 0, 1, 0};
-                            currentBoat.returnServer().setGains(gs_tag, dstatus, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
+                            //final double dstatus[] = {0, 0, 1, 0};
+                            grabSamplerStates[2] = 1;
+                            currentBoat.returnServer().setGains(gs_tag, grabSamplerStates, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
                                 @Override
                                 public void completed(Void aVoid) {
                                     Log.i(logTag, "Setting GrabSampler completed.");
@@ -3342,8 +3355,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         @Override
                         public void run() {
                             grabSamplerStates = getGrabSampler(); //get all grab sampler data puts 00 01 10 11 for each grab sampler in int array
-                            final double dstatus[] = {0, 0, 0, 1};
-                            currentBoat.returnServer().setGains(gs_tag, dstatus, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
+                            //final double dstatus[] = {0, 0, 0, 1};
+                            grabSamplerStates[3] = 1;
+                            currentBoat.returnServer().setGains(gs_tag, grabSamplerStates, new FunctionObserver<Void>() { //why is this pulling network on main thread its not its threaded out
                                 @Override
                                 public void completed(Void aVoid) {
                                     Log.i(logTag, "Setting GrabSampler completed.");
@@ -3361,3 +3375,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         });
     }
 }
+
+
+
