@@ -313,8 +313,8 @@ android:layout_marginLeft="1dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="18dp"
-        android:layout_centerVertical="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/SensorStart" />
 
     <Button
         android:text="3"

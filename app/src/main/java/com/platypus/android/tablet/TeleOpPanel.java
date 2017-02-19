@@ -2375,9 +2375,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           int icon_Index_old = -1;
 
             if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null)
-          {
-              //boat2.setPosition(currentBoat.getLocation());
-          }
+            {
+                boat2.setPosition(currentBoat.getLocation());
+            }
 
           float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
           degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
@@ -2392,7 +2392,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             location = LocationServices.FusedLocationApi.getLastLocation();
             //System.out.println(location);
             if (location != null) { //occurs when gps is off or no lock
-                //userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+                userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
             }
         }
       };
