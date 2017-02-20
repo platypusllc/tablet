@@ -64,6 +64,7 @@ import android.location.Location;
 import android.net.ConnectivityManager;
 
 import android.os.Environment;
+import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
@@ -460,7 +461,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             return;
           }
             System.out.println("center to boat: " + currentBoat.getLocation());
-            System.out.println(currentBoat.getLocation() == boat2.getPosition());
+            //System.out.println(currentBoat.getLocation() == boat2.getPosition());
           mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                                                                       new CameraPosition.Builder()
                                                                       .target(currentBoat.getLocation())
@@ -790,7 +791,26 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             Icon userIcon = mIconFactory.fromDrawable(userDraw);
             userloc = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Your Location").icon(userIcon));
 
+
             updateMarkers();
+
+
+//            mapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener() {
+//                @Override
+//                public void onMapClick(@NonNull LatLng point) {
+//
+//                    // When the user clicks on the map, we want to animate the marker to that
+//                    // location.
+//                    ValueAnimator markerAnimator = ObjectAnimator.ofObject(userloc, "position",
+//                            new LatLngEvaluator(), userloc.getPosition(), point);
+//                    markerAnimator.setDuration(1);
+//                    markerAnimator.start();
+//                }
+//            });
+
+
+
+
 //            ValueAnimator markerAnimator = ObjectAnimator.ofObject(boat2, "position",
 //                    new LatLngEvaluator(), boat2.getPosition(), currentBoat.getLocation());
 //            markerAnimator.setDuration(2000);
@@ -2363,46 +2383,48 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
       });
   }
-  public void updateMarkers() {
-    //curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-      final IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
-      BitmapFactory.Options options = new BitmapFactory.Options();
-    Runnable markerRun = new Runnable() {
-        @Override
-        public void run() {
-          Pointarrow Arrow = new Pointarrow();
-          int icon_Index;
-          int icon_Index_old = -1;
 
-            if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null)
-            {
-                boat2.setPosition(currentBoat.getLocation());
+    public void UpdateMarkers()
+    {
+        final Handler handler = new Handler();
+        final IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
+        Runnable markerRun = new Runnable() {
+            @Override
+            public void run() {
+                Pointarrow Arrow = new Pointarrow();
+                int icon_Index;
+                int icon_Index_old = -1;
+
+                if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null)
+                {
+                    boat2.setPosition(currentBoat.getLocation());
+                }
+
+                float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
+                degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+                if (mMapboxMap != null) {
+                    icon_Index = Arrow.getIcon(degree);
+                    if (icon_Index != icon_Index_old) {
+                        boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
+                        icon_Index_old = icon_Index;
+                    }
+                }
+
+                location = LocationServices.FusedLocationApi.getLastLocation();
+                //System.out.println(location);
+                if (location != null) { //occurs when gps is off or no lock
+                    userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+                }
+                handler.postDelayed(this, 50);
             }
+        };
+        handler.post(markerRun);
+    }
 
-          float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
-          degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
-          if (mMapboxMap != null) {
-            icon_Index = Arrow.getIcon(degree);
-            if (icon_Index != icon_Index_old) {
-                boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
-              icon_Index_old = icon_Index;
-            }
-          }
 
-            location = LocationServices.FusedLocationApi.getLastLocation();
-            //System.out.println(location);
-            if (location != null) { //occurs when gps is off or no lock
-                userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
-            }
-        }
-      };
-    ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
-    exec.scheduleAtFixedRate(markerRun, 0, 500, TimeUnit.MILLISECONDS);
-  }
-
-  //Change this to take a waypointlist in not sure global variable
-  public void startWaypoints()
-  {
+    //Change this to take a waypointlist in not sure global variable
+    public void startWaypoints()
+    {
     Thread thread = new Thread() {
         public void run() {
           //if (currentBoat.isConnected() == true) {
@@ -3376,5 +3398,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
 }
 
+class LatLngEvaluator implements TypeEvaluator<LatLng> {
+    // Method is used to interpolate the marker animation.
 
+    private LatLng latLng = new LatLng();
+
+    @Override
+    public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
+        latLng.setLatitude(startValue.getLatitude()
+                + ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
+        latLng.setLongitude(startValue.getLongitude()
+                + ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
+        //return latLng;
+        //System.out.println("called type eval");
+        return endValue;
+    }
+}
 

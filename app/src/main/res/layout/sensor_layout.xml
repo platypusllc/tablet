@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/relativeLayout_waypoint"
+        android:paddingTop="10dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="10dp"
+        android:background="@drawable/border"
+        android:layout_marginLeft="1dp"
+        android:layout_alignEnd="@+id/relativeLayout_map"
+        android:layout_below="@+id/relativeLayout_map"
+        android:layout_toEndOf="@+id/relativeLayout_sensor"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="5dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.0"
+            android:id="@+id/batteryVoltage"
+            android:layout_marginLeft="20dp"
+            android:layout_alignTop="@+id/batteryTextView"
+            android:layout_toEndOf="@+id/batteryTextView"
+            android:layout_marginStart="20dp" />
+
+        <!--<TextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--style="?android:attr/textAppearanceSmall"-->
+        <!--android:text="Sensor 1"-->
+        <!--android:id="@+id/sensor1"-->
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="?android:attr/textAppearanceSmall"
+            android:layout_marginRight="15dp"
+            android:id="@+id/sensortype1"
+            android:textStyle="bold"
+            android:text="Null"
+            android:layout_marginLeft="30dp"
+            android:layout_alignTop="@+id/batteryVoltage"
+            android:layout_toEndOf="@+id/batteryVoltage" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="15dp"
+            android:text="0.0"
+            android:id="@+id/SValue1"
+            style="?android:attr/textAppearanceSmall"
+            android:layout_alignBottom="@+id/sensortype1"
+            android:layout_toEndOf="@+id/sensortype1" />
+
+        <!--<TextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Sensor 2"-->
+        <!--style="?android:attr/textAppearanceSmall"-->
+        <!--android:id="@+id/sensor2"-->
+        <!--android:layout_marginLeft="15dp"-->
+        <!--android:layout_marginRight="15dp"-->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="15dp"
+            android:id="@+id/sensortype2"
+            style="?android:attr/textAppearanceSmall"
+            android:textStyle="bold"
+            android:text="Null"
+            android:layout_alignBottom="@+id/SValue1"
+            android:layout_toEndOf="@+id/SValue1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="15dp"
+            android:text="0.0"
+            android:id="@+id/SValue2"
+
+            style="?android:attr/textAppearanceSmall"
+            android:layout_alignTop="@+id/sensortype2"
+            android:layout_toEndOf="@+id/sensortype2" />
+        <!--android:textSize="18dp"-->
+
+        <!--<TextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Sensor 3"-->
+        <!--android:id="@+id/sensor3"-->
+        <!--android:layout_marginLeft="15dp"-->
+        <!--android:layout_marginRight="15dp"-->
+        <!--android:layout_alignTop="@+id/sensortype2"-->
+        <!--style="?android:attr/textAppearanceSmall"-->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="15dp"
+            android:id="@+id/sensortype3"
+            style="?android:attr/textAppearanceSmall"
+            android:textStyle="bold"
+            android:text="Null"
+            android:layout_toEndOf="@+id/SValue2"
+            android:layout_alignBottom="@id/SValue2"/>
+
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="15dp"
+            android:text="0.0"
+            style="?android:attr/textAppearanceSmall"
+            android:id="@+id/SValue3"
+            android:layout_alignBottom="@+id/sensortype3"
+            android:layout_toEndOf="@+id/sensortype3" />
+
+        <ToggleButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/SensorStart"
+            android:textOff="Show Sensorvalue"
+            android:textOn="Show Sensorvalue"
+            android:layout_toEndOf="@id/SValue3"
+            android:layout_alignBottom="@id/SValue3"/>
+
+        <Button
+            android:text="4"
+            android:id="@+id/grabsampler_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="18dp"
+            android:layout_alignParentEnd="true"
+            android:layout_below="@+id/SensorStart" />
+
+        <Button
+            android:text="3"
+            android:id="@+id/grabsampler_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/grabsampler_4"
+            android:layout_alignBottom="@+id/grabsampler_4"
+            android:layout_toStartOf="@+id/grabsampler_4" />
+
+        <Button
+            android:text="2"
+            android:id="@+id/grabsampler_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/grabsampler_3"
+            android:layout_alignBottom="@+id/grabsampler_3"
+            android:layout_toStartOf="@+id/grabsampler_3" />
+
+        <Button
+            android:text="1"
+            android:id="@+id/grabsampler_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/grabsampler_2"
+            android:layout_alignBottom="@+id/grabsampler_2"
+            android:layout_toStartOf="@+id/grabsampler_3"
+            android:layout_marginEnd="69dp" />
+
+        <TextView
+            android:text="Grab Sampler"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView9"
+            android:layout_above="@+id/grabsampler_3"
+            android:layout_toStartOf="@+id/grabsampler_4"
+            android:layout_marginEnd="15dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:text="Sensor Data"
+            android:id="@+id/textView6"
+            android:layout_marginLeft="3dp"
+            android:textStyle="bold"
+            android:textSize="16dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Battery"
+            android:id="@+id/batteryTextView"
+            android:layout_marginLeft="20dp"
+            android:layout_marginStart="20dp"
+            android:layout_alignBottom="@+id/textView6"
+            android:layout_toEndOf="@+id/textView6" />
+
+        <!--android:textSize="18dp"-->
+
+</LinearLayout>
