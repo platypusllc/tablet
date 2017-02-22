@@ -71,6 +71,7 @@ import android.media.audiofx.BassBoost;
 import android.net.ConnectivityManager;
 
 import android.os.Environment;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
@@ -216,10 +217,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   String rotation;
 
   //Marker boat;
-  Marker boat2;
   Marker home_M;
-  Marker userloc;
-  Location location;
+    Location location;
 
   int currentselected = -1; //which element selected
   String saveName; //shouldnt be here?
@@ -464,7 +463,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             return;
           }
             System.out.println("center to boat: " + currentBoat.getLocation());
-            System.out.println(currentBoat.getLocation() == boat2.getPosition());
           mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                                                                       new CameraPosition.Builder()
                                                                       .target(currentBoat.getLocation())
@@ -714,14 +712,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 final int index = markerList.indexOf(marker);
                 //final int indexR = boundryList.indexOf(marker);
 
-                final Marker mark = marker;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                      if (mark == boat2 || mark == userloc)
-                        {
-                          return;
-                        }
+
                       //                                AlertDialog.Builder builder = new AlertDialog.Builder(context);
                       //                                builder.setMessage("Delete this waypoint?")
                       //                                        .setCancelable(false)
@@ -756,9 +747,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                       //                                AlertDialog alert = builder.create();
                       //                                alert.show();
 
-                    }
-                  });
-                return false;
+
+                  return false;
               }
             });
           mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
@@ -789,12 +779,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 invalidate();
               }
             });
-          boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
-                                       .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
 
           Drawable userDraw = ContextCompat.getDrawable(context, R.drawable.userloc);
           Icon userIcon  = mIconFactory.fromDrawable(userDraw);
-          userloc = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Your Location").icon(userIcon));
+
+
+            updateMarkers(); //Launch update markers thread
 
         }
       });
@@ -1195,7 +1185,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     @Override
       protected String doInBackground(String... arg0) {
-        updateMarkers(); //Launch update markers thread
+
       currentBoat.isConnected();
       networkRun = new Runnable() {
           @Override
@@ -1301,15 +1291,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           }
 
 
-        if (mMapboxMap != null) {
 
-          icon_Index = Arrow.getIcon(degree);
-          if (icon_Index != icon_Index_old) {
-            boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
-            icon_Index_old = icon_Index;
-          } else {
-          }
-        }
+
       }
 
       if (connected == true) {
@@ -2413,40 +2396,49 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
       });
   }
-  public void updateMarkers() {
-    //curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-      final IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
-      BitmapFactory.Options options = new BitmapFactory.Options();
-    Runnable markerRun = new Runnable() {
-        @Override
-        public void run() {
-          Pointarrow Arrow = new Pointarrow();
-          int icon_Index;
-          int icon_Index_old = -1;
+    public void updateMarkers()
+    {
+        final Handler handler = new Handler();
+        final IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
+        Drawable userDraw = ContextCompat.getDrawable(context, R.drawable.userloc);
+        Icon userIcon  = mIconFactory.fromDrawable(userDraw);
+        final Marker userloc = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Your Location").icon(userIcon));
+        final Marker boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
+                .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
 
-          if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null) {
-              boat2.setPosition(currentBoat.getLocation());
-          }
 
-          float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
-          degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
-          if (mMapboxMap != null) {
-            icon_Index = Arrow.getIcon(degree);
-            if (icon_Index != icon_Index_old) {
-              boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
-              icon_Index_old = icon_Index;
+        Runnable markerRun = new Runnable() {
+            @Override
+            public void run() {
+                Pointarrow Arrow = new Pointarrow();
+                int icon_Index;
+                int icon_Index_old = -1;
+
+                if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null)
+                {
+                    boat2.setPosition(currentBoat.getLocation());
+                }
+
+                float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
+                degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+                if (mMapboxMap != null) {
+                    icon_Index = Arrow.getIcon(degree);
+                    if (icon_Index != icon_Index_old) {
+                        boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
+                        icon_Index_old = icon_Index;
+                    }
+                }
+
+                location = LocationServices.FusedLocationApi.getLastLocation();
+                //System.out.println(location);
+                if (location != null) { //occurs when gps is off or no lock
+                    userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+                }
+                handler.postDelayed(this, 500);
             }
-          }
-            location = LocationServices.FusedLocationApi.getLastLocation();
-            //System.out.println(location);
-            if (location != null) { //occurs when gps is off or no lock
-                userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
-            }
-        }
-      };
-    ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
-    exec.scheduleAtFixedRate(markerRun, 0, 500, TimeUnit.MILLISECONDS);
-  }
+        };
+        handler.post(markerRun);
+    }
 
   //Change this to take a waypointlist in not sure global variable
   public void startWaypoints()
