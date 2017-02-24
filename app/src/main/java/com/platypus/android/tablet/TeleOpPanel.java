@@ -2384,7 +2384,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       });
   }
 
-    public void UpdateMarkers()
+    public void updateMarkers()
     {
         final Handler handler = new Handler();
         final IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());

@@ -1,8 +1,5 @@
 <component name="libraryTable">
   <library name="mapbox-android-sdk-4.2.2">
-    <ANNOTATIONS>
-      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.mapbox.mapboxsdk/mapbox-android-sdk/4.2.2/annotations.zip!/" />
-    </ANNOTATIONS>
     <CLASSES>
       <root url="file://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.mapbox.mapboxsdk/mapbox-android-sdk/4.2.2/res" />
       <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.mapbox.mapboxsdk/mapbox-android-sdk/4.2.2/jars/classes.jar!/" />
