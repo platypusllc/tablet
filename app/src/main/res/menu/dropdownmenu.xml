@@ -41,10 +41,13 @@
         android:title="Preferences"
        />
 
-
     <item
         android:id="@+id/GrabSampler"
         android:title="GrabSampler" />
+
+    <item
+        android:id="@+id/GrabSamplerReset"
+        android:title="Reset Sampler" />
 
 
 </menu>

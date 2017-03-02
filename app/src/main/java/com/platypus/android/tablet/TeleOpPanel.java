@@ -597,6 +597,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     case "Preferences": {
                         Intent intent = new Intent(context, SettingsActivity.class);
                         context.startActivity(intent);
+                        break;
+                    }
+                    case "Reset Sampler":
+                    {
+                        //reset buttons
+                        grabsampler1.setText("1");
+                        grabsampler2.setText("2");
+                        grabsampler3.setText("3");
+                        grabsampler4.setText("4");
+                        grabsampler1.setEnabled(true);
+                        grabsampler2.setEnabled(true);
+                        grabsampler3.setEnabled(true);
+                        grabsampler4.setEnabled(true);
+
+
                     }
                 }
                   return true;
@@ -2467,7 +2482,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 Pointarrow Arrow = new Pointarrow();
                 int icon_Index;
                 int icon_Index_old = -1;
-
 
                 if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null)
                 {
