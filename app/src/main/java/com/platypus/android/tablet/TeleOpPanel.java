@@ -2099,6 +2099,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     public void sendPID()
     {
+        loadPreferences(); //update values should be replaced automatically with
         final Thread thread = new Thread() {
             public void run() {
                 final int THRUST_GAIN_AXIS = 0;
@@ -2129,6 +2130,48 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         };
         thread.start();
+        Thread PIDthread = new Thread()
+        {
+            @Override
+            public void run()
+            {
+                currentBoat.returnServer().getGains(0, new FunctionObserver<double[]>() {
+                    @Override
+                    public void completed(final double[] doubles) {
+                        //serverPIDThrust = doubles;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                System.out.println("pids are now: " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void failed(FunctionError functionError) {
+                        System.out.println("FAILED TO GET PIDS");
+                    }
+                });
+                currentBoat.returnServer().getGains(5, new FunctionObserver<double[]>() {
+                    @Override
+                    public void completed(final double[] doubles) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                System.out.println("pids are now: " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void failed(FunctionError functionError) {
+                        System.out.println("FAILED TO GET PIDS");
+                    }
+                });
+
+            }
+        };
+        PIDthread.start();
     }
   public void setPID() {
     if (currentBoat == null) {
@@ -3131,9 +3174,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     });
       dialog.show();
   }
+
     public void loadPreferences()
     {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
+        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
         final SharedPreferences.Editor editor = sharedPref.edit();
 
         ///String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "192.168.1.259");
