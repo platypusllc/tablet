@@ -250,11 +250,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   SensorManager senSensorManager;
   Sensor senAccelerometer;
   public boolean stopWaypoints = true;
-
+ 
     public static double THRUST_MIN = -1.0;
     public static double THRUST_MAX = .3;
-    public static double RUDDER_MIN = 1.0;
-    public static double RUDDER_MAX = -1.0;
+    public static double RUDDER_MIN = -1.0;
+    public static double RUDDER_MAX = 1.0;
 
   public EditText ipAddress = null;
   public EditText color = null;
@@ -3017,7 +3017,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
     //touchpointList = boatPath.getQuickHullList();
     boatPath.updateRegionPoints();
-    if (boatPath.getPoints().size() > 0) {
+      System.out.println("nullhaha");
+      System.out.println("null" + (boatPath==null));
+      System.out.println("null" + (boatPath.getPoints()==null));
+      System.out.println("null" + (mMapboxMap==null));
+
+    if (boatPath != null && boatPath.getPoints().size() > 0) {
       Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.GREEN).width(5));
     }
     if (touchpointList.size() == 0 && Waypath != null) {
