@@ -942,9 +942,25 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
       SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
       SharedPreferences.Editor editor = sharedPref.edit();
-      editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().getAddress().toString());
-      editor.putString(SettingsActivity.KEY_PREF_LAT,Double.toString(currentBoat.getLocation().getLatitude()));
-      editor.putString(SettingsActivity.KEY_PREF_LON,Double.toString(currentBoat.getLocation().getLongitude()));
+      if (currentBoat == null || currentBoat.getIpAddress() == null) {
+          editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP, "192.168.1.1");
+      }
+
+      else
+      {
+          editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP, currentBoat.getIpAddress().getAddress().toString());
+      }
+      if (currentBoat.getLocation() == null)
+      {
+          editor.putString(SettingsActivity.KEY_PREF_LAT,Double.toString(pHollowStartingPoint.getLatitude()));
+          editor.putString(SettingsActivity.KEY_PREF_LON,Double.toString(pHollowStartingPoint.getLongitude()));
+      }
+      else
+      {
+          editor.putString(SettingsActivity.KEY_PREF_LAT,Double.toString(currentBoat.getLocation().getLatitude()));
+          editor.putString(SettingsActivity.KEY_PREF_LON,Double.toString(currentBoat.getLocation().getLongitude()));
+      }
+
       editor.apply();
       editor.commit();
       //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().toString());
@@ -2633,7 +2649,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               }
             });
           //              }
-          //if (currentBoat != null || currentBoat.getLocation() != null || mMapboxMap != null)
+            if (currentBoat != null || currentBoat.getLocation() != null || mMapboxMap != null)
           {
             touchpointList.add(currentBoat.getLocation());
             System.out.println(touchpointList.size());
