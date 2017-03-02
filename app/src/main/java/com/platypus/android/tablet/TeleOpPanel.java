@@ -179,6 +179,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   Button clearRegion = null;
   Button updateTransect = null;
 
+    Button sensorPodAdd = null;
+    Button sensorPodSub = null;
+    Button sensorPodZero = null;
+    double winchHeight = 0;
+
     Button grabsampler1 = null;
     Button grabsampler2 = null;
     Button grabsampler3 = null;
@@ -379,6 +384,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       grabsampler2 = (Button) this.findViewById(R.id.grabsampler_2);
       grabsampler3 = (Button) this.findViewById(R.id.grabsampler_3);
       grabsampler4 = (Button) this.findViewById(R.id.grabsampler_4);
+
+      sensorPodAdd = (Button) this.findViewById(R.id.sensorPodAdd);
+      sensorPodSub = (Button) this.findViewById(R.id.sensorPodSub);
+      sensorPodZero = (Button) this.findViewById(R.id.sensorPodZero);
 
 
     mapInfo.setText("Map Information \n Nothing Pending");
@@ -1617,7 +1626,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
       });
     dialog.show();
-
+      initSensorPodListener();
   }
 
   public static InetSocketAddress getAddress() {
@@ -2105,7 +2114,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     }
   }
+    public void sendPID(final int axis, final double[] k) {
+         Thread thread = new Thread() {
+            public void run() {
+                currentBoat.returnServer().setGains(axis, k, new FunctionObserver<Void>() {
+                    @Override
+                    public void completed(Void aVoid) {
+                        Log.i(logTag, "Setting PID completed.");
+                    }
 
+                    @Override
+                    public void failed(FunctionError functionError) {
+                        Log.i(logTag, "Setting PID failed: " + functionError);
+                    }
+                });
+            }
+        };
+        thread.start();
+    }
     public void sendPID()
     {
         final Thread thread = new Thread() {
@@ -3541,22 +3567,43 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         //System.out.println("default ip: " + defaultIP);
 
     }
-}
+    public void initSensorPodListener()
+    {
+        final int axis = 3;
 
-class LatLngEvaluator implements TypeEvaluator<LatLng> {
-    // Method is used to interpolate the marker animation.
+        sensorPodAdd.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                winchHeight += 1;
+                double command[] = {winchHeight};
+                sendPID(axis,command);
+            }
+        });
+        sensorPodSub.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                winchHeight -= 1;
 
-    private LatLng latLng = new LatLng();
+                double command[] = {winchHeight};
+                sendPID(axis,command);
 
-    @Override
-    public LatLng evaluate(float fraction, LatLng startValue, LatLng endValue) {
-        latLng.setLatitude(startValue.getLatitude()
-                + ((endValue.getLatitude() - startValue.getLatitude()) * fraction));
-        latLng.setLongitude(startValue.getLongitude()
-                + ((endValue.getLongitude() - startValue.getLongitude()) * fraction));
-        //return latLng;
-        //System.out.println("called type eval");
-        return endValue;
+
+            }
+        });
+
+        sensorPodZero.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                winchHeight = 0;
+                double command[] = {winchHeight};
+                sendPID(axis,command);
+            }
+        });
+
+
+
+
     }
+
 }
 

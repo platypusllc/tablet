@@ -69,7 +69,9 @@
                 android:layout_alignParentStart="true"
                 mapbox:style_url="@string/style_mapbox_streets"
                 mapbox:access_token="pk.eyJ1IjoicGxhdHlwdXNsbGMiLCJhIjoiY2lsM3p5bjJyM3U0N3Z5bTNxbmFpZXNwaSJ9.YWzXSt3aXtpoBrdMPmLE3Q"
-                android:layout_height="500dp" />
+                android:layout_height="500dp" >
+
+            </com.mapbox.mapboxsdk.maps.MapView>
 
 
             <Button
@@ -352,6 +354,31 @@ android:layout_marginLeft="1dp"
         android:layout_above="@+id/grabsampler_3"
         android:layout_toStartOf="@+id/grabsampler_4"
         android:layout_marginEnd="15dp" />
+
+    <Button
+        android:text="Zero"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/sensorPodSub"
+        android:layout_toEndOf="@+id/sensorPodSub"
+        android:id="@+id/sensorPodZero" />
+
+    <Button
+        android:text="-"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/sensorPodSub"
+        android:layout_alignBaseline="@+id/sensorPodAdd"
+        android:layout_alignBottom="@+id/sensorPodAdd"
+        android:layout_toEndOf="@+id/sensorPodAdd" />
+
+    <Button
+        android:text="+"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/sensorPodAdd"
+        android:layout_above="@+id/textView9"
+        android:layout_toStartOf="@+id/textView9" />
 
     <!--android:textSize="18dp"-->
 
