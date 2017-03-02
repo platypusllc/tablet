@@ -1568,7 +1568,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             if (ipAddress.getText() == null || ipAddress.getText().equals("")) {
               address = CrwNetworkUtils.toInetSocketAddress("127.0.0.1:" + boatPort);
             }
-              address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":" + boatPort);
+              else {
+                address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":" + boatPort);
+            }
             // address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
             //                    log.append("\n" + address.toString());
             //currentBoat = new Boat(address);
@@ -3113,7 +3115,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         final SharedPreferences.Editor editor = sharedPref.edit();
 
-        String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "192.168.259");
+        ///String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "192.168.1.259");
+        String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "192.168.1.1");
         String defaultPort = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_PORT,"11411");
 
         textIpAddress = defaultIP;
