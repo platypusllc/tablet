@@ -3,12 +3,14 @@ package com.platypus.android.tablet;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.app.Activity;
+import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.PreferenceActivity;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.widget.CheckBox;
 
 import java.util.Map;
 
@@ -75,12 +77,33 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
                 System.out.println("entry: " + entry.getValue().toString());
             }
         }
+
+        /*
+        final CheckBoxPreference save_location_checkbox =
+                (CheckBoxPreference) findPreference("pref_save_location");
+        save_location_checkbox.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener()
+        {
+            public boolean onPreferenceChange(Preference preference, Object newValue)
+            {
+                return true;
+            }
+        });
+        */
     }
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,String key)
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
     {
         Preference pref = findPreference(key);
-        pref.setSummary(sharedPreferences.getString(key,"default"));
+        if (key.equalsIgnoreCase(KEY_PREF_SAVE_MAP))
+        {
+            boolean state = sharedPreferences.getBoolean(key, true);
+            CheckBoxPreference cbpref = (CheckBoxPreference) pref;
+            cbpref.setChecked(state);
+        }
+        else
+        {
+            pref.setSummary(sharedPreferences.getString(key,"default"));
+        }
     }
     @Override
     protected void onResume() {

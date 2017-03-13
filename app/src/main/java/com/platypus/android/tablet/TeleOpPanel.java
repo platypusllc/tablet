@@ -43,6 +43,8 @@ import org.json.JSONObject;
 
 
 import com.mapbox.mapboxsdk.MapboxAccountManager;
+import com.mapbox.mapboxsdk.annotations.MarkerView;
+import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
@@ -147,7 +149,7 @@ import com.platypus.android.tablet.Joystick.*;
   This is being caused by the points not being recalculated after adding a point
 */
 
-//TODO somewhere an extra point is getitng added to the list or doesnt remove a point when calculating quickhull
+//TODO somewhere an extra point is getting added to the list or doesn't remove a point when calculating quickhull
 public class TeleOpPanel extends Activity implements SensorEventListener {
   final Context context = this;
   final double GPSDIST = 0.0000449;
@@ -218,7 +220,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
   //Marker boat;
   Marker home_M;
-    Location location;
+  Location location;
 
   int currentselected = -1; //which element selected
   String saveName; //shouldnt be here?
@@ -329,7 +331,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   String mapLogTag = "Sensor";
 
   PolyArea.AreaType currentAreaType = PolyArea.AreaType.WAYPOINT;
-  //static final String
+
+
+
 
 
   protected void onCreate(final Bundle savedInstanceState) {
@@ -686,9 +690,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     MapboxAccountManager.start(this,getString(R.string.mapbox_access_token));
     mv.onCreate(savedInstanceState);
-    mv.getMapAsync(new OnMapReadyCallback() {
+    mv.getMapAsync(new OnMapReadyCallback()
+    {
         @Override
-        public void onMapReady(@NonNull MapboxMap mapboxMap) {
+        public void onMapReady(@NonNull MapboxMap mapboxMap)
+        {
           System.out.println("mapboxmap ready");
           mMapboxMap = mapboxMap;
           if (setInitialPan == true && initialPan.getLatitude()!=0 || initialPan.getLongitude() != 0)
@@ -706,9 +712,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           //mMapboxMap.setStyle(Style.SATELLITE_STREETS); //satalite
           //mMapboxMap.setMyLocationEnabled(true); //show current location
           mMapboxMap.getUiSettings().setRotateGesturesEnabled(false); //broken on mapbox side, currently fixing issue 4635 https://github.com/mapbox/mapbox-gl-native/issues/4635
-          mMapboxMap.setOnMarkerClickListener(new MapboxMap.OnMarkerClickListener() {
+          mMapboxMap.setOnMarkerClickListener(new MapboxMap.OnMarkerClickListener()
+          {
               @Override
-              public boolean onMarkerClick(@NonNull Marker marker) {
+              public boolean onMarkerClick(@NonNull Marker marker)
+              {
                 final int index = markerList.indexOf(marker);
                 //final int indexR = boundryList.indexOf(marker);
 
@@ -750,10 +758,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                   return false;
               }
-            });
-          mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener() {
+          });
+          mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener()
+          {
               @Override
-              public void onMapLongClick(LatLng point) {
+              public void onMapLongClick(LatLng point)
+              {
 
                 System.out.println("start draw waypoints: " + startDrawWaypoints);
                 System.out.println("start draw region: " + startDraw);
@@ -778,16 +788,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                   //System.out.println("tp list after quickhull: " + touchpointList.size());
                 invalidate();
               }
-            });
+          });
 
           Drawable userDraw = ContextCompat.getDrawable(context, R.drawable.userloc);
           Icon userIcon  = mIconFactory.fromDrawable(userDraw);
-
-
-            updateMarkers(); //Launch update markers thread
+          updateMarkers(); //Launch update markers thread
 
         }
-      });
+    });
     //        try {
     //            boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
     //                    .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
@@ -1296,7 +1304,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
         degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
 
-        float bias = mv.getRotation();  // bias is the map orirentation
+        float bias = mv.getRotation();  // bias is the map orientation
 
         try {
           currentBoat.setLocation(curLoc);
@@ -1985,7 +1993,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         .setNegativeButton("Tablet", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
 
-
               Location tempLocation = LocationServices.FusedLocationApi.getLastLocation();
               LatLng loc = new LatLng(tempLocation.getLatitude(),tempLocation.getLongitude());
               //LatLng loc = new LatLng(mMapboxMap.getMyLocation());
@@ -2018,7 +2025,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           })
         .show();
 
-
     } else {
       new AlertDialog.Builder(context)
         .setTitle("Set Home")
@@ -2046,8 +2052,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           })
         .show();
     }
-
-
   }
 
   public void goHome() {
@@ -2173,6 +2177,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         };
         PIDthread.start();
     }
+
+  /*
   public void setPID() {
     if (currentBoat == null) {
       Log.i(logTag, "No boat connected, cant set PID");
@@ -2291,6 +2297,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       });
     piddialog.show();
   }
+  */
 
   public int isAverage(SensorData data, String value) {
     double v = Double.parseDouble(value);
@@ -2315,32 +2322,36 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   public void saveMap()
   {
     if (mMapboxMap == null)
-      {
-        runOnUiThread(new Runnable() {
+    {
+        runOnUiThread(new Runnable()
+        {
             @Override
-            public void run() {
+            public void run()
+            {
               Toast.makeText(getApplicationContext(), "Map not saved (make sure youre connected to internet for downloading maps", Toast.LENGTH_LONG).show();
             }
-          });
+        });
         return;
-      }
+    }
 
     Thread thread = new Thread()
-      {
+    {
         @Override
         public void run()
         {
           networkConnection = hasActiveInternetConnection(context);
         }
-      };
+    };
     thread.start();
-    if (networkConnection == false) {
-      runOnUiThread(new Runnable() {
+    if (networkConnection == false)
+    {
+      runOnUiThread(new Runnable()
+      {
           @Override
           public void run() {
             Toast.makeText(getApplicationContext(), "Please Connect to the Internet first", Toast.LENGTH_LONG).show();
           }
-        });
+      });
       runOnUiThread(new Runnable() {
           @Override
           public void run() {
@@ -2352,12 +2363,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
 
 
-    runOnUiThread(new Runnable() {
+    runOnUiThread(new Runnable()
+    {
         @Override
-        public void run() {
+        public void run()
+        {
           Toast.makeText(getApplicationContext(), "Please leave app open and connected to the internet until the completion dialog shows", Toast.LENGTH_LONG).show();
         }
-      });
+    });
 
 
     // Set up the OfflineManager
@@ -2387,67 +2400,83 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     // Set the metadata not sure but changing "area" to something longer might be causing crash
     byte[] metadata;
-    try {
+    try
+    {
       JSONObject jsonObject = new JSONObject();
       jsonObject.put(JSON_FIELD_REGION_NAME, "Area");
       String json = jsonObject.toString();
       metadata = json.getBytes(JSON_CHARSET);
-    } catch (Exception e) {
+    }
+    catch (Exception e)
+    {
       Log.e(logTag, "Failed to encode metadata: " + e.getMessage());
       metadata = null;
     }
 
     //create region
-    offlineManager.createOfflineRegion(definition, metadata, new OfflineManager.CreateOfflineRegionCallback() {
+    offlineManager.createOfflineRegion(definition, metadata, new OfflineManager.CreateOfflineRegionCallback()
+    {
         @Override
-        public void onCreate(OfflineRegion offlineRegion) {
+        public void onCreate(OfflineRegion offlineRegion)
+        {
           offlineRegion.setDownloadState(OfflineRegion.STATE_ACTIVE);
 
-          offlineRegion.setObserver(new OfflineRegion.OfflineRegionObserver() {
+          offlineRegion.setObserver(new OfflineRegion.OfflineRegionObserver()
+          {
               @Override
-              public void onStatusChanged(OfflineRegionStatus status) {
+              public void onStatusChanged(OfflineRegionStatus status)
+              {
                 double percentage = status.getRequiredResourceCount() >= 0 ?
                   (100.0 * status.getCompletedResourceCount() / status.getRequiredResourceCount()) : 0.0;
                 percentage = Math.round(percentage);
-                if (status.isComplete()) {
+                if (status.isComplete())
+                {
                   mapInfo.setText("Map Information \n Map Downloaded");
                   System.out.println("download complete");
-                  runOnUiThread(new Runnable() {
+                  runOnUiThread(new Runnable()
+                  {
                       @Override
-                      public void run() {
+                      public void run()
+                      {
                         final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
                         alertDialog.setTitle("Download Completed");
                         alertDialog.show();
                         alertDialog.setCancelable(true);
                         alertDialog.setCanceledOnTouchOutside(true);
-                        alertDialog.setButton("Dismiss", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
+                        alertDialog.setButton("Dismiss", new DialogInterface.OnClickListener()
+                        {
+                            public void onClick(DialogInterface dialog, int which)
+                            {
                               alertDialog.dismiss();
                             }
-                          });
+                        });
 
                       }
-                    });
+                  });
 
-                } else if (status.isRequiredResourceCountPrecise()) {
+                }
+                else if (status.isRequiredResourceCountPrecise())
+                {
                   mapInfo.setText("Map Information \n " + percentage + "% Downloaded");
                   //setPercentage((int) Math.round(percentage));
                 }
               }
 
               @Override
-              public void onError(OfflineRegionError error) {
+              public void onError(OfflineRegionError error)
+              {
                 // If an error occurs, print to logcat
                 Log.e(logTag, "onError reason: " + error.getReason());
                 Log.e(logTag, "onError message: " + error.getMessage());
               }
 
               @Override
-              public void mapboxTileCountLimitExceeded(long limit) {
+              public void mapboxTileCountLimitExceeded(long limit)
+              {
                 // Notify if offline region exceeds maximum tile count
                 Log.e(logTag, "Mapbox tile count limit exceeded: " + limit);
               }
-            });
+          });
           //list offline regions
 
         }
@@ -2455,25 +2484,26 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         public void onError(String error) {
           Log.e(logTag, "Error: " + error);
         }
-      });
+    });
   }
+
     public void updateMarkers()
     {
         final Handler handler = new Handler();
-        final IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
+
+        final IconFactory mIconFactory = IconFactory.getInstance(context);
         Drawable userDraw = ContextCompat.getDrawable(context, R.drawable.userloc);
         Icon userIcon  = mIconFactory.fromDrawable(userDraw);
         final Marker userloc = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Your Location").icon(userIcon));
-        final Marker boat2 = mMapboxMap.addMarker(new MarkerOptions().position(pHollowStartingPoint).title("Boat")
-                .icon(mIconFactory.fromResource(R.drawable.pointarrow)));
+        final MarkerView boat2 = mMapboxMap.addMarker(new MarkerViewOptions().position(pHollowStartingPoint).title("Boat")
+                             .icon(mIconFactory.fromResource(R.drawable.pointarrow)).rotation(0));
 
-
-        Runnable markerRun = new Runnable() {
+        Runnable markerRun = new Runnable()
+        {
             @Override
-            public void run() {
-                Pointarrow Arrow = new Pointarrow();
+            public void run()
+            {
                 int icon_Index;
-                int icon_Index_old = -1;
 
                 if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null)
                 {
@@ -2482,22 +2512,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                 float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
                 degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
-                if (mMapboxMap != null) {
-                    icon_Index = Arrow.getIcon(degree);
-                    if (icon_Index != icon_Index_old) {
-                        boat2.setIcon(mIconFactory.fromResource(pointarrow[icon_Index]));
-                        icon_Index_old = icon_Index;
-                    }
+                if (mMapboxMap != null)
+                {
+                    // Log.e(logTag, String.format("Angle = %f", degree));
+                    boat2.setRotation(degree);
                 }
 
                 location = LocationServices.FusedLocationApi.getLastLocation();
-                //System.out.println(location);
-                if (location != null) { //occurs when gps is off or no lock
+                if (location != null)
+                { //occurs when gps is off or no lock
                     userloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
                 }
-                handler.postDelayed(this, 500);
+                handler.postDelayed(this, 200);
             }
         };
+
         handler.post(markerRun);
     }
 
@@ -2669,30 +2698,31 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     dropWP.setOnClickListener(new OnClickListener() {
         @Override
-        public void onClick(View view) {
-          //                if (currentBoat == null)
-          //                {
-          runOnUiThread(new Runnable() {
+        public void onClick(View view)
+        {
+          runOnUiThread(new Runnable()
+          {
               @Override
-              public void run() {
-                if (currentBoat == null) {
+              public void run()
+              {
+                if (currentBoat == null)
+                {
                   Toast.makeText(getApplicationContext(), "No Boat Connected", Toast.LENGTH_LONG).show();
                   return;
                 }
                 if (currentBoat.getLocation() == null)
-                  {
+                {
                     Toast.makeText(getApplicationContext(), "Waiting on boat GPS", Toast.LENGTH_LONG).show();
                     return;
-                  }
+                }
                 if (mMapboxMap == null)
-                  {
+                {
                     Toast.makeText(getApplicationContext(), "Map still loading", Toast.LENGTH_LONG).show();
                     return;
-                  }
+                }
               }
-            });
-          //              }
-            if (currentBoat != null || currentBoat.getLocation() != null || mMapboxMap != null)
+          });
+          if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null)
           {
             touchpointList.add(currentBoat.getLocation());
             System.out.println(touchpointList.size());
@@ -3046,7 +3076,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
    * */
   public void invalidate() {
     if (!(Waypath == null || markerList == null)) {
-      //FUCKING LEAVE WHY WONT YOU DISAPPEAR FUCK YOU
       mMapboxMap.removeAnnotation(Waypath);
       Waypath.remove();
       mMapboxMap.removeAnnotations(markerList);
