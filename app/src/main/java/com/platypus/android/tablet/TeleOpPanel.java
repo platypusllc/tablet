@@ -236,14 +236,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   double old_thrust = 0;
   double rot;
   String boatwaypoint;
-  double tempThrustValue = 0; //used for abs value of thrust
   Twist twist = new Twist();
   boolean networkConnection = true;
   ScheduledFuture future;
   ScheduledThreadPoolExecutor exec;
   Runnable networkRun;
-  float tempX = 0;
-  float tempY = 0;
 
   boolean isAutonomous;
   boolean isCurrentWaypointDone = true;
@@ -253,10 +250,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   Sensor senAccelerometer;
   public boolean stopWaypoints = true;
  
-    public static double THRUST_MIN = -1.0;
-    public static double THRUST_MAX = .3;
-    public static double RUDDER_MIN = -1.0;
-    public static double RUDDER_MAX = 1.0;
+  public static double THRUST_MIN = -1.0;
+  public static double THRUST_MAX = 0.3;
+  public static double RUDDER_MIN = -1.0;
+  public static double RUDDER_MAX = 1.0;
 
   public EditText ipAddress = null;
   public EditText color = null;
@@ -266,7 +263,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   public RadioButton direct = null;
   public RadioButton reg = null;
 
-  public ToggleButton regionWaypointButton = null;
   public static String textIpAddress;
     public static String boatPort = "11411";
   public static Boat currentBoat;
@@ -284,7 +280,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   private PoseListener pl;
   private SensorListener sl;
   private WaypointListener wl;
-  private int WPnum = 0;
   private boolean startDraw = false;
   private boolean startDrawWaypoints = false;
 
@@ -385,7 +380,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           waypointDir.mkdir();
       }
 
-      //loadPreferences();
       //load inital waypoint menu
     onLoadWaypointLayout();
     switchView.setOnClickListener(new OnClickListener() {
@@ -833,91 +827,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 }
               })
             .show();
-
         }
-      });
-
-
+    });
     connectBox();
-
-    //        loadWPFile.setOnClickListener(
-    //                new OnClickListener() {
-    //                    @Override
-    //                    public void onClick(View view) {
-    //                        try {
-    //
-    //                            if(setWaypointsFromFile()==false) {
-    //                                failedwp = true;
-    ////
-    //                            }
-    //                            else
-    //                            {
-    //                                failedwp = false;
-    //                            }
-    //                        }
-    //                        catch(Exception e)
-    //                        {
-    //
-    //                        }
-    //                    }
-    //                });
-
-    //        final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-    //        alertDialog.setTitle("Add Waypoints from File");
-    //        if (failedwp == true)
-    //        {
-    //            alertDialog.setMessage("Waypoint File was in the incorrect formatting. \n No Current Waypoints");
-    //            waypointList.clear();
-    //            for (Marker i : markerList) {
-    //                i.remove();
-    //            }
-    //        }
-    //        else {
-    //            alertDialog.setMessage("Waypoints Added and Started");
-    //        }
-
-    //        alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
-    //            public void onClick(DialogInterface dialog, int which) {
-    //                alertDialog.dismiss();
-    //            }
-    //        });
-    //alertDialog.show();
-    //actual = true;
-
-    /*
-     * This gets called when a boat is connected
-     * Note it has to draw the boat somewhere initially until it gets a gps loc so it draws it
-     * on PantherHollow lake until it gets a new gps loc and will then update to the current
-     * position
-     */
-    //start comment
-
-
-    //end uncomment
-    //        speed.setOnClickListener(new OnClickListener() {
-    //            @Override
-    //            public void onClick(View v) {
-    //                if(speed.isChecked()){
-    //                    Mapping_S = true;
-    //                    Log.i(logTag, "Mapping Speed");
-    //                }
-    //                else{
-    //                    Mapping_S = false;
-    //                }
-    //                Thread thread = new Thread(){
-    //                    public void run(){
-    //                        if(Mapping_S){
-    //                            currentBoat.returnServer().setGains(0, low_tPID, null);
-    //                        }
-    //                        else{
-    //                            currentBoat.returnServer().setGains(0,tPID, null);
-    //                        }
-    //                    }
-    //                };
-    //            }
-    //        });
-
-
   }
   @Override
   protected void onStart() {
@@ -1031,34 +943,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   private JoystickMovedListener _listener = new JoystickMovedListener() {
       @Override
       public void OnMoved(int x, int y) {
-        //    System.out.println("called");
+          Log.e(logTag, String.format("joystick (x, y) = %d, %d", x, y));
         thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
         rudderTemp = fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX);
-        //System.out.println(thrustTemp);
-        //System.out.println(rudderTemp);
-        //            if (currentBoat != null) {
-        //                //does this need to be in seperate thread?
-        //                Thread thread = new Thread() {
-        //                    public void run() {a
-        //                        if (currentBoat.getConnected() == true) {
-        //                            updateVelocity(currentBoat, null);
-        //                        }
-        //                    }
-        //                };
-        //                thread.start();
-        //            }
-        //Instead add the update to async loop and give option to change that update rate
-        //            Log.i(logTag, "Y:" + y + "\tX:" + x);
-        //            Log.i(logTag, "Thrust" + thrustTemp + "\t Rudder" + rudderTemp);
-        //            try {
-        //                mlogger.info(new JSONObject()
-        //                        .put("Time", sdf.format(d))
-        //                        .put("Joystick", new JSONObject()
-        //                                .put("Thrust", thrustTemp)
-        //                                .put("Rudder", rudderTemp)));
-        //            } catch (JSONException e) {
-        //
-        //            }
       }
 
       @Override
@@ -1141,26 +1028,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   /* Function observer is passed as parameter since it is needed when
    * the joystick is being moved but not when it is released  */
   public void updateVelocity(Boat a, FunctionObserver<Void> fobs) { //taken right from desktop client for updating velocity
-    // ConnectScreen.boat.setVelocity(thrust.getProgress(),
-    // rudder.getProgress());
-    //System.out.println("velocity update");
-    //System.out.println("starting update velocity: " + System.currentTimeMillis());
     if (a.returnServer() != null) {
-      //Twist twist = new Twist();
 
-      twist.dx(thrustTemp >= -1 & thrustTemp <= 1 ? thrustTemp : 0);
-      if (Math.abs(rudderTemp - 0) < .05) {
-        tempThrustValue = 0;
-        twist.drz(fromProgressToRange((int) tempThrustValue, RUDDER_MIN,
-                                      RUDDER_MAX));
-      } else {
-        twist.drz(rudderTemp >= -1 & rudderTemp <= 1 ? rudderTemp : 0);
-      }
-//      System.out.println("twisty" + twist.dx());
-//      System.out.println("twistx" + twist.drz());
+      twist.dx(thrustTemp);
+      twist.drz(-1.0*rudderTemp); // left-right is backwards
+
       a.returnServer().setVelocity(twist, fobs);
     }
-    //System.out.println("end update velocity: " + System.currentTimeMillis());
   }
 
   /*
@@ -1215,29 +1089,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           @Override
           public void run() {
             if (currentBoat != null) {
-        //        System.out.println("do in background RUN");
               connected = currentBoat.getConnected();
-              //System.out.println("ran is connected");
-              //System.out.println("update markers called from async");
-              //                        if (old_thrust != thrustTemp) { //update velocity
-              //                            //updateVelocity(currentBoat);
-              //                        }
-              //
-              //                        if (old_rudder != rudderTemp) { //update rudder
-              //                            //updateVelocity(currentBoat);
-              //                        }
 
               //if (currentBoat.getConnected() == true)
               {
-                //System.out.println("vel ran:");
                 if (old_thrust != thrustTemp || old_rudder!=rudderTemp) {
-                    //System.out.println("Starting update velocity function observer: " + System.currentTimeMillis());
                     updateVelocity(currentBoat, new FunctionObserver<Void>() {
                         @Override
                           public void completed(Void aVoid) {
-                          System.out.println("twist completed");
-//													System.out.println("ending update velocity function observer: " + System.currentTimeMillis());
-                        }
+                          }
                         @Override
                           public void failed(FunctionError functionError) {
 //													System.out.println("ending update velocity function observer: " + System.currentTimeMillis());
@@ -1245,7 +1105,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                       });
                 }
               }
-              //System.out.println("sent vel");
               if (stopWaypoints == true) {
                 currentBoat.returnServer().stopWaypoints(new FunctionObserver<Void>() {
                     @Override
@@ -1280,8 +1139,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                   }
                 } catch (Exception e) {
-                  System.out.println(e.toString());
-                  // Log.i(logTag, "PlanarDistanceSq Error");
+                  Log.e(logTag, e.getMessage());
                 }
               }
               publishProgress();
@@ -1314,9 +1172,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
           }
 
-
-
-
       }
 
       if (connected == true) {
@@ -1325,7 +1180,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       if (connected == false) {
         ipAddressBox.setBackgroundColor(Color.RED);
       }
-
 
       if (sensorReady == true) {
         try {
@@ -1435,15 +1289,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             //System.out.println("joystick released");
           }
         });
-      DecimalFormat velFormatter = new DecimalFormat("####.###");
 
-      //thrustTemp = fromProgressToRange(thrust.getProgress(), THRUST_MIN, THRUST_MAX);
-      // rudderTemp = fromProgressToRange(rudder.getProgress(), RUDDER_MIN, RUDDER_MAX);
-
-      //            thrustProgress.setText(velFormatter.format(thrustTemp * 100.0) + "%");
-      //            rudderProgress.setText(velFormatter.format(rudderTemp * -100.0) + "%");
-
-      //uncomment this
       if (waypointLayoutEnabled == true) {
         String status = boatwaypoint;
         if (status == null)
@@ -1487,7 +1333,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   // Converts from progress bar value to linear scaling between min and
   // max
   private double fromProgressToRange(int progress, double min, double max) {
-    return ((max - min) * ((double) progress) / 20.0);
+      // progress will be between -10 and 10, with 0 being the center
+      //return ((max - min) * ((double) progress) / 20.0);
+      // evaluate linear range above and below zero separately
+      double value;
+      if (progress < 0)
+      {
+          value = min*Math.abs(progress)/10.0;
+          return value;
+      }
+      else
+      {
+          value = max*progress/10.0;
+          return value;
+      }
   }
 
   // Converts from progress bar value to linear scaling between min and
@@ -2104,11 +1963,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public void sendPID()
     {
         loadPreferences(); //update values should be replaced automatically with
+        final int THRUST_GAIN_AXIS = 0;
+        final int RUDDER_GAIN_AXIS = 5;
         final Thread thread = new Thread() {
             public void run() {
-                final int THRUST_GAIN_AXIS = 0;
-                final int RUDDER_GAIN_AXIS = 5;
-
                 currentBoat.returnServer().setGains(THRUST_GAIN_AXIS, tPID, new FunctionObserver<Void>() {
                     @Override
                     public void completed(Void aVoid) {
@@ -2139,37 +1997,36 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             @Override
             public void run()
             {
-                currentBoat.returnServer().getGains(0, new FunctionObserver<double[]>() {
+                currentBoat.returnServer().getGains(THRUST_GAIN_AXIS, new FunctionObserver<double[]>() {
                     @Override
                     public void completed(final double[] doubles) {
-                        //serverPIDThrust = doubles;
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                System.out.println("pids are now: " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
+                                Log.i(logTag, "pids are now: " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
                             }
                         });
                     }
 
                     @Override
                     public void failed(FunctionError functionError) {
-                        System.out.println("FAILED TO GET PIDS");
+                        Log.e(logTag, "FAILED TO GET PIDS");
                     }
                 });
-                currentBoat.returnServer().getGains(5, new FunctionObserver<double[]>() {
+                currentBoat.returnServer().getGains(RUDDER_GAIN_AXIS, new FunctionObserver<double[]>() {
                     @Override
                     public void completed(final double[] doubles) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                System.out.println("pids are now: " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
+                                Log.i(logTag, "pids are now: " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
                             }
                         });
                     }
 
                     @Override
                     public void failed(FunctionError functionError) {
-                        System.out.println("FAILED TO GET PIDS");
+                        Log.e(logTag, "FAILED TO GET PIDS");
                     }
                 });
 
@@ -2177,127 +2034,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         };
         PIDthread.start();
     }
-
-  /*
-  public void setPID() {
-    if (currentBoat == null) {
-      Log.i(logTag, "No boat connected, cant set PID");
-      return;
-    }
-
-    final int THRUST_GAIN_AXIS = 0;
-    final int RUDDER_GAIN_AXIS = 5;
-
-    final Dialog piddialog = new Dialog(context);
-    piddialog.setContentView(R.layout.setpid);
-    piddialog.setTitle("Set PID Gains");
-
-    Button setPID = (Button) piddialog.findViewById(R.id.pidsubmit);
-
-    final EditText thrustP = (EditText) piddialog.findViewById(R.id.thrustfirst);
-    final EditText thrustI = (EditText) piddialog.findViewById(R.id.thrustsecond);
-    final EditText thrustD = (EditText) piddialog.findViewById(R.id.thrustthird);
-
-    final EditText rudderP = (EditText) piddialog.findViewById(R.id.rudderfirst);
-    final EditText rudderI = (EditText) piddialog.findViewById(R.id.ruddersecond);
-    final EditText rudderD = (EditText) piddialog.findViewById(R.id.rudderthird);
-
-    Thread PIDthread = new Thread()
-      {
-        @Override
-        public void run()
-        {
-          currentBoat.returnServer().getGains(0, new FunctionObserver<double[]>() {
-              @Override
-                public void completed(final double[] doubles) {
-                //serverPIDThrust = doubles;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-
-                      System.out.println(doubles[0] + " " + doubles[1] + " " + doubles[2]);
-
-                      thrustP.setText("" + doubles[0]);
-                      thrustI.setText("" + doubles[1]);
-                      thrustD.setText("" + doubles[2]);
-                    }
-                  });
-              }
-
-              @Override
-                public void failed(FunctionError functionError) {
-                System.out.println("FAILED TO GET PIDS");
-              }
-            });
-          currentBoat.returnServer().getGains(5, new FunctionObserver<double[]>() {
-              @Override
-                public void completed(final double[] doubles) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                      rudderP.setText("" + doubles[0]);
-                      rudderI.setText("" + doubles[1]);
-                      rudderD.setText("" + doubles[2]);
-                    }
-                  });
-              }
-
-              @Override
-                public void failed(FunctionError functionError) {
-                System.out.println("FAILED TO GET PIDS");
-              }
-            });
-
-        }
-      };
-    PIDthread.start();
-
-
-    //there is probably a better way to do this (without setting them to 0 in xml page)
-    setPID.setOnClickListener(new OnClickListener() {
-        @Override
-        public void onClick(View view) {
-          final double thrustPID[] = {Double.parseDouble(thrustP.getText().toString()), Double.parseDouble(thrustI.getText().toString()), Double.parseDouble(thrustD.getText().toString())};
-          final double rudderPID[] = {Double.parseDouble(rudderP.getText().toString()), Double.parseDouble(rudderI.getText().toString()), Double.parseDouble(rudderD.getText().toString())};
-
-            final Thread thread = new Thread() {
-              public void run() {
-                //System.out.println("pids");
-                for (double i : thrustPID) {
-                  //System.out.println(i);
-                }
-                currentBoat.returnServer().setGains(THRUST_GAIN_AXIS, thrustPID, new FunctionObserver<Void>() {
-                    @Override
-                      public void completed(Void aVoid) {
-                      Log.i(logTag, "Setting thrust PID completed.");
-                    }
-
-                    @Override
-                      public void failed(FunctionError functionError) {
-                      Log.i(logTag, "Setting thrust PID failed: " + functionError);
-                    }
-                  });
-                currentBoat.returnServer().setGains(RUDDER_GAIN_AXIS, rudderPID, new FunctionObserver<Void>() {
-                    @Override
-                      public void completed(Void aVoid) {
-                      Log.i(logTag, "Setting rudder PID completed ");
-                    }
-
-                    @Override
-                      public void failed(FunctionError functionError) {
-                      Log.i(logTag, "Setting rudder PID failed: " + functionError);
-                    }
-                  });
-              }
-            };
-          thread.start();
-          piddialog.dismiss();
-        }
-
-      });
-    piddialog.show();
-  }
-  */
 
   public int isAverage(SensorData data, String value) {
     double v = Double.parseDouble(value);
@@ -2850,7 +2586,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               }
             };
           thread.start();
-          WPnum = 0;
           boatPath = new Path();
           touchpointList.clear();
           invalidate();
@@ -3209,9 +2944,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
-        final SharedPreferences.Editor editor = sharedPref.edit();
+        //final SharedPreferences.Editor editor = sharedPref.edit();
 
-        ///String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "192.168.1.259");
         String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "192.168.1.1");
         String defaultPort = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_PORT,"11411");
 
@@ -3219,31 +2953,28 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         textIpAddress = textIpAddress.replace("/",""); //network on main thread error if this doesnt happen
         boatPort = defaultPort;
         ipAddressBox.setText("IP Address: " + textIpAddress);
-        //ipAddress.setText("192.168.1.77:11411");
 
-        //set ip and port
-
-        tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_P,".2"));
+        tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_P,"0.2"));
         tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_I,"0"));
         tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_D,"0"));
 
-        rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_P,"1"));
+        rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_P,"1.0"));
         rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_I,"0"));
-        rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_D,".2"));
+        rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_D,"0.2"));
 
-        low_tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_P,".06"));
+        low_tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_P,"0.06"));
         low_tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_I,"0"));
         low_tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_D,"0"));
 
-        low_rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_P,".35"));
+        low_rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_P,"0.35"));
         low_rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_I,"0"));
-        low_rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_D,".15"));
+        low_rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_D,"0.15"));
 
-        THRUST_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MIN,"-1"));
+        THRUST_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MIN,"-1.0"));
         THRUST_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MAX,"0.3"));
 
-        RUDDER_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_RUDDER_MIN,"-1"));
-        RUDDER_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_RUDDER_MAX,".3"));
+        RUDDER_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_RUDDER_MIN,"-1.0"));
+        RUDDER_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_RUDDER_MAX,"1.0"));
 
         updateRateMili = Integer.parseInt(sharedPref.getString(SettingsActivity.KEY_PREF_COMMAND_RATE,"500"));
         Double initialPanLat = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_LAT,"0"));
