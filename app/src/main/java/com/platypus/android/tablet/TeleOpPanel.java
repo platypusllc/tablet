@@ -170,11 +170,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   TextView sensorType1 = null;
   TextView sensorType2 = null;
   TextView sensorType3 = null;
-  String sensorText1 = "ATLAS_DO \\n mg/L";
-  String sensorText2 = "ATLAS_PH";
-  String sensorText3 = "ES2 \n" +
-            "EC(µS/cm)\n" +
-            "T(°C)";
+
   TextView battery = null;
   TextView Title = null;
   TextView waypointInfo = null;
@@ -515,33 +511,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                         }
                         break;
                     }
-
-//                    case "Update Command Rate": {
-//                        AlertDialog.Builder alertDialog = new AlertDialog.Builder(TeleOpPanel.this);
-//                        alertDialog.setTitle("Change Velocity Update Rate");
-//                        final EditText input = new EditText(TeleOpPanel.this);
-//                        input.setText(updateRateMili+"");
-//                        input.setInputType(InputType.TYPE_CLASS_NUMBER);
-//                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-//                                LinearLayout.LayoutParams.MATCH_PARENT,
-//                                LinearLayout.LayoutParams.MATCH_PARENT);
-//                        input.setLayoutParams(lp);
-//                        alertDialog.setView(input);
-//                        alertDialog.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                updateRateMili = Integer.parseInt(input.getText().toString());
-//                                //restart exec.
-//
-//                                future.cancel(true);
-//                                future = exec.scheduleAtFixedRate(networkRun, 0, updateRateMili, TimeUnit.MILLISECONDS);
-//
-//
-//                                dialog.cancel();
-//                            }
-//                        });
-//                        alertDialog.show();
-//                        break;
-//                }
                     case "Preferences":
                     {
                         Intent intent = new Intent(context, SettingsActivity.class);
@@ -2593,7 +2562,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     LayoutInflater inflater = (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     regionlayout = (LinearLayout) findViewById(R.id.relativeLayout_sensor);
     waypointregion = inflater.inflate(R.layout.region_layout, regionlayout);
-      //regionWaypointButton = (ToggleButton) regionlayout.findViewById(R.id.additionalWaypoint);
     startRegion = (Button) regionlayout.findViewById(R.id.region_start); //start button
     drawPoly = (ImageButton) regionlayout.findViewById(R.id.region_draw); //toggle adding points to region
     perimeter = (Button) regionlayout.findViewById(R.id.region_perimeter); //perimeter* start perimeter? didnt write this
@@ -2603,22 +2571,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     drawPoly.setBackgroundResource(R.drawable.draw_icon);
     spirallawn = (ToggleButton) regionlayout.findViewById(R.id.region_spiralorlawn);
     updateTransect = (Button) regionlayout.findViewById(R.id.region_transectButton);
-
-
-    //        if (spirallawn.isChecked()) {
-    //            if (boatPath == null)
-    //            {
-    //                System.out.println("null boatpath");
-    //            }
-    //            boatPath = new Region(touchpointList, AreaType.LAWNMOWER,currentTransectDist);
-    //        }
-    //        else {
-    //            if (boatPath == null)
-    //            {
-    //                boatPath = new Region(touchpointList, AreaType.SPIRAL);
-    //            }
-    //            boatPath = new Region(touchpointList, AreaType.SPIRAL,currentTransectDist);
-    //        }
 
     spirallawn.setOnClickListener(new OnClickListener() {
         @Override
@@ -2633,7 +2585,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           invalidate();
         }
       });
-
 
     updateTransect.setOnClickListener(new OnClickListener() {
         @Override
@@ -2732,15 +2683,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
       });
   }
-  public void switchModes()
-  {
 
-  }
   /*
    * Not calling update transect
-   *
-   *
-   *
    *
    * */
   public void invalidate() {
@@ -2915,25 +2860,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         Double initialPanLon = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_LON,"0"));
         initialPan = new LatLng(initialPanLat,initialPanLon);
         setInitialPan = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SAVE_MAP,true);
-
-        sensorText1 = sharedPref.getString(SettingsActivity.KEY_PREF_SENSOR1,"ATLAS_DO \\n mg/L");
-        sensorText2 = sharedPref.getString(SettingsActivity.KEY_PREF_SENSOR2,"ATLAS_PH");
-        sensorText3 = sharedPref.getString(SettingsActivity.KEY_PREF_SENSOR3,"ES2 \nEC(µS/cm)\nT(°C)");
-        System.out.println("sensor called");
-        System.out.println("sensor : " + sensorText1);
-        System.out.println("sensor : " + sensorText2);
-        System.out.println("sensor : " + sensorText3);
-
-                //REMEMBER TO SEND PIDS WHEN CONNECTING TO THE BOAT
-        //boolean for should there be an initial pan
     }
     public void saveDefaultSettings()
     {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sharedPref.edit();
-        //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,"192.168.1.123");
         editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().getAddress().toString());
-        //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_PORT,currentBoat.getIpAddress().toString().substring(currentBoat.getIpAddress().toString().indexOf(":"),currentBoat.getIpAddress().toString().length()));
         editor.putString(SettingsActivity.KEY_PREF_PID_THRUST_P,Double.toString(tPID[0]));
         editor.putString(SettingsActivity.KEY_PREF_PID_THRUST_I,Double.toString(tPID[1]));
         editor.putString(SettingsActivity.KEY_PREF_PID_THRUST_D,Double.toString(tPID[2]));
@@ -2953,17 +2885,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         editor.putString(SettingsActivity.KEY_PREF_RUDDER_MIN,Double.toString(RUDDER_MIN));
         editor.putString(SettingsActivity.KEY_PREF_RUDDER_MAX,Double.toString(RUDDER_MAX));
 
-        editor.putString(SettingsActivity.KEY_PREF_SENSOR1,sensorText1);
-        editor.putString(SettingsActivity.KEY_PREF_SENSOR2,sensorText2);
-        editor.putString(SettingsActivity.KEY_PREF_SENSOR3,sensorText3);
-
-
         //see if thrust values save automatically if theyre edited in the settings activity
         //add latlng
         editor.apply();
         editor.commit();
         editor.apply();
-        //String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "");
-        //System.out.println("default ip: " + defaultIP);
     }
 }
