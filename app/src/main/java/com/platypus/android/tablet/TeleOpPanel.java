@@ -1,13 +1,5 @@
 package com.platypus.android.tablet;
 
-/*
-TODO
-figure out loadPreferences
-Why is it crashing when you set that ipaddress text view
-set other variables on loading 
-test
- */
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.BufferedWriter;
@@ -18,7 +10,6 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URL;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,12 +55,10 @@ import com.mapbox.mapboxsdk.offline.OfflineManager;
 import com.mapbox.mapboxsdk.offline.OfflineRegion;
 
 import android.app.AlertDialog;
-import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.media.audiofx.BassBoost;
 import android.net.ConnectivityManager;
 
 import android.os.Environment;
@@ -77,7 +66,6 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
-import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -153,8 +141,6 @@ import com.platypus.android.tablet.Joystick.*;
 public class TeleOpPanel extends Activity implements SensorEventListener {
   final Context context = this;
   final double GPSDIST = 0.0000449;
-  SeekBar thrust = null;
-  SeekBar rudder = null;
   TextView ipAddressBox = null;
   TextView mapInfo = null;
   RelativeLayout linlay = null;
@@ -184,9 +170,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   TextView sensorType1 = null;
   TextView sensorType2 = null;
   TextView sensorType3 = null;
-    String sensorText1 = "ATLAS_DO \\n mg/L";
-    String sensorText2 = "ATLAS_PH";
-    String sensorText3 = "ES2 \n" +
+  String sensorText1 = "ATLAS_DO \\n mg/L";
+  String sensorText2 = "ATLAS_PH";
+  String sensorText3 = "ES2 \n" +
             "EC(µS/cm)\n" +
             "T(°C)";
   TextView battery = null;
@@ -264,7 +250,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   public RadioButton reg = null;
 
   public static String textIpAddress;
-    public static String boatPort = "11411";
+  public static String boatPort = "11411";
   public static Boat currentBoat;
   public static InetSocketAddress address;
   public CheckBox autoBox;
@@ -295,8 +281,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   private UtmPose[] wpPose = null, tempPose = null;
   private int N_waypoint = 0;
   private boolean waypointlistener = false;
-  private int[] pointarrow = {R.drawable.pointarrow, R.drawable.pointarrow_45, R.drawable.pointarrow_90,
-                              R.drawable.pointarrow_135, R.drawable.pointarrow_180, R.drawable.pointarrow_225, R.drawable.pointarrow_270, R.drawable.pointarrow_315};
 
   Icon Ihome;
 
@@ -305,8 +289,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   ArrayList<LatLng> touchpointList = new ArrayList<LatLng>();
   ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
   ArrayList<LatLng> savePointList = new ArrayList<LatLng>();
-  ArrayList<Marker> markerList = new ArrayList(); //List of all the
-  //ArrayList<Marker> boundryList = new ArrayList();
+  ArrayList<Marker> markerList = new ArrayList();
 
   String waypointFileName = "waypoints.txt";
 
@@ -323,28 +306,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   private static final String logTag = TeleOpPanel.class.getName();
   String sensorLogTag = "Sensor";
   String waypointLogTag = "Sensor";
-  String mapLogTag = "Sensor";
-
-  PolyArea.AreaType currentAreaType = PolyArea.AreaType.WAYPOINT;
-
-
-
-
 
   protected void onCreate(final Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    //this.setContentView(R.layout.tabletlayout_nexus7);  // layout for LG GpadF 8
-    //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-      //this.setContentView(R.layout.tabletlayout); // layout for Nexus 10
-      this.setContentView(R.layout.tabletlayoutswitch);
+    this.setContentView(R.layout.tabletlayoutswitch);
 
     ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
     linlay = (RelativeLayout) this.findViewById(R.id.linlay);
-    //tiltButton = (ToggleButton) this.findViewById(R.id.tiltButton);
 
     connectButton = (Button) this.findViewById(R.id.connectButton);
     log = (TextView) this.findViewById(R.id.log);
-    // loadWPFile = (Button)this.findViewById(R.id.loadFileButton);
     autoBox = (CheckBox) this.findViewById(R.id.autonomousBox);
     makeConvex = (Button) this.findViewById(R.id.makeconvex);
     sensorData1 = (TextView) this.findViewById(R.id.SValue1);
@@ -364,21 +335,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     mapInfo = (TextView) this.findViewById(R.id.mapinfo);
     final ToggleButton switchView = (ToggleButton) this.findViewById(R.id.switchviewbutton);
 
-      mapInfo.setText("Map Information \n Nothing Pending");
-      loadPreferences();
+    mapInfo.setText("Map Information \n Nothing Pending");
+    loadPreferences();
 
-      sensorData1.setText("Waiting");
-      sensorData2.setText("Waiting");
-      sensorData3.setText("Waiting");
+    sensorData1.setText("Waiting");
+    sensorData2.setText("Waiting");
+    sensorData3.setText("Waiting");
 
 
-      //Create folder for the first time if it does not exist
-      File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
-//      File waypointDir = new File(getFilesDir() + "/waypoints"); //FOLDER CALLED WAYPOINTS
-      if (waypointDir.exists() == false)
-      {
-          waypointDir.mkdir();
-      }
+    //Create folder for the first time if it does not exist
+    File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
+//    File waypointDir = new File(getFilesDir() + "/waypoints"); //FOLDER CALLED WAYPOINTS
+    if (waypointDir.exists() == false)
+    {
+        waypointDir.mkdir();
+    }
 
       //load inital waypoint menu
     onLoadWaypointLayout();
@@ -626,23 +597,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         @Override
         public void receivedSensor(SensorData sensorData) {
           Data = sensorData;
-
+          //Log.e(logTag, "sensorListener: " + sensorData.toString());
           sensorV = Arrays.toString(Data.data);
           sensorV = sensorV.substring(1, sensorV.length() - 1);
           sensorReady = true;
-          //Log.i("Platypus","Get sensor Data");
-          //Log.i(logTag, "Sensor listener called");
-        }
-      };
-    //*******************************************************************************
-    //  Initialize Waypointlistener
-    //*******************************************************************************
-    wl = new WaypointListener() {
-        @Override
-        public void waypointUpdate(WaypointState waypointState) {
-          boatwaypoint = waypointState.toString();
-          //System.out.println(waypointState.toString());
-          //  Log.i(logTag, "Waypoint listener called");
         }
       };
 
@@ -656,13 +614,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           boatwaypoint = waypointState.toString();
         }
       };
-
-    //***********************************************************************
-    // Initialize save and load waypoint buttons
-    // **********************************************************************
-    //
-
-
 
     //****************************************************************************
     //  Initialize the Boat
@@ -1152,8 +1103,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       return null;
     }
     @Override
-      protected void onProgressUpdate(Integer... result) {
-        //mapInfo.setText("Rot is: "+ rot);
+    protected void onProgressUpdate(Integer... result) {
       LatLng curLoc;
       //if (latlongloc != null & counter_M > 5) {
       if (latlongloc != null) {
@@ -1190,7 +1140,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
           SharedPreferences.Editor editor = settings.edit();
 
-
           if (Data.channel == 4) {
             String[] batteries = sensorV.split(",");
             battery.setText(batteries[0]);
@@ -1204,18 +1153,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           }
 
           if (sensorvalueButton.isChecked()) {
-            //  sensorValueBox.setBackgroundColor(Color.GREEN);
             double value;
             switch (Data.channel) {
             case 4:
-              //                        String[] batteries = sensorV.split(",");
-              //                        battery.setText(batteries[0]);
               break;
             case 1:
               sensorData1.setText(sensorV);
-              //sensorType1.setText(Data.type + "\n" + unit(Data.type))
-                // sensorType1.setText("ATLAS_DO \n mg/L");
-                sensorType1.setText(sensorText1);
+              sensorType1.setText(unit(Data.type));
               sensorData1.setTextColor(isAverage(Data, sensorV));
               value = (Double.parseDouble(sensorV) + getAverage(Data)) / 2;
 
@@ -1225,33 +1169,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               break;
             case 2:
               sensorData2.setText(sensorV);
-              //sensorType2.setText(Data.type+ "\n"+unit(Data.type));
-                //sensorType2.setText("ATLAS_PH");
-                sensorType2.setText(sensorText2);
+              sensorType2.setText(unit(Data.type));
               sensorData2.setTextColor(isAverage(Data, sensorV));
               value = (Double.parseDouble(sensorV) + getAverage(Data)) / 2;
-
               editor.putString(Data.type.toString(), Double.toString(value));
               editor.commit();
 
               break;
             case 3:
               sensorData3.setText(sensorV);
-              // sensorType3.setText(Data.type+ "\n"+unit(Data.type));
-                //sensorType3.setText("ES2 \nEC(µS/cm)\nT(°C)");
-                sensorType3.setText(sensorText3);
-              //                            sensorData3.setTextColor(isAverage(Data, sensorV));
-              //                            value = (Double.parseDouble(sensorV) + getAverage(Data))/2;
-              //
-              //                            editor.putString(Data.type.toString(), Double.toString(value));
-              //                            editor.commit();
+              sensorType3.setText(unit(Data.type));
+              sensorData3.setTextColor(isAverage(Data, sensorV));
+              value = (Double.parseDouble(sensorV) + getAverage(Data))/2;
+              editor.putString(Data.type.toString(), Double.toString(value));
+              editor.commit();
               break;
             case 9:
               break;
             default:
-//              sensorData1.setText("Waiting");
-//              sensorData2.setText("Waiting");
-//              sensorData3.setText("Waiting");
             }
 
           }
@@ -1310,22 +1245,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
   }
 
-  private String unit(VehicleServer.SensorType Type) {
+  private String unit(VehicleServer.SensorType stype) {
     String unit = "";
 
-    if (Type.toString().equalsIgnoreCase("ATLAS_PH")) {
+    if (stype == VehicleServer.SensorType.ATLAS_PH) {
       unit = "pH";
-    } else if (Type.toString().equalsIgnoreCase("ATLAS_DO")) {
-      unit = "mg/L";
-    } else if (Type.toString().equalsIgnoreCase("ES2")) {
+    } else if (stype == VehicleServer.SensorType.ATLAS_DO) {
+      unit = "DO (mg/L)";
+    } else if (stype == VehicleServer.SensorType.ES2) {
       unit = "EC(µS/cm)\n" +
-        "TE(°C)";
-    } else if (Type.toString().equalsIgnoreCase("HDS_DEPTH")) {
-      unit = "m";
+        "T(°C)";
+    } else if (stype == VehicleServer.SensorType.HDS_DEPTH) {
+      unit = "depth (m)";
     } else {
       unit = "";
     }
-
 
     return unit;
   }
