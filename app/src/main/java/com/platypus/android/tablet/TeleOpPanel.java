@@ -115,7 +115,6 @@ import android.widget.PopupMenu;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -2589,7 +2588,29 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
               SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
               SharedPreferences.Editor editor = sharedPref.edit();
-              editor.putString(SettingsActivity.KEY_PREF_SPEED, String.valueOf(speed_spinner.getSelectedItem()));
+              String item = String.valueOf(speed_spinner.getSelectedItem());
+              Log.i(logTag, "spinner item = " + item);
+              switch (item)
+              {
+                  case "Slow":
+                      editor.putString(SettingsActivity.KEY_PREF_SPEED, "SLOW");
+                      break;
+                  case "Medium":
+                      Log.i(logTag, "set it to medium, you fool!");
+                      editor.putString(SettingsActivity.KEY_PREF_SPEED, "MEDIUM");
+                      break;
+                  case "Fast":
+                      editor.putString(SettingsActivity.KEY_PREF_SPEED, "FAST");
+                      break;
+                  case "Custom":
+                      editor.putString(SettingsActivity.KEY_PREF_SPEED, "CUSTOM");
+                      break;
+                  default:
+                      break;
+              }
+              editor.apply();
+              editor.commit();
+
               //Toast.makeText(getApplicationContext(), String.valueOf(speed_spinner.getSelectedItem()), Toast.LENGTH_SHORT).show();
               sendPID();
           }
@@ -2878,6 +2899,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         // get vehicle type and speed preferences
         String vehicle_type = sharedPref.getString(SettingsActivity.KEY_PREF_VEHICLE_TYPE, "PROP");
         String vehicle_speed = sharedPref.getString(SettingsActivity.KEY_PREF_SPEED, "MEDIUM");
+        Log.i(logTag, String.format("Vehicle type = %s, Speed = %s", vehicle_type, vehicle_speed));
         switch (vehicle_type)
         {
             case "PROP":
