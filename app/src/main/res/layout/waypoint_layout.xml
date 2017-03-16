@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <LinearLayout
         android:id="@+id/waypointbuttons"
         android:layout_width="match_parent"
@@ -63,24 +64,6 @@
             android:id="@+id/waypointDropWaypointButton" />
 
         <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Mapping Speed"
-        android:id="@+id/textView7"
-            android:layout_gravity="center_horizontal"
-        android:layout_below="@+id/waypointDeleteButton"/>
-
-    <Switch
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/switch1"
-        android:checked="false"
-        android:layout_below="@+id/textView7"
-        android:layout_alignEnd="@+id/waypointStartButton"
-        android:layout_gravity="center_horizontal" />
-
-    <TextView
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:id="@+id/waypoints_waypointstatus"
         android:layout_width="wrap_content"
@@ -90,5 +73,14 @@
         android:layout_gravity="center"
         android:layout_below="@+id/switch1"
         android:layout_alignStart="@+id/switch1" />
+
+        <Spinner
+            android:id="@+id/speed_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:prompt="@string/speed_prompt"
+            android:entries="@array/spinner_speed_entries"
+            />
+
     </LinearLayout>
 </LinearLayout>

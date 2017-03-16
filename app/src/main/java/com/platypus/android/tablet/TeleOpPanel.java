@@ -61,8 +61,12 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.ConnectivityManager;
 
+import android.os.Binder;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.IBinder;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
@@ -110,7 +114,7 @@ import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
-import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -152,7 +156,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   ImageButton drawPoly = null;
   ImageButton waypointButton = null;
 
-
   Button deleteWaypoint = null;
   Button connectButton = null;
   Button advancedOptions = null;
@@ -175,14 +178,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   TextView Title = null;
   TextView waypointInfo = null;
 
-
   LinearLayout regionlayout = null;
   LinearLayout waypointlayout = null;
   View waypointregion = null;
 
   ToggleButton sensorvalueButton = null;
   JoystickView joystick;
-  Switch speed = null;
+  //Switch speed = null;
+    Spinner speed_spinner = null;
 
   int updateRateMili = 50;
   boolean checktest;
@@ -303,6 +306,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   String sensorLogTag = "Sensor";
   String waypointLogTag = "Sensor";
 
+    ////////////////////////////////////////
+    ////////////////////////////////////////
+
   protected void onCreate(final Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.setContentView(R.layout.tabletlayoutswitch);
@@ -332,6 +338,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     final ToggleButton switchView = (ToggleButton) this.findViewById(R.id.switchviewbutton);
 
     mapInfo.setText("Map Information \n Nothing Pending");
+
+    SettingsActivity.set_TeleOpPanel(this);
     loadPreferences();
 
     sensorData1.setText("Waiting");
@@ -515,6 +523,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     {
                         Intent intent = new Intent(context, SettingsActivity.class);
                         context.startActivity(intent);
+
                         break;
                     }
                 }
@@ -783,12 +792,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
       SharedPreferences.Editor editor = sharedPref.edit();
       if (currentBoat == null || currentBoat.getIpAddress() == null) {
-          editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP, "192.168.1.1");
+          editor.putString(SettingsActivity.KEY_PREF_IP, "192.168.1.1");
       }
 
       else
       {
-          editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP, currentBoat.getIpAddress().getAddress().toString());
+          editor.putString(SettingsActivity.KEY_PREF_IP, currentBoat.getIpAddress().getAddress().toString());
       }
       if (currentBoat.getLocation() == null)
       {
@@ -803,12 +812,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
       editor.apply();
       editor.commit();
-      //editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().toString());
+      //editor.putString(SettingsActivity.KEY_PREF_IP,currentBoat.getIpAddress().toString());
 
 //    try {
 //      System.out.println("saving session");
 //      saveSession();
-//        //saveDefaultSettings();
+//        //saveSettings();
 //    }
 //    catch(Exception e)
 //    {
@@ -1201,11 +1210,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             status = "\t\t-----";
           }
         waypointInfo.setText("Waypoint Status: \n" + status);
+
+        /*
         if (speed.isChecked()) {
           Mapping_S = true;
         } else {
           Mapping_S = false;
         }
+        */
 
       }
 
@@ -1374,7 +1386,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           }
           dialog.dismiss();
           dialogClose();
-            saveDefaultSettings();
+          SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+          SharedPreferences.Editor editor = sharedPref.edit();
+          editor.putString(SettingsActivity.KEY_PREF_IP,currentBoat.getIpAddress().getAddress().toString());
+          editor.apply();
+          editor.commit();
         }
       });
     dialog.show();
@@ -2324,14 +2340,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     deleteWaypoint = (Button) waypointregion.findViewById(R.id.waypointDeleteButton);
     pauseWP = (ToggleButton) waypointregion.findViewById(R.id.pause);
     startWaypoints = (Button) waypointregion.findViewById(R.id.waypointStartButton);
-    speed = (Switch) waypointregion.findViewById(R.id.switch1);
+
+      ///////////////////////////////////////////
+    //speed = (Switch) waypointregion.findViewById(R.id.switch1);
+      speed_spinner = (Spinner) waypointregion.findViewById(R.id.speed_spinner);
+
+      ///////////////////////////////////////////
+
     waypointInfo = (TextView) waypointregion.findViewById(R.id.waypoints_waypointstatus);
+      /*
     if (speed == null)
       {
         System.out.println("NULL");
       }
     speed.setTextOn("Slow");
     speed.setTextOff("Normal");
+    */
     Button dropWP = (Button) waypointregion.findViewById(R.id.waypointDropWaypointButton);
 
 
@@ -2526,6 +2550,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
       });
 
+      /*
     speed.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -2556,6 +2581,23 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             };
           thread.start();
         }
+      });
+      */
+
+      speed_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+          @Override
+          public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+              SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+              SharedPreferences.Editor editor = sharedPref.edit();
+              editor.putString(SettingsActivity.KEY_PREF_SPEED, String.valueOf(speed_spinner.getSelectedItem()));
+              //Toast.makeText(getApplicationContext(), String.valueOf(speed_spinner.getSelectedItem()), Toast.LENGTH_SHORT).show();
+              sendPID();
+          }
+
+          @Override
+          public void onNothingSelected(AdapterView<?> parent) {
+
+          }
       });
   }
   public void onLoadRegionLayout() {
@@ -2825,29 +2867,110 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
         //final SharedPreferences.Editor editor = sharedPref.edit();
 
-        String defaultIP = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_IP, "192.168.1.1");
-        String defaultPort = sharedPref.getString(SettingsActivity.KEY_PREF_DEFAULT_PORT,"11411");
+        String iP = sharedPref.getString(SettingsActivity.KEY_PREF_IP, "192.168.1.1");
+        String port = sharedPref.getString(SettingsActivity.KEY_PREF_PORT,"11411");
 
-        textIpAddress = defaultIP;
+        textIpAddress = iP;
         textIpAddress = textIpAddress.replace("/",""); //network on main thread error if this doesnt happen
-        boatPort = defaultPort;
+        boatPort = port;
         ipAddressBox.setText("IP Address: " + textIpAddress);
 
-        tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_P,"0.2"));
-        tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_I,"0"));
-        tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_D,"0"));
+        // get vehicle type and speed preferences
+        String vehicle_type = sharedPref.getString(SettingsActivity.KEY_PREF_VEHICLE_TYPE, "PROP");
+        String vehicle_speed = sharedPref.getString(SettingsActivity.KEY_PREF_SPEED, "MEDIUM");
+        switch (vehicle_type)
+        {
+            case "PROP":
+                switch (vehicle_speed)
+                {
+                    case "SLOW":
+                        tPID[0] = 0.06;
+                        tPID[1] = 0.0;
+                        tPID[2] = 0.0;
+                        rPID[0] = 0.35;
+                        rPID[1] = 0;
+                        rPID[2] = 0.15;
+                        break;
 
-        rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_P,"1.0"));
-        rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_I,"0"));
-        rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_D,"0.2"));
+                    case "MEDIUM":
+                        tPID[0] = 0.2;
+                        tPID[1] = 0.0;
+                        tPID[2] = 0.0;
+                        rPID[0] = 1.0;
+                        rPID[1] = 0.0;
+                        rPID[2] = 0.2;
+                        break;
 
-        low_tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_P,"0.06"));
-        low_tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_I,"0"));
-        low_tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_THRUST_D,"0"));
+                    case "FAST":
+                        tPID[0] = 0.5;
+                        tPID[1] = 0.0;
+                        tPID[2] = 0.0;
+                        rPID[0] = 1.0;
+                        rPID[1] = 0;
+                        rPID[2] = 0.4;
+                        break;
 
-        low_rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_P,"0.35"));
-        low_rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_I,"0"));
-        low_rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_LOW_RUDDER_D,"0.15"));
+                    case "CUSTOM":
+                        tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_P,"0.2"));
+                        tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_I,"0"));
+                        tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_D,"0"));
+                        rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_P,"1.0"));
+                        rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_I,"0"));
+                        rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_D,"0.2"));
+                        break;
+
+                    default:
+                        break;
+                }
+                break;
+
+            case "AIR":
+                switch (vehicle_speed)
+                {
+                    case "SLOW":
+                        tPID[0] = 0.2;
+                        tPID[1] = 0.0;
+                        tPID[2] = 0.0;
+                        rPID[0] = 0.9;
+                        rPID[1] = 0.0;
+                        rPID[2] = 0.9;
+                        break;
+
+                    case "MEDIUM":
+                        tPID[0] = 0.5;
+                        tPID[1] = 0.0;
+                        tPID[2] = 0.0;
+                        rPID[0] = 0.75;
+                        rPID[1] = 0.0;
+                        rPID[2] = 0.9;
+                        break;
+
+                    case "FAST":
+                        tPID[0] = 0.8;
+                        tPID[1] = 0;
+                        tPID[2] = 0;
+                        rPID[0] = 0.7;
+                        rPID[1] = 0;
+                        rPID[2] = 0.9;
+                        break;
+
+                    case "CUSTOM":
+                        tPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_P,"0.4"));
+                        tPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_I,"0"));
+                        tPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_THRUST_D,"0"));
+                        rPID[0] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_P,"0.75"));
+                        rPID[1] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_I,"0"));
+                        rPID[2] = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_PID_RUDDER_D,"0.90"));
+                        break;
+
+                    default:
+                        break;
+                }
+                break;
+
+            default:
+                break;
+        }
 
         THRUST_MIN = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MIN,"-1.0"));
         THRUST_MAX = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_THRUST_MAX,"0.3"));
@@ -2861,11 +2984,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         initialPan = new LatLng(initialPanLat,initialPanLon);
         setInitialPan = sharedPref.getBoolean(SettingsActivity.KEY_PREF_SAVE_MAP,true);
     }
-    public void saveDefaultSettings()
+    /*
+    public void saveSettings()
     {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString(SettingsActivity.KEY_PREF_DEFAULT_IP,currentBoat.getIpAddress().getAddress().toString());
+        editor.putString(SettingsActivity.KEY_PREF_IP,currentBoat.getIpAddress().getAddress().toString());
         editor.putString(SettingsActivity.KEY_PREF_PID_THRUST_P,Double.toString(tPID[0]));
         editor.putString(SettingsActivity.KEY_PREF_PID_THRUST_I,Double.toString(tPID[1]));
         editor.putString(SettingsActivity.KEY_PREF_PID_THRUST_D,Double.toString(tPID[2]));
@@ -2891,4 +3015,5 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         editor.commit();
         editor.apply();
     }
+    */
 }
