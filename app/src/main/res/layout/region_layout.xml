@@ -7,10 +7,11 @@
         android:layout_height="fill_parent"
         android:orientation = "vertical">
     <ImageButton
+        style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+
         android:id="@+id/region_draw"
-        android:layout_marginTop="10dp"
         android:layout_marginLeft="10dp"
         android:layout_above="@+id/makeconvex"
         android:layout_alignStart="@+id/removeMap" />
@@ -24,7 +25,19 @@
         android:layout_alignParentBottom="true"
         android:layout_toEndOf="@+id/removeMap" />
 
-    <Button
+        <ToggleButton
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Spiral"
+            android:textOff="Spiral"
+            android:textOn="LawnMower"
+            android:id="@+id/region_spiralorlawn"
+            android:layout_gravity="center_horizontal"/>
+
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Perimeter"
@@ -32,20 +45,56 @@
         android:layout_alignTop="@+id/removeMap"
         android:layout_toEndOf="@+id/removeMap" />
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Remove"
-        android:id="@+id/regIon_remove"
-        android:layout_above="@+id/drawPolygon"
-        android:layout_alignStart="@+id/area" />
 
-    <Button
+        <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Clear"
         android:id="@+id/region_clear"
         android:layout_alignParentBottom="true"
+            style="?android:attr/buttonStyleSmall"
         android:layout_alignStart="@+id/drawPolygon" />
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stop "
+            android:id="@+id/stopButton" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Transect Distance"
+            android:id="@+id/textView8"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="5dp" />
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center">
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:inputType="number"
+            android:ems="5"
+            android:text="5"
+            android:textAppearance="?android:attr/textAppearanceSmallInverse"
+            android:id="@+id/region_transect"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/region_transect"
+            android:layout_toRightOf="@id/region_transect"
+            android:text="↻"
+            android:id="@+id/region_transectButton"
+            android:layout_gravity="center_horizontal" />
+        </RelativeLayout>
     </LinearLayout>
 </LinearLayout>

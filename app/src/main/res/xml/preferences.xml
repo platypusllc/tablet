@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:key="pref_ipstuff"
+        android:title="App Prefrences">
+
+        <EditTextPreference
+            android:defaultValue="192.168.1.250"
+            android:key="pref_boat_ip"
+            android:summary="Current IP"
+            android:title="Boat IP Address" />
+        <EditTextPreference
+            android:defaultValue="11411"
+            android:key="pref_port"
+            android:summary="Current Port"
+            android:title="Boat Port"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_waypoint_file"
+        android:title="Waypoint Files">
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_tablet_options"
+        android:title="Tablet Stuff">
+        <EditTextPreference
+            android:defaultValue="500"
+            android:key="pref_command_update_rate"
+            android:summary="current update rate"
+            android:title="Update Rate of Commands (ms)"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="pref_tablet_map_location"
+        android:title="Tablet Stuff">
+        <EditTextPreference
+            android:key="pref_latitude"
+            android:summary="lat"
+            android:title="Initial Map Location Latitude"/>
+        <EditTextPreference
+            android:key="pref_longitude"
+            android:summary="lon"
+            android:title="Initial Map Location Longitude"/>
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:summary="Save last location"
+            android:key="pref_save_location"/>
+            <!--android:Title="Save last location?"-->
+
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="pref_thrust"
+        android:title="Joystick Thrust Range">
+        <EditTextPreference
+            android:key="pref_thrust_min"
+            android:summary="thrustmin"
+            android:title="Thrust Minimum"
+            />
+        <EditTextPreference
+            android:key="pref_thrust_max"
+            android:summary="thrustmax"
+            android:title="Thrust Maximum"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_rudder"
+        android:title="Joystick Rudder Range">
+        <EditTextPreference
+            android:key="pref_rudder_min"
+            android:summary="ruddermin"
+            android:title="Rudder Minimum"
+            />
+        <EditTextPreference
+            android:key="pref_rudder_max"
+            android:summary="ruddermax"
+            android:title="Rudder Maximum"
+            />
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:key="pref_pids_thrust"
+        android:title="Thrust PIDS">
+        <EditTextPreference
+            android:key="pref_pid_thrust_p"
+            android:summary="p"
+            android:title="Thrust P Value"/>
+        <EditTextPreference
+            android:key="pref_pid_thrust_i"
+            android:summary="i"
+            android:title="Thrust I Value"/>
+        <EditTextPreference
+            android:key="pref_pid_thrust_d"
+            android:summary="d"
+            android:title="Thrust D Value"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_pids_rudder"
+        android:title="Rudder PIDS">
+        <EditTextPreference
+            android:key="pref_pid_rudder_p"
+            android:summary="p"
+            android:title="Rudder P Value"/>
+        <EditTextPreference
+            android:key="pref_pid_rudder_i"
+            android:summary="i"
+            android:title="Rudder I Value"/>
+        <EditTextPreference
+            android:key="pref_pid_rudder_d"
+            android:summary="d"
+            android:title="Rudder D Value"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="pref_pids_low_thrust"
+        android:title="Low Thrust PIDS">
+        <EditTextPreference
+            android:key="pref_pid_low_thrust_p"
+            android:summary="p"
+            android:title="Low Thrust P Value"/>
+        <EditTextPreference
+            android:key="pref_pid_low_thrust_i"
+            android:summary="i"
+            android:title="Low Thrust I Value"/>
+        <EditTextPreference
+            android:key="pref_pid_low_thrust_d"
+            android:summary="d"
+            android:title="Low Thrust D Value"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_pids_low_rudder"
+        android:title="Low Rudder PIDS">
+        <EditTextPreference
+            android:key="pref_pid_low_rudder_p"
+            android:summary="p"
+            android:title="Low Rudder P Value"/>
+        <EditTextPreference
+            android:key="pref_pid_low_rudder_i"
+            android:summary="i"
+            android:title="Low Rudder I Value"/>
+        <EditTextPreference
+            android:key="pref_pid_low_rudder_d"
+            android:summary="d"
+            android:title="Low Rudder D Value"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_sensor"
+        android:title="Sensor Types">
+
+        <EditTextPreference
+            android:key="pref_sensor_one"
+            android:summary="p"
+            android:title="Sensor One"/>
+        <EditTextPreference
+            android:key="pref_sensor_two"
+            android:summary=""
+            android:title="Sensor Two"/>
+        <EditTextPreference
+            android:key="pref_sensor_three"
+            android:summary=""
+            android:title="Sensor Three"/>
+
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

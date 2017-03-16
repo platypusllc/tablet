@@ -39,8 +39,8 @@ public class ConnectScreen extends Activity implements OnClickListener {
 		ipAddress = (EditText) this.findViewById(R.id.ipAddress1);
 		//phoneIDNumber = (EditText) this.findViewById(R.id.phoneIDNumber);
 		//color = (EditText) this.findViewById(R.id.colorBox);
-		actualBoat = (RadioButton) this.findViewById(R.id.actualBoatRadio);
-		simulation = (RadioButton) this.findViewById(R.id.simulationRadio);
+		//actualBoat = (RadioButton) this.findViewById(R.id.actualBoatRadio);
+		//simulation = (RadioButton) this.findViewById(R.id.simulationRadio);
 		submitButton = (Button) this.findViewById(R.id.submit);
 		submitButton.setOnClickListener(this);
 

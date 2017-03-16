@@ -21,12 +21,26 @@
         android:title="Go Home"/>
     <item
         android:id="@+id/pid"
-        android:title="Set PID" />
+        android:title="Send PIDs" />
     <item
         android:id="@+id/savewpbutton"
         android:title="Save Waypoints" />
     <item
         android:id="@+id/loadwpbutton"
         android:title="Load Waypoints" />
+    <item
+        android:id="@+id/loadWaypointFileButton"
+        android:title="Load Waypoint File"
+        />
+
+    <!--<item-->
+        <!--android:id="@+id/updateRate"-->
+        <!--android:title="Update Command Rate" />-->
+    <item
+        android:id="@+id/preferences"
+        android:title="Preferences"
+       />
+
+
 
 </menu>

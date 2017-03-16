@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "1023589398815",
+    "firebase_url": "https://platypus-b6aff.firebaseio.com",
+    "project_id": "platypus-b6aff",
+    "storage_bucket": "platypus-b6aff.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1023589398815:android:e4c666c30209ff77",
+        "android_client_info": {
+          "package_name": "com.platypus.android.tablet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1023589398815-bnkeqrl5fu1gbk8p6hfoc0bholgc89aj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKA4I3ZgAm5vMe2_EPRObNgUp29m9Ts2o"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

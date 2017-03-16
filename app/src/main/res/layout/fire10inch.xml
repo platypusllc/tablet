@@ -65,11 +65,11 @@
             <com.mapbox.mapboxsdk.maps.MapView
                 android:id="@+id/mapview"
                 android:layout_width="fill_parent"
-                android:layout_height="600dp"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentStart="true"
                 mapbox:style_url="@string/style_mapbox_streets"
-                mapbox:access_token="pk.eyJ1IjoicGxhdHlwdXNsbGMiLCJhIjoiY2lsM3p5bjJyM3U0N3Z5bTNxbmFpZXNwaSJ9.YWzXSt3aXtpoBrdMPmLE3Q"/>
+                mapbox:access_token="pk.eyJ1IjoicGxhdHlwdXNsbGMiLCJhIjoiY2lsM3p5bjJyM3U0N3Z5bTNxbmFpZXNwaSJ9.YWzXSt3aXtpoBrdMPmLE3Q"
+                android:layout_height="600dp" />
 
 
             <Button

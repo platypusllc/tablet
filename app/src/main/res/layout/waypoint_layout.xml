@@ -9,22 +9,30 @@
         android:orientation = "vertical"
         android:weightSum="1">
 
-    <Button
+        <ImageButton
+            android:id="@+id/waypointButton"
+            android:layout_width="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_height="wrap_content"/>
+
+        <Button
         style="?android:attr/buttonStyleSmall"
         android:id="@+id/waypointStartButton"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="Start Waypoints" />
 
-    <ToggleButton
-        android:id="@+id/waypointButton"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:textOn="Add Waypoints"
-        android:textOff="Add Waypoints"
-        android:checked="false"/>
 
+    <!--<ImageButton-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/"-->
+        <!--android:layout_marginLeft="10dp"-->
+        <!--android:layout_alignStart="@+id/removeMap" />-->
 
+        <!--android:textOn="Add Waypoints"-->
+        <!--android:textOff="Add Waypoints"-->
+        <!--android:checked="false"/>-->
 
     <ToggleButton
         style="?android:attr/buttonStyleSmall"
@@ -60,7 +68,7 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
         android:text="Mapping Speed"
         android:id="@+id/textView7"
-        android:layout_gravity="center_horizontal"
+            android:layout_gravity="center_horizontal"
         android:layout_below="@+id/waypointDeleteButton"/>
 
     <Switch
@@ -79,7 +87,7 @@
         android:layout_height="wrap_content"
         android:text="Waypoint Status"
         android:layout_marginTop="25dp"
-        android:layout_gravity="center_horizontal"
+        android:layout_gravity="center"
         android:layout_below="@+id/switch1"
         android:layout_alignStart="@+id/switch1" />
     </LinearLayout>
