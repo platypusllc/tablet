@@ -84,7 +84,7 @@ import com.platypus.crw.CrwNetworkUtils;
 import com.platypus.crw.SensorListener;
 import com.platypus.crw.VehicleServer;
 import com.platypus.crw.data.SensorData;
-import robotutils.Pose3D;
+import com.platypus.crw.data.Pose3D;
 import android.app.Activity;
 import android.content.Context;
 
