@@ -256,7 +256,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   SensorData Data;
   public String sensorV = "Loading...";
   boolean sensorReady = false;
-  public static TextView log;
+  public TextView log;
   public boolean Auto = false;
 
   private PoseListener pl;
@@ -1643,7 +1643,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                     while ((currentLine = reader.readLine()) != null) {
                       int index = currentLine.indexOf(' ');
-                      String tempasdf = currentLine;
 
                       String trimmedLine = currentLine.trim();
                       if (trimmedLine.contains(lineToRemove)) {
@@ -2295,11 +2294,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   public boolean reachedWaypoint(LatLng boatLocation,LatLng point)
   {
     //Marker i = markerList.get(0);
-    if (isWaypointWithinDistance(boatLocation,point,GPSDIST))
-      {
-        return true;
-      }
-    return false;
+    return isWaypointWithinDistance(boatLocation,point,GPSDIST);
   }
   public boolean isWaypointWithinDistance(LatLng a, LatLng b, double dist)
   {
@@ -2308,9 +2303,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //        double distanceBetweenPoints = Math.sqrt(x+y);
     //        //if (distanceBetweenPoints < dist)//0.0000449)
     if (a.distanceTo(b) <= dist)
-      {
+    {
         return true;
-      }
+    }
+
     return false;
   }
 
@@ -2347,17 +2343,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 if (currentBoat == null)
                 {
                   Toast.makeText(getApplicationContext(), "No Boat Connected", Toast.LENGTH_LONG).show();
-                  return;
                 }
-                if (currentBoat.getLocation() == null)
+                else if (currentBoat.getLocation() == null)
                 {
                     Toast.makeText(getApplicationContext(), "Waiting on boat GPS", Toast.LENGTH_LONG).show();
-                    return;
                 }
-                if (mMapboxMap == null)
+                else if (mMapboxMap == null)
                 {
                     Toast.makeText(getApplicationContext(), "Map still loading", Toast.LENGTH_LONG).show();
-                    return;
                 }
               }
           });
@@ -2394,12 +2387,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                       }
                     });
                   startDraw = false;
-                  if (waypointLayoutEnabled == false) {
+                  if (!waypointLayoutEnabled) {
                     drawPoly.setClickable(false);
                   }
 
                 } else {
-                  if (waypointLayoutEnabled == false) {
+                  if (!waypointLayoutEnabled) {
                     drawPoly.setClickable(true);
                   }
                 }
@@ -2452,7 +2445,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       });
     deleteWaypoint.setOnClickListener(new View.OnClickListener() {
         public void onClick(View v) {
-          if (containsRegion == true)
+          if (containsRegion)
             {
               Toast.makeText(getApplicationContext(), "Please Delete Region in Region Menu", Toast.LENGTH_LONG).show();
               return;
@@ -2519,7 +2512,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             AlertDialog alert = builder.create();
             alert.show();
           }
-          if (pauseWP.isChecked() == false) {
+          if (!pauseWP.isChecked()) {
             startWaypoints();
           }
 
@@ -2674,7 +2667,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     drawPoly.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View v) {
-          if (startDraw == false) {
+          if (!startDraw) {
             drawPoly.setBackgroundResource(R.drawable.draw_icon2);
           } else {
             drawPoly.setBackgroundResource(R.drawable.draw_icon);

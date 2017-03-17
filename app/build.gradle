@@ -77,7 +77,7 @@ dependencies {
     compile files('libs/jscience.jar')
     //compile 'com.google.firebase:firebase-crash:9.4.0'
     //compile 'com.firebase:firebase-client-android:2.3.1'
-    
+
     // Included until automatic resolution from repo is fixed
     compile files('libs/platypus-core-1.0.1-20170316.122337-1-jar-with-dependencies.jar')
     // Should request jar from mvn-repo but cannot resolve at the moment
