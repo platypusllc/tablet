@@ -2,19 +2,14 @@ package com.platypus.android.tablet;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.app.Activity;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
-import android.preference.PreferenceActivity;
-import android.preference.ListPreference;
 import android.preference.Preference;
-import android.preference.PreferenceFragment;
+import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-import android.widget.CheckBox;
 
 import java.util.Map;
 
-import static com.platypus.android.tablet.R.id.map;
 
 /*
 * Only things that should be automatically saved from the teleop panel activity when its closed:

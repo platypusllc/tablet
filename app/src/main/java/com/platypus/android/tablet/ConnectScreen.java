@@ -1,11 +1,5 @@
 package com.platypus.android.tablet;
 
-import java.net.InetSocketAddress;
-
-//import com.google.android.gms.maps.MapFragment;
-
-import com.platypus.crw.CrwNetworkUtils;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,6 +9,11 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
+
+import com.platypus.crw.CrwNetworkUtils;
+
+import java.net.InetSocketAddress;
+
 
 public class ConnectScreen extends Activity implements OnClickListener {
 

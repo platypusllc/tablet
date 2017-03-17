@@ -1,9 +1,8 @@
 package com.platypus.android.tablet.Path;
 
-import java.util.ArrayList;
-
 import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.platypus.android.tablet.PolyArea;
+
+import java.util.ArrayList;
 
 public class Path
 {
@@ -54,7 +53,6 @@ public class Path
 
   public void outputPointsToOctave()
   {
-    String output = "";
     System.out.print("x=[");
     for (LatLng a : points)
     {
