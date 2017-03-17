@@ -19,15 +19,11 @@ gradle.projectsEvaluated {
     preBuild.dependsOn('accessToken')
 }
 
-ext {
-    supportLibVersion = '24.2.1'
-}
-
 
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '25'
+    buildToolsVersion '25.0.2'
     defaultConfig {
         applicationId "com.platypus.android.tablet"
         minSdkVersion 21
@@ -71,30 +67,24 @@ android {
 
 }
 dependencies {
-
-    //compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.0-beta.2@aar') {
-    //compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.1.1@aar'){
-    compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.0@aar') {
+    compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.2@aar') {
         transitive = true
     }
-
-    //transitive = true
-    //}
     compile files('libs/activation.jar')
     compile files('libs/mail.jar')
     compile files('libs/additionnal.jar')
-    // compile files('libs/mapbox-android-sdk-0.7.4.jar')
     compile files('libs/microlog4android-1.0.0.jar')
     compile files('libs/jscience.jar')
-    compile files('libs/platypus-core.jar')
     //compile 'com.google.firebase:firebase-crash:9.4.0'
-
-    compile 'com.android.support:support-v4:25.0.1'
     //compile 'com.firebase:firebase-client-android:2.3.1'
+
+    // Included until automatic resolution from repo is fixed
+    compile files('libs/platypus-core-1.0.1-20170316.122337-1-jar-with-dependencies.jar')
+    // Should request jar from mvn-repo but cannot resolve at the moment
+    //compile 'com.platypus.crw:platypus-core:1.0.1-SNAPSHOT'
 }
 
 repositories {
     mavenCentral()
-    maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url "https://raw.githubusercontent.com/PlatypusLLC/core/mvn_repo" }
 }
-//apply plugin: 'com.google.gms.google-services'
