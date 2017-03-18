@@ -989,16 +989,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     @Override
       protected String doInBackground(String... arg0) {
 
-      currentBoat.isConnected();
       networkRun = new Runnable() {
           @Override
           public void run() {
             if (currentBoat != null) {
               connected = currentBoat.getConnected();
 
-              //if (currentBoat.getConnected() == true)
-              {
-                if (old_thrust != thrustTemp || old_rudder!=rudderTemp) {
+                //if (old_thrust != thrustTemp || old_rudder!=rudderTemp) {
                     updateVelocity(currentBoat, new FunctionObserver<Void>() {
                         @Override
                           public void completed(Void aVoid) {
@@ -1008,8 +1005,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //													System.out.println("ending update velocity function observer: " + System.currentTimeMillis());
                         }
                       });
-                }
-              }
               if (stopWaypoints == true) {
                 currentBoat.returnServer().stopWaypoints(new FunctionObserver<Void>() {
                     @Override
