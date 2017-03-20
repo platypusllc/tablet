@@ -184,7 +184,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   ToggleButton sensorvalueButton = null;
   JoystickView joystick;
   //Switch speed = null;
-    Spinner speed_spinner = null;
+  private boolean speed_spinner_erroneous_call = true;
+  Spinner speed_spinner = null;
 
   int updateRateMili = 50;
   boolean checktest;
@@ -267,12 +268,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   private boolean startDraw = false;
   private boolean startDrawWaypoints = false;
 
-  boolean Mapping_S = false;
-
-  double[] low_tPID = {.06, .0, .0};
   double[] tPID = {.2, .0, .0};
 
-  double[] low_rPID = {.35, 0, .15};
   double[] rPID = {1, 0, .2};
 
   private UtmPose _pose;
@@ -281,7 +278,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   private boolean waypointlistener = false;
 
   Icon Ihome;
-
 
   Path boatPath = null;
   ArrayList<LatLng> touchpointList = new ArrayList<LatLng>();
@@ -2327,6 +2323,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     return false;
   }
 
+    void set_speed_spinner_from_pref()
+    {
+        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        String vehicle_speed = sharedPref.getString(SettingsActivity.KEY_PREF_SPEED, "MEDIUM");
+        if (speed_spinner != null)
+        {
+            switch (vehicle_speed)
+            {
+                case "SLOW":
+                    speed_spinner.setSelection(0);
+                    break;
+                case "MEDIUM":
+                    speed_spinner.setSelection(1);
+                    break;
+                case "FAST":
+                    speed_spinner.setSelection(2);
+                    break;
+                case "CUSTOM":
+                    speed_spinner.setSelection(3);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
   public void onLoadWaypointLayout()
   {
     LayoutInflater inflater = (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -2340,8 +2362,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
       ///////////////////////////////////////////
     //speed = (Switch) waypointregion.findViewById(R.id.switch1);
+      speed_spinner_erroneous_call = true; // reset the erroneous call boolean
       speed_spinner = (Spinner) waypointregion.findViewById(R.id.speed_spinner);
-
+      set_speed_spinner_from_pref();
       ///////////////////////////////////////////
 
     waypointInfo = (TextView) waypointregion.findViewById(R.id.waypoints_waypointstatus);
@@ -2588,6 +2611,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       speed_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
           @Override
           public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+              // this listener triggers when the view is initialized, no user touch event
+              // That causes undesired behavior, so we need to make sure it is ignored once
+              if (speed_spinner_erroneous_call)
+              {
+                  speed_spinner_erroneous_call = false;
+                  return;
+              }
               SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
               SharedPreferences.Editor editor = sharedPref.edit();
               String item = String.valueOf(speed_spinner.getSelectedItem());
@@ -2611,7 +2641,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               editor.apply();
               editor.commit();
 
-              //Toast.makeText(getApplicationContext(), String.valueOf(speed_spinner.getSelectedItem()), Toast.LENGTH_SHORT).show();
+              Toast.makeText(getApplicationContext(), String.valueOf(speed_spinner.getSelectedItem()), Toast.LENGTH_SHORT).show();
               sendPID();
           }
 
@@ -2899,6 +2929,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         // get vehicle type and speed preferences
         String vehicle_type = sharedPref.getString(SettingsActivity.KEY_PREF_VEHICLE_TYPE, "PROP");
         String vehicle_speed = sharedPref.getString(SettingsActivity.KEY_PREF_SPEED, "MEDIUM");
+        set_speed_spinner_from_pref();
+
         Log.i(logTag, String.format("Vehicle type = %s, Speed = %s", vehicle_type, vehicle_speed));
         switch (vehicle_type)
         {

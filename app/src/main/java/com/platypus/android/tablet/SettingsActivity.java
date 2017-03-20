@@ -126,8 +126,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 
         v.addHeaderView(restore_defaults_button);
 
-
-
         Preference pref = findPreference("pref_category");
         SharedPreferences sharedpref = PreferenceManager.getDefaultSharedPreferences(this);
         Map<String, ?> listOfPref = sharedpref.getAll();
