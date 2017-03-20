@@ -2,15 +2,15 @@ package com.platypus.android.tablet;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.app.Activity;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.PreferenceActivity;
-import android.preference.ListPreference;
 import android.preference.Preference;
-import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.ListView;
 
 import java.util.Map;
 
@@ -25,8 +25,24 @@ import static com.platypus.android.tablet.R.id.map;
 
 public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-    public static final String KEY_PREF_DEFAULT_IP = "pref_boat_ip";
-    public static final String KEY_PREF_DEFAULT_PORT = "pref_boat_port";
+
+    private static TeleOpPanel tpanel;
+    public static final void set_TeleOpPanel(TeleOpPanel tpanel_)
+    {
+        tpanel = tpanel_;
+    }
+
+    // TODO: TeleOpPanel sendPID button looks at preferences
+    //       1) see vehicle type
+    //       2) see speed (slow, med, fast, custom)
+    //       3) based on those two things, it sets PID values hardcoded in TeleOpPanel
+
+
+    public static final String KEY_PREF_VEHICLE_TYPE = "pref_vehicle_type";
+    public static final String KEY_PREF_SPEED = "pref_vehicle_speed";
+
+    public static final String KEY_PREF_IP = "pref_boat_ip";
+    public static final String KEY_PREF_PORT = "pref_boat_port";
     public static final String KEY_PREF_COMMAND_RATE = "pref_command_update_rate";
     public static final String KEY_PREF_LAT = "pref_latitude";
     public static final String KEY_PREF_LON = "pref_longitude";
@@ -61,10 +77,60 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
+
+        ListView v = getListView();
+        Button restore_defaults_button = new Button(this);
+        restore_defaults_button.setText("Restore defaults  (long press)");
+        restore_defaults_button.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                // TODO: change the PID defaults based on vehicle type
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                SharedPreferences.Editor editor = sharedPref.edit();
+                String vehicle_type = sharedPref.getString(KEY_PREF_VEHICLE_TYPE, "PROP");
+                switch (vehicle_type) {
+                    case "PROP":
+                        editor.putString(KEY_PREF_PID_THRUST_P, Double.toString(0.2));
+                        editor.putString(KEY_PREF_PID_THRUST_I, Double.toString(0.0));
+                        editor.putString(KEY_PREF_PID_THRUST_D, Double.toString(0.0));
+                        editor.putString(KEY_PREF_PID_RUDDER_P, Double.toString(1.0));
+                        editor.putString(KEY_PREF_PID_RUDDER_I, Double.toString(0.0));
+                        editor.putString(KEY_PREF_PID_RUDDER_D, Double.toString(0.2));
+                        editor.putString(KEY_PREF_THRUST_MIN, Double.toString(-1.0));
+                        editor.putString(KEY_PREF_THRUST_MAX, Double.toString(0.3));
+                        editor.putString(KEY_PREF_RUDDER_MIN,Double.toString(-1.0));
+                        editor.putString(KEY_PREF_RUDDER_MAX,Double.toString(1.0));
+                        break;
+
+                    case "AIR":
+                        editor.putString(KEY_PREF_PID_THRUST_P, Double.toString(0.4));
+                        editor.putString(KEY_PREF_PID_THRUST_I, Double.toString(0.0));
+                        editor.putString(KEY_PREF_PID_THRUST_D, Double.toString(0.0));
+                        editor.putString(KEY_PREF_PID_RUDDER_P, Double.toString(0.75));
+                        editor.putString(KEY_PREF_PID_RUDDER_I, Double.toString(0.0));
+                        editor.putString(KEY_PREF_PID_RUDDER_D, Double.toString(0.9));
+                        editor.putString(KEY_PREF_THRUST_MIN, Double.toString(-1.0));
+                        editor.putString(KEY_PREF_THRUST_MAX, Double.toString(0.7));
+                        editor.putString(KEY_PREF_RUDDER_MIN,Double.toString(-1.0));
+                        editor.putString(KEY_PREF_RUDDER_MAX,Double.toString(1.0));
+                        break;
+
+                    default:
+                        break;
+                }
+
+                editor.putString(KEY_PREF_COMMAND_RATE, "500");
+                editor.putBoolean(KEY_PREF_SAVE_MAP, true);
+                editor.apply();
+                editor.commit();
+                return false;
+            }
+        });
+
+        v.addHeaderView(restore_defaults_button);
+
         Preference pref = findPreference("pref_category");
-        //SharedPreferences sharedpref = pref.getSharedPreferences();
         SharedPreferences sharedpref = PreferenceManager.getDefaultSharedPreferences(this);
-        //System.out.println("sharedpref: " + sharedpref.getString("pref_pid_low_rudder_p","0.4"));
         Map<String, ?> listOfPref = sharedpref.getAll();
         for (Map.Entry<String, ?> entry : listOfPref.entrySet())
         {
@@ -77,18 +143,9 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
             }
         }
 
-        /*
-        final CheckBoxPreference save_location_checkbox =
-                (CheckBoxPreference) findPreference("pref_save_location");
-        save_location_checkbox.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener()
-        {
-            public boolean onPreferenceChange(Preference preference, Object newValue)
-            {
-                return true;
-            }
-        });
-        */
     }
+
+
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
     {
@@ -104,6 +161,8 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
             pref.setSummary(sharedPreferences.getString(key,"default"));
         }
     }
+
+
     @Override
     protected void onResume() {
         super.onResume();

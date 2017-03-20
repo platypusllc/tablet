@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:defaultValue="@string/default_vehicle_type"
+        android:dialogTitle="Vehicle Type"
+        android:title="Vehicle Type"
+        android:entries="@array/pref_vehicle_type_entries"
+        android:entryValues="@array/pref_vehicle_type_values"
+        android:key="pref_vehicle_type"
+        android:summary="Set the type of Platypus vehicle that is in use"
+        />
+
+    <ListPreference
+        android:defaultValue="@string/default_speed"
+        android:dialogTitle="Vehicle Speed"
+        android:title="Vehicle Speed"
+        android:entries="@array/pref_speed_entries"
+        android:entryValues="@array/pref_speed_values"
+        android:key="pref_vehicle_speed"
+        android:summary="Set the relative speed of the vehicle"
+        />
+
+
     <PreferenceCategory
         android:key="pref_ipstuff"
-        android:title="App Prefrences">
+        android:title="WiFi Preferences">
 
         <EditTextPreference
             android:defaultValue="192.168.1.250"
@@ -17,10 +39,12 @@
 
     </PreferenceCategory>
 
+    <!--
     <PreferenceCategory
         android:key="pref_waypoint_file"
         android:title="Waypoint Files">
     </PreferenceCategory>
+    -->
 
     <PreferenceCategory
         android:key="pref_tablet_options"
@@ -46,7 +70,6 @@
             android:defaultValue="true"
             android:summary="Save last location"
             android:key="pref_save_location"/>
-            <!--android:Title="Save last location?"-->
 
     </PreferenceCategory>
     <PreferenceCategory
@@ -79,10 +102,10 @@
             />
     </PreferenceCategory>
 
-
+    <!-- CUSTOM PIDs -->
     <PreferenceCategory
         android:key="pref_pids_thrust"
-        android:title="Thrust PIDS">
+        android:title="Custom Thrust PIDS">
         <EditTextPreference
             android:key="pref_pid_thrust_p"
             android:summary="p"
@@ -96,10 +119,9 @@
             android:summary="d"
             android:title="Thrust D Value"/>
     </PreferenceCategory>
-
     <PreferenceCategory
         android:key="pref_pids_rudder"
-        android:title="Rudder PIDS">
+        android:title="Custom Rudder PIDS">
         <EditTextPreference
             android:key="pref_pid_rudder_p"
             android:summary="p"
@@ -113,6 +135,10 @@
             android:summary="d"
             android:title="Rudder D Value"/>
     </PreferenceCategory>
+
+
+    <!-- SLOW PIDs -->
+    <!--
     <PreferenceCategory
         android:key="pref_pids_low_thrust"
         android:title="Low Thrust PIDS">
@@ -129,16 +155,17 @@
             android:summary="d"
             android:title="Low Thrust D Value"/>
     </PreferenceCategory>
-
     <PreferenceCategory
         android:key="pref_pids_low_rudder"
-        android:title="Low Rudder PIDS">
+        android:title="Low Rudder PIDS"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content">
         <EditTextPreference
             android:key="pref_pid_low_rudder_p"
             android:summary="p"
             android:title="Low Rudder P Value"/>
         <EditTextPreference
-            android:key="pref_pid_low_rudder_i"
+            android:key="pref_pid_low_rudder_i
             android:summary="i"
             android:title="Low Rudder I Value"/>
         <EditTextPreference
@@ -146,26 +173,7 @@
             android:summary="d"
             android:title="Low Rudder D Value"/>
     </PreferenceCategory>
-
-    <PreferenceCategory
-        android:key="pref_sensor"
-        android:title="Sensor Types">
-
-        <EditTextPreference
-            android:key="pref_sensor_one"
-            android:summary="p"
-            android:title="Sensor One"/>
-        <EditTextPreference
-            android:key="pref_sensor_two"
-            android:summary=""
-            android:title="Sensor Two"/>
-        <EditTextPreference
-            android:key="pref_sensor_three"
-            android:summary=""
-            android:title="Sensor Three"/>
-
-
-    </PreferenceCategory>
+    -->
 
     <PreferenceCategory
         android:key="pref_battery_warnings"
