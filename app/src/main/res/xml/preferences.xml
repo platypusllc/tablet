@@ -167,4 +167,18 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:key="pref_battery_warnings"
+        android:title="Battery Warnings">
+
+        <EditTextPreference
+            android:key="pref_voltage_alert"
+            android:summary=""
+            android:title="Battery voltage threshold for quiet alerts" />
+        <EditTextPreference
+            android:key="pref_voltage_warning"
+            android:summary=""
+            android:title="Battery voltage threshold for loud alerts" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

@@ -54,9 +54,8 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     public static final String KEY_PREF_PID_LOW_RUDDER_I= "pref_pid_low_rudder_i";
     public static final String KEY_PREF_PID_LOW_RUDDER_D= "pref_pid_low_rudder_d";
 
-    public static final String KEY_PREF_SENSOR1 = "pref_sensor_one";
-    public static final String KEY_PREF_SENSOR2 = "pref_sensor_two";
-    public static final String KEY_PREF_SENSOR3 = "pref_sensor_three";
+    public static final String KEY_PREF_VOLTAGE_ALERT = "pref_voltage_alert";
+    public static final String KEY_PREF_VOLTAGE_WARNING = "pref_voltage_warning";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

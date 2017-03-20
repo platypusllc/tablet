@@ -273,6 +273,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   double[] low_rPID = {.35, 0, .15};
   double[] rPID = {1, 0, .2};
 
+  double battery_voltage = 16.0;
+
   private UtmPose _pose;
   private UtmPose[] wpPose = null, tempPose = null;
   private int N_waypoint = 0;
@@ -1114,6 +1116,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             battery.setText(batteries[0]);
             battery.setTextColor(isAverage(Data, batteries[0]));
             double value = (Double.parseDouble(batteries[0]) + getAverage(Data)) / 2;
+
+            battery_voltage = Double.parseDouble(batteries[0]);
+
+
             //Log.i(logTag,"Average = "+ value);
 
             editor.putString(Data.type.toString(), Double.toString(value));
