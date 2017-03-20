@@ -189,7 +189,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Button grabsampler3 = null;
     Button grabsampler4 = null;
 
-  TextView sensorData1 = null;
+    TextView winchHeightText = null;
+    double recWinchHeight = 0;
+
+    TextView sensorData1 = null;
   TextView sensorData2 = null;
   TextView sensorData3 = null;
 
@@ -389,7 +392,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       sensorPodSub = (Button) this.findViewById(R.id.sensorPodSub);
       sensorPodZero = (Button) this.findViewById(R.id.sensorPodZero);
 
-
+      winchHeightText = (TextView) this.findViewById(R.id.winchHeight);
     mapInfo.setText("Map Information \n Nothing Pending");
 
      //getGrabSampler();
@@ -1242,7 +1245,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       networkRun = new Runnable() {
           @Override
           public void run() {
-
+              double empty[] = {0,1};
+              sendPID(3,empty);
               grabSamplerStates = getGrabSampler();
               if (currentBoat != null) {
         //        System.out.println("do in background RUN");
@@ -1288,11 +1292,31 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                       Log.i(waypointLogTag,"Failed to stop waypoints");
 
                     }
-                  });
-                stopWaypoints = false;
+                });
+                  stopWaypoints = false;
               }
-              old_thrust = thrustTemp;
-              old_rudder = rudderTemp;
+                  old_thrust = thrustTemp;
+                  old_rudder = rudderTemp;
+
+
+
+                  currentBoat.returnServer().getGains(3, new FunctionObserver<double[]>() {
+                      @Override
+                      public void completed(double[] doubles) {
+                          //Log.i(logTag, "PID: " + doubles[0]);
+                          System.out.println("Depth is" + doubles[0]);
+                          recWinchHeight = doubles[0];
+                      }
+
+                      @Override
+                      public void failed(FunctionError functionError) {
+
+                      }
+                  });
+
+
+
+
 
               //what is this?
               if (tempPose != null) {
@@ -1485,7 +1509,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
 
       }
-
+        winchHeightText.setText("Winch Height: " + recWinchHeight + "m");
       //uncomment this
       //waypointsCompleted();
     }
@@ -2129,7 +2153,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     }
   }
-    public void sendPID(final int axis, final double[] k) {
+    public void sendPID(final int axis, final double[] k) { //something is calling this really often
          Thread thread = new Thread() {
             public void run() {
                 currentBoat.returnServer().setGains(axis, k, new FunctionObserver<Void>() {
@@ -3588,7 +3612,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         sensorPodAdd.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                winchHeight += 1;
+                winchHeight += .3;
                 double command[] = {winchHeight};
                 sendPID(axis,command);
             }
@@ -3596,7 +3620,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         sensorPodSub.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                winchHeight -= 1;
+                winchHeight -= .3
+                ;
 
                 double command[] = {winchHeight};
                 sendPID(axis,command);
