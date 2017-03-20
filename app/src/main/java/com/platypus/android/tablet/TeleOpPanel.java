@@ -305,9 +305,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   String sensorLogTag = "Sensor";
   String waypointLogTag = "Sensor";
 
-    ////////////////////////////////////////
-    ////////////////////////////////////////
-
   protected void onCreate(final Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.setContentView(R.layout.tabletlayoutswitch);
@@ -349,7 +346,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //Create folder for the first time if it does not exist
     File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
 //    File waypointDir = new File(getFilesDir() + "/waypoints"); //FOLDER CALLED WAYPOINTS
-    if (waypointDir.exists() == false)
+    if (!waypointDir.exists())
     {
         waypointDir.mkdir();
     }
@@ -395,7 +392,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             startDrawWaypoints = startDraw;
             startDraw = false;
 
-            if (startDraw == false) {
+            if (!startDraw) {
               drawPoly.setBackgroundResource(R.drawable.draw_icon2);
             } else {
               drawPoly.setBackgroundResource(R.drawable.draw_icon);
@@ -2192,29 +2189,30 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           //if (currentBoat.isConnected() == true) {
           if (currentBoat.getConnected() == true) {
             checktest = true;
-            JSONObject JPose = new JSONObject();
-            System.out.println("before if wp is: " + waypointList.size());
+            Log.i(logTag, "before if wp is: " + waypointList.size());
             try
-              {
+            {
                 Thread.currentThread().sleep(100);
-              }
+            }
             catch(Exception e)
-              {
+            {
 
-              }
+            }
             if (boatPath.getPoints() == null)
-              {
-                System.out.println("null object dumbass fix this later");
+            {
+                Log.e(logTag, "TeleOpPanel.startWaypoints():  boatPath.getPoints() is null");
                 return;
-              }
+            }
             waypointList = boatPath.getPoints();
-            if (waypointList.size() > 0) {
+            if (waypointList.size() > 0)
+            {
               //Convert all UTM to latlong
               UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
               waypointStatus = tempUtm.toString();
 
               wpPose = new UtmPose[waypointList.size()];
-              synchronized (_waypointLock) {
+              synchronized (_waypointLock)
+              {
                 //wpPose[0] = new UtmPose(tempUtm.pose, tempUtm.origin);
                 for (int i = 0; i < waypointList.size(); i++) {
                   wpPose[i] = convertLatLngUtm(waypointList.get(i));
@@ -2277,7 +2275,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                   }
                 });
-              System.out.println("before if wp is: " + waypointList.size());
+              Log.i(logTag, "startWaypoints():  before if wp is: " + waypointList.size());
             }
             else {
               runOnUiThread(new Runnable() {
@@ -2417,12 +2415,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                       }
                     });
                   startDraw = false;
-                  if (waypointLayoutEnabled == false) {
+                  if (waypointLayoutEnabled == false)
+                  {
                     drawPoly.setClickable(false);
                   }
 
-                } else {
-                  if (waypointLayoutEnabled == false) {
+                }
+                else
+                {
+                  if (waypointLayoutEnabled == false)
+                  {
                     drawPoly.setClickable(true);
                   }
                 }
@@ -2589,14 +2591,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
               SharedPreferences.Editor editor = sharedPref.edit();
               String item = String.valueOf(speed_spinner.getSelectedItem());
-              Log.i(logTag, "spinner item = " + item);
               switch (item)
               {
                   case "Slow":
                       editor.putString(SettingsActivity.KEY_PREF_SPEED, "SLOW");
                       break;
                   case "Medium":
-                      Log.i(logTag, "set it to medium, you fool!");
                       editor.putString(SettingsActivity.KEY_PREF_SPEED, "MEDIUM");
                       break;
                   case "Fast":
