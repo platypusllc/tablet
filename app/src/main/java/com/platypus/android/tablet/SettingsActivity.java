@@ -25,18 +25,8 @@ import static com.platypus.android.tablet.R.id.map;
 
 public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-
     private static TeleOpPanel tpanel;
-    public static final void set_TeleOpPanel(TeleOpPanel tpanel_)
-    {
-        tpanel = tpanel_;
-    }
-
-    // TODO: TeleOpPanel sendPID button looks at preferences
-    //       1) see vehicle type
-    //       2) see speed (slow, med, fast, custom)
-    //       3) based on those two things, it sets PID values hardcoded in TeleOpPanel
-
+    public static final void set_TeleOpPanel(TeleOpPanel tpanel_) { tpanel = tpanel_;}
 
     public static final String KEY_PREF_VEHICLE_TYPE = "pref_vehicle_type";
     public static final String KEY_PREF_SPEED = "pref_vehicle_speed";
@@ -62,16 +52,9 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     public static final String KEY_PREF_PID_RUDDER_I= "pref_pid_rudder_i";
     public static final String KEY_PREF_PID_RUDDER_D= "pref_pid_rudder_d";
 
-    public static final String KEY_PREF_PID_LOW_THRUST_P = "pref_pid_low_thrust_p";
-    public static final String KEY_PREF_PID_LOW_THRUST_I= "pref_pid_low_thrust_i";
-    public static final String KEY_PREF_PID_LOW_THRUST_D= "pref_pid_low_thrust_d";
-
-    public static final String KEY_PREF_PID_LOW_RUDDER_P = "pref_pid_low_rudder_p";
-    public static final String KEY_PREF_PID_LOW_RUDDER_I= "pref_pid_low_rudder_i";
-    public static final String KEY_PREF_PID_LOW_RUDDER_D= "pref_pid_low_rudder_d";
-
     public static final String KEY_PREF_VOLTAGE_ALERT = "pref_voltage_alert";
-    public static final String KEY_PREF_VOLTAGE_WARNING = "pref_voltage_warning";
+    public static final String KEY_PREF_VOLTAGE_ALARM = "pref_voltage_alarm";
+    public static final String KEY_PREF_SNOOZE = "pref_snooze";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +67,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
         restore_defaults_button.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                // TODO: change the PID defaults based on vehicle type
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                 SharedPreferences.Editor editor = sharedPref.edit();
                 String vehicle_type = sharedPref.getString(KEY_PREF_VEHICLE_TYPE, "PROP");
@@ -118,8 +100,10 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
                     default:
                         break;
                 }
-
                 editor.putString(KEY_PREF_COMMAND_RATE, "500");
+                editor.putString(KEY_PREF_VOLTAGE_ALERT, "15.0");
+                editor.putString(KEY_PREF_VOLTAGE_ALARM, "14.0");
+                editor.putString(KEY_PREF_SNOOZE, "5");
                 editor.putBoolean(KEY_PREF_SAVE_MAP, true);
                 editor.apply();
                 editor.commit();
@@ -145,7 +129,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 
     }
 
-
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
     {
@@ -161,7 +144,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
             pref.setSummary(sharedPreferences.getString(key,"default"));
         }
     }
-
 
     @Override
     protected void onResume() {
