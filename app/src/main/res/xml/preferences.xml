@@ -136,45 +136,6 @@
             android:title="Rudder D Value"/>
     </PreferenceCategory>
 
-
-    <!-- SLOW PIDs -->
-    <!--
-    <PreferenceCategory
-        android:key="pref_pids_low_thrust"
-        android:title="Low Thrust PIDS">
-        <EditTextPreference
-            android:key="pref_pid_low_thrust_p"
-            android:summary="p"
-            android:title="Low Thrust P Value"/>
-        <EditTextPreference
-            android:key="pref_pid_low_thrust_i"
-            android:summary="i"
-            android:title="Low Thrust I Value"/>
-        <EditTextPreference
-            android:key="pref_pid_low_thrust_d"
-            android:summary="d"
-            android:title="Low Thrust D Value"/>
-    </PreferenceCategory>
-    <PreferenceCategory
-        android:key="pref_pids_low_rudder"
-        android:title="Low Rudder PIDS"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content">
-        <EditTextPreference
-            android:key="pref_pid_low_rudder_p"
-            android:summary="p"
-            android:title="Low Rudder P Value"/>
-        <EditTextPreference
-            android:key="pref_pid_low_rudder_i
-            android:summary="i"
-            android:title="Low Rudder I Value"/>
-        <EditTextPreference
-            android:key="pref_pid_low_rudder_d"
-            android:summary="d"
-            android:title="Low Rudder D Value"/>
-    </PreferenceCategory>
-    -->
-
     <PreferenceCategory
         android:key="pref_battery_warnings"
         android:title="Battery Warnings">
@@ -182,11 +143,18 @@
         <EditTextPreference
             android:key="pref_voltage_alert"
             android:summary=""
-            android:title="Battery voltage threshold for quiet alerts" />
+            android:title="Battery voltage threshold for quiet alerts (must be >= alarm voltage)" />
         <EditTextPreference
-            android:key="pref_voltage_warning"
+            android:key="pref_voltage_alarm"
             android:summary=""
-            android:title="Battery voltage threshold for loud alerts" />
+            android:title="Battery voltage threshold for loud alarms" />
+
+        <EditTextPreference
+            android:key="pref_snooze"
+            android:summary=""
+            android:title="Minutes to snooze the alerts/alarms"
+            />
+
     </PreferenceCategory>
 
 </PreferenceScreen>
