@@ -298,8 +298,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   String waypointFileName = "waypoints.txt";
 
   ArrayList<UtmPose> allWaypointsSent = new ArrayList<UtmPose>();
-  private Polyline Waypath_outline_layer;
-  private Polyline Waypath_top_layer;
+
+    /*ASDF*/
+  //private Polyline Waypath_outline_layer;
+  //private Polyline Waypath_top_layer;
+    ArrayList<Polyline> Waypath_outline = new ArrayList<>();
+    ArrayList<Polyline> Waypath_top = new ArrayList<>();
+
   boolean isFirstWaypointCompleted = false;
   public static final String PREF_NAME = "DataFile";
   private TabletLogger mlogger;
@@ -1615,9 +1620,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
                 num++;
               }
+              /*ASDF*/
             //Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-              Waypath_outline_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.BLACK).width(8));
-              Waypath_top_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.WHITE).width(5));
+              //Waypath_outline_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.BLACK).width(8));
+              //Waypath_top_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.WHITE).width(5));
 
             dialog.dismiss();
           }
@@ -2710,16 +2716,38 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
    * Not calling update transect
    *
    * */
+  private void remove_waypaths()
+  {
+      for (Polyline p : Waypath_outline)
+      {
+          mMapboxMap.removeAnnotation(p);
+          p.remove();
+      }
+      for (Polyline p : Waypath_top)
+      {
+          mMapboxMap.removeAnnotation(p);
+          p.remove();
+      }
+  }
+  private void add_waypaths()
+  {
+      ArrayList<ArrayList<LatLng>> point_pairs = boatPath.getPointPairs();
+      for (ArrayList<LatLng> pair : point_pairs)
+      {
+          Waypath_outline.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.BLACK).width(8)));
+          Waypath_outline.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.WHITE).width(5)));
+      }
+  }
   public void invalidate() {
-    if (!(Waypath_outline_layer == null || markerList == null))
-    {
-      mMapboxMap.removeAnnotation(Waypath_outline_layer);
-      mMapboxMap.removeAnnotation(Waypath_top_layer);
-      Waypath_outline_layer.remove();
-      Waypath_top_layer.remove();
-      mMapboxMap.removeAnnotations(markerList);
-    }
-    markerList.clear();
+      if (Waypath_outline.size() > 0)
+      {
+          remove_waypaths();
+      }
+      if (markerList != null)
+      {
+          mMapboxMap.removeAnnotations(markerList);
+          markerList.clear();
+      }
     IconFactory mIconFactory = IconFactory.getInstance(this);
     Drawable mboundry = ContextCompat.getDrawable(this, R.drawable.boundary);
     final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
@@ -2730,16 +2758,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       System.out.println("null" + (boatPath.getPoints()==null));
       System.out.println("null" + (mMapboxMap==null));
 
+      /*ASDF*/
+
     if (boatPath != null && boatPath.getPoints().size() > 0) {
-      //Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.GREEN).width(5));
-        Waypath_outline_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.BLACK).width(8));
-        Waypath_top_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.WHITE).width(5));
+        add_waypaths();
     }
-    if (touchpointList.size() == 0 && Waypath_outline_layer != null) {
-        Waypath_outline_layer.remove();
-        Waypath_top_layer.remove();
-      mMapboxMap.removeAnnotation(Waypath_outline_layer);
-        mMapboxMap.removeAnnotation(Waypath_top_layer);
+    if (touchpointList.size() == 0 && Waypath_outline.size() > 0) {
+        remove_waypaths();
     }
 
     if (boatPath instanceof Region) {

@@ -15,8 +15,7 @@ private final double ONEMETER = transectDistance/10;
   private static final double LON_D_PER_M = 1.0 / 90000.0;
   private static final double LAT_D_PER_M = 1.0 / 110000.0;
 
-
-	//Dont quickhull points, keep them origina
+	//Dont quickhull points, keep them original
     private ArrayList<LatLng> originalPoints = new ArrayList<LatLng>();
   //Points will be the original points																																	 
   private ArrayList<LatLng> regionPoints = new ArrayList<LatLng>();
@@ -36,19 +35,6 @@ private final double ONEMETER = transectDistance/10;
     updateRegionPoints();
   }
 
-  public Region(Path path)
-  {
-    points = path.getPoints();
-    originalPoints = points;
-    regionType = AreaType.SPIRAL;
-    updateRegionPoints();
-  }
-
-  public void setAreaType(AreaType type)
-  {
-    regionType = type;
-    updateRegionPoints();
-  }
   public AreaType getAreaType()
   {
     return regionType;
@@ -68,6 +54,20 @@ private final double ONEMETER = transectDistance/10;
   {
     return regionPoints;
   }
+
+  public ArrayList<ArrayList<LatLng>> getPointPairs()
+  {
+    ArrayList<ArrayList<LatLng>> point_pairs = new ArrayList<>();
+    for (int i = 0; i < regionPoints.size()-1; i++)
+    {
+      ArrayList<LatLng> pair = new ArrayList<>();
+      pair.add(regionPoints.get(i));
+      pair.add(regionPoints.get(i+1));
+      point_pairs.add(pair);
+    }
+    return point_pairs;
+  }
+
   public ArrayList<LatLng> getOriginalPoints()
   {
     return originalPoints;
