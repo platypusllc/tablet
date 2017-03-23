@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
 //TODO wtf is causing the random lines across the polygon that occur in spiral mode.
-//TODO ok caused by the previous polygon has poitns that get added for some reason
+//TODO ok caused by the previous polygon has points that get added for some reason
 public class Region extends Path
 {
 
@@ -21,13 +21,6 @@ private final double ONEMETER = transectDistance/10;
   //Points will be the original points																																	 
   private ArrayList<LatLng> regionPoints = new ArrayList<LatLng>();
 
-
-//  public Region(ArrayList<LatLng> list)
-//  {
-//    setPoints(list);
-//    originalPoints = points;
-//    updateRegionPoints();
-//  }
   public Region(ArrayList<LatLng> list, AreaType type) {
     setPoints(list);
     originalPoints = points;
@@ -43,15 +36,6 @@ private final double ONEMETER = transectDistance/10;
     updateRegionPoints();
   }
 
-
-  //  public Region(Path path, AreaType type)
-//  {
-//    points = path.getPoints();
-//    originalPoints = points;
-//    regionType = type;
-//
-//    updateRegionPoints();
-//  }
   public Region(Path path)
   {
     points = path.getPoints();
@@ -60,12 +44,6 @@ private final double ONEMETER = transectDistance/10;
     updateRegionPoints();
   }
 
-//  public void setAreaType(AreaType type)
-//  {
-//    //quickHull();
-//    regionType = type;
-//    updateRegionPoints();
-//  }
   public void setAreaType(AreaType type)
   {
     regionType = type;
@@ -123,27 +101,7 @@ private final double ONEMETER = transectDistance/10;
       //getLawnmowerPath(10*1/90000);
     }
   }
-//  public void setPoints(ArrayList<LatLng> list)
-//  {
-//    points = list;
-//    updateRegionPoints();
-//  }
-//  public void addPoint(LatLng point)
-//  {
-//    points.add(point);
-//    updateRegionPoints();
-//  }
-//  public boolean removePoint(int index)
-//  {
-//		points.remove(index);
-//		updateRegionPoints();
-//		return true;
-//  }
-//  public void clearPoints()
-//  {
-//    points.clear();
-//    regionPoints.clear();
-//  }
+
   public boolean isEmpty()
   {
     return this.points.isEmpty() || regionPoints.isEmpty();

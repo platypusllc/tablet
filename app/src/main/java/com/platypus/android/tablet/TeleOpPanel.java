@@ -298,7 +298,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   String waypointFileName = "waypoints.txt";
 
   ArrayList<UtmPose> allWaypointsSent = new ArrayList<UtmPose>();
-  private Polyline Waypath;
+  private Polyline Waypath_outline_layer;
+  private Polyline Waypath_top_layer;
   boolean isFirstWaypointCompleted = false;
   public static final String PREF_NAME = "DataFile";
   private TabletLogger mlogger;
@@ -1614,7 +1615,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
                 num++;
               }
-            Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+            //Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
+              Waypath_outline_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.BLACK).width(8));
+              Waypath_top_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.WHITE).width(5));
 
             dialog.dismiss();
           }
@@ -2708,13 +2711,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
    *
    * */
   public void invalidate() {
-    if (!(Waypath == null || markerList == null)) {
-      mMapboxMap.removeAnnotation(Waypath);
-      Waypath.remove();
+    if (!(Waypath_outline_layer == null || markerList == null))
+    {
+      mMapboxMap.removeAnnotation(Waypath_outline_layer);
+      mMapboxMap.removeAnnotation(Waypath_top_layer);
+      Waypath_outline_layer.remove();
+      Waypath_top_layer.remove();
       mMapboxMap.removeAnnotations(markerList);
-      //            for (Marker i : markerList) {
-      //                i.remove();
-      //            }
     }
     markerList.clear();
     IconFactory mIconFactory = IconFactory.getInstance(this);
@@ -2728,11 +2731,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       System.out.println("null" + (mMapboxMap==null));
 
     if (boatPath != null && boatPath.getPoints().size() > 0) {
-      Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.GREEN).width(5));
+      //Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.GREEN).width(5));
+        Waypath_outline_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.BLACK).width(8));
+        Waypath_top_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.WHITE).width(5));
     }
-    if (touchpointList.size() == 0 && Waypath != null) {
-      Waypath.remove();
-      mMapboxMap.removeAnnotation(Waypath);
+    if (touchpointList.size() == 0 && Waypath_outline_layer != null) {
+        Waypath_outline_layer.remove();
+        Waypath_top_layer.remove();
+      mMapboxMap.removeAnnotation(Waypath_outline_layer);
+        mMapboxMap.removeAnnotation(Waypath_top_layer);
     }
 
     if (boatPath instanceof Region) {
