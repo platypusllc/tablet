@@ -13,7 +13,6 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.ScheduledFuture;
@@ -31,8 +30,6 @@ import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-
 
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.MarkerView;
@@ -2849,30 +2846,30 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 switch (vehicle_speed)
                 {
                     case "SLOW":
-                        tPID[0] = 0.06;
+                        tPID[0] = 0.07;
                         tPID[1] = 0.0;
                         tPID[2] = 0.0;
-                        rPID[0] = 0.35;
+                        rPID[0] = 0.45;
                         rPID[1] = 0;
-                        rPID[2] = 0.15;
+                        rPID[2] = 0.45;
                         break;
 
                     case "MEDIUM":
                         tPID[0] = 0.2;
                         tPID[1] = 0.0;
                         tPID[2] = 0.0;
-                        rPID[0] = 1.0;
+                        rPID[0] = 0.8;
                         rPID[1] = 0.0;
-                        rPID[2] = 0.2;
+                        rPID[2] = 0.8;
                         break;
 
                     case "FAST":
-                        tPID[0] = 0.5;
+                        tPID[0] = 0.6;
                         tPID[1] = 0.0;
                         tPID[2] = 0.0;
-                        rPID[0] = 1.0;
+                        rPID[0] = 0.7;
                         rPID[1] = 0;
-                        rPID[2] = 0.4;
+                        rPID[2] = 0.9;
                         break;
 
                     case "CUSTOM":
