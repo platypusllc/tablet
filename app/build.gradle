@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.github.triplet.play'
 apply plugin: 'com.google.gms.google-services'
 
 task accessToken {
@@ -30,19 +31,26 @@ repositories {
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
+    playAccountConfigs {
+        release {
+            jsonFile = file(System.getenv("ANDROID_PLAY_JSON_FILE") ?: ".")
+        }
+    }
+    signingConfigs {
+        release {
+            keyAlias System.getenv("ANDROID_RELEASE_KEY_ALIAS") ?: "EXAMPLE_ALIAS"
+            keyPassword System.getenv("ANDROID_RELEASE_KEY_PASSWORD") ?: "EXAMPLE_PASSWORD"
+            storeFile file(System.getenv("ANDROID_RELEASE_STORE_FILE") ?: ".")
+            storePassword System.getenv("ANDROID_RELEASE_STORE_PASSWORD") ?: "EXAMPLE_PASSWORD"
+            v2SigningEnabled true
+        }
+    }
     defaultConfig {
         applicationId "com.platypus.android.tablet"
         minSdkVersion 21
         targetSdkVersion 25
         multiDexEnabled true
-    }
-    dexOptions {
-        preDexLibraries = false
-    }
-    packagingOptions {
-        exclude 'META-INF/ASL2.0'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/NOTICE'
+        playAccountConfig = playAccountConfigs.release
     }
     buildTypes {
         release {
@@ -51,7 +59,22 @@ android {
             signingConfig getSigningConfig()
         }
     }
+    dexOptions {
+        javaMaxHeapSize '4g'
+        // Skip pre-dexing when running on Travis CI or when disabled via -Dpre-dex=false.
+        // See: https://guides.codepath.com/android/Setting-up-Travis-CI
+        preDexLibraries = preDexEnabled && !travisBuild
+    }
+    packagingOptions {
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+    }
+}
 
+play {
+    track = 'alpha'
+    untrackOld = true
 }
 
 dependencies {
