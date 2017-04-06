@@ -19,31 +19,17 @@ gradle.projectsEvaluated {
     preBuild.dependsOn('accessToken')
 }
 
-ext {
-    supportLibVersion = '24.2.1'
-}
-
-
-
 android {
     compileSdkVersion 25
-    buildToolsVersion '25'
+    buildToolsVersion "25.0.2"
     defaultConfig {
         applicationId "com.platypus.android.tablet"
         minSdkVersion 21
-        targetSdkVersion 21
+        targetSdkVersion 25
         multiDexEnabled true
     }
     dexOptions {
         preDexLibraries = false
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-        }
-    }
-    productFlavors {
     }
     packagingOptions {
         exclude 'META-INF/ASL2.0'
@@ -55,46 +41,27 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig getSigningConfig()
-            applicationVariants.all { variant ->
-                variant.outputs.each { output ->
-                    def date = new Date();
-                    //def formattedDate = date.format('yyyyMMddHHmmss')
-                    output.outputFile = new File(output.outputFile.parent,
-                            output.outputFile.name.replace("app-release", "platypus-Tablet")
-                            //for Debug use output.outputFile = new File(output.outputFile.parent,
-                            //                             output.outputFile.name.replace("-debug", "-" + formattedDate)
-                    )
-                }
-            }
         }
     }
 
 }
-dependencies {
 
-    //compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.0-beta.2@aar') {
-    //compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.1.1@aar'){
+dependencies {
     compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.0@aar') {
         transitive = true
     }
-
-    //transitive = true
-    //}
     compile files('libs/activation.jar')
     compile files('libs/mail.jar')
     compile files('libs/additionnal.jar')
-    // compile files('libs/mapbox-android-sdk-0.7.4.jar')
     compile files('libs/microlog4android-1.0.0.jar')
     compile files('libs/jscience.jar')
     compile files('libs/platypus-core.jar')
-    //compile 'com.google.firebase:firebase-crash:9.4.0'
-
     compile 'com.android.support:support-v4:25.0.1'
+    //compile 'com.google.firebase:firebase-crash:9.4.0'
     //compile 'com.firebase:firebase-client-android:2.3.1'
 }
 
 repositories {
     mavenCentral()
-    maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
 }
 //apply plugin: 'com.google.gms.google-services'
