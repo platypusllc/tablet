@@ -1,2 +1,0 @@
-if you get a runProguard missing error or something in your "app" file? find out what this is
-change runProguard to minifyEnable
