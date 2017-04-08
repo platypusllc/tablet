@@ -22,8 +22,7 @@ env:
   # MAPBOX_ACCESS_TOKEN
   - secure: WGeOULBCPGsj6blUyxfxtTtlXVK9Lki+lmJJNEg56JYbP9eVCdGsQeQjtEZYg3gCwOZAQNqofCQSw2qAyLo50YZAYXxSTUXltoHMb9+9ymhyoFpWxdMEBn1tz3RPq1A6eT/RlNV5B9MOdAoGzetaK1u8018gvvF1nye6uUsSRlMuP6Y9gtTXhh8HTnKVQeYaAVoUptX4bdKteX+JqMzO2gIAMD1WI8mhdrhoYBOqrIQkEbCji9mjnzGsrO5xHQ6EmsARoEY45Tf4E9oAy7FPPHRHIqGfURvOJBuemoRp9KORJp9b4KEJE+MgCEP3KDF1jTzq355+PzWL4TZRt3vUgoFgcuoaQVDo65IU1gnmobK37QpV9adbgLwclI0zFGxuuEAPZ4qFk7yp3qS50WLDvPCyDTduqzb1sU5XSQKZzm3j0fI9wnwXLRiOk1ZwFDCUP8K6BAs1YV6RR702CQmJc/PxoeUNPpifERlapzyfZeTWsYi1my/FIuuYMw0bdo0Pe0J/c6I6fY2R90sg4rKW7Gm8gx+NR3IQ3HwdDnZkiNL1HaUdbwU6rJ4o2GpnZjbilAqQeySBZ/98ieNskRQmJgKhuHT3IZsQlLvdkG/LXhc7fNM/5y7dXc5GL52Lh67D/ujCuli/11pd4jY3/fg+DCJCSjoLLoJ29Tc0Vv/AdxQ=
 before_install:
-- openssl aes-256-cbc -K $encrypted_3a18627f5297_key -iv $encrypted_3a18627f5297_iv
-  -in secrets.tar.enc -out secrets.tar -d
+- openssl aes-256-cbc -K $encrypted_abffbe2e7324_key -iv $encrypted_abffbe2e7324_iv -in secrets.tar.enc -out secrets.tar -d
 - tar xvf secrets.tar
 script: "./gradlew build check"
 deploy:
