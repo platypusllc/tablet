@@ -64,6 +64,9 @@ android {
         // See: https://guides.codepath.com/android/Setting-up-Travis-CI
         preDexLibraries = preDexEnabled && !travisBuild
     }
+    lintOptions {
+        abortOnError false
+    }
     packagingOptions {
         exclude 'META-INF/ASL2.0'
         exclude 'META-INF/LICENSE'
