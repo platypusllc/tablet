@@ -48,6 +48,8 @@ android {
         applicationId "com.platypus.android.tablet"
         minSdkVersion 21
         targetSdkVersion 25
+        versionCode 1
+        versionName "1.0.0"
         multiDexEnabled true
         playAccountConfig = playAccountConfigs.release
     }
