@@ -13,8 +13,7 @@ import com.platypus.crw.data.Twist;
 import com.platypus.crw.data.Utm;
 import com.platypus.crw.data.UtmPose;
 import com.platypus.crw.udp.UdpVehicleServer;
-
-import robotutils.Pose3D;
+import com.platypus.crw.data.Pose3D;
 
 
 public class Boat

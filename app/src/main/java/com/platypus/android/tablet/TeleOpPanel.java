@@ -6,7 +6,6 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -31,8 +30,6 @@ import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-
 
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.MarkerView;
@@ -90,7 +87,7 @@ import com.platypus.crw.CrwNetworkUtils;
 import com.platypus.crw.SensorListener;
 import com.platypus.crw.VehicleServer;
 import com.platypus.crw.data.SensorData;
-import robotutils.Pose3D;
+import com.platypus.crw.data.Pose3D;
 import android.app.Activity;
 import android.content.Context;
 
@@ -135,7 +132,6 @@ import android.app.Dialog;
 
 import android.view.View.OnClickListener;
 import com.platypus.android.tablet.Joystick.*;
-
 
 /*
   TODO somewhere invalidate is not getting called.
@@ -2058,11 +2054,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
               Thread thread = new Thread() {
                   public void run() {
-                      currentBoat.returnServer().getNumSensors(new FunctionObserver<Integer>() {
+                      currentBoat.returnServer().getWaypointsIndex(new FunctionObserver<Integer>() {
                           @Override
                           public void completed(Integer waypoint_index) {
                               Log.i(logTag, String.format("Boat current waypoint i = %d", waypoint_index));
-                                current_waypoint_index = waypoint_index;
+                              current_waypoint_index = waypoint_index;
                           }
 
                           @Override
