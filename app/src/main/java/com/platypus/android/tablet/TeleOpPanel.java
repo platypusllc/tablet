@@ -1,5 +1,6 @@
 package com.platypus.android.tablet;
 
+import android.*;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -7,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -24,6 +26,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -296,6 +299,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   protected void onCreate(final Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.setContentView(R.layout.tabletlayoutswitch);
+
+      // Check for location and file write permissions.
+      if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+              != PackageManager.PERMISSION_GRANTED ||
+              ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                      != PackageManager.PERMISSION_GRANTED) {
+
+          // Request location and file write permissions.
+          ActivityCompat.requestPermissions(this, new String[]{
+                  android.Manifest.permission.ACCESS_FINE_LOCATION,
+                  android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+          }, 0);
+      }
 
     ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
     linlay = (RelativeLayout) this.findViewById(R.id.linlay);
@@ -993,27 +1009,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     @Override
       protected String doInBackground(String... arg0) {
 
-      currentBoat.isConnected();
+      //currentBoat.isConnected();
       networkRun = new Runnable() {
           @Override
           public void run() {
             if (currentBoat != null) {
               connected = currentBoat.getConnected();
 
-              //if (currentBoat.getConnected() == true)
-              {
-                if (old_thrust != thrustTemp || old_rudder!=rudderTemp) {
-                    updateVelocity(currentBoat, new FunctionObserver<Void>() {
-                        @Override
-                          public void completed(Void aVoid) {
-                          }
-                        @Override
-                          public void failed(FunctionError functionError) {
-//													System.out.println("ending update velocity function observer: " + System.currentTimeMillis());
-                        }
-                      });
-                }
-              }
+
+                updateVelocity(currentBoat, new FunctionObserver<Void>() {
+                    @Override
+                      public void completed(Void aVoid) {
+                      }
+                    @Override
+                      public void failed(FunctionError functionError) {
+                        //System.out.println("ending update velocity function observer: " + System.currentTimeMillis());
+                    }
+                  });
+
               if (stopWaypoints == true) {
                 currentBoat.returnServer().stopWaypoints(new FunctionObserver<Void>() {
                     @Override
