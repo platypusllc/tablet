@@ -4,6 +4,7 @@ package com.platypus.android.tablet;
  */
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
+
 import java.util.ArrayList;
 
 

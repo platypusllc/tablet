@@ -1,8 +1,8 @@
 package com.platypus.android.tablet.Path;
 
-import java.util.ArrayList;
-
 import com.mapbox.mapboxsdk.geometry.LatLng;
+
+import java.util.ArrayList;
 
 //TODO wtf is causing the random lines across the polygon that occur in spiral mode.
 //TODO ok caused by the previous polygon has poitns that get added for some reason
