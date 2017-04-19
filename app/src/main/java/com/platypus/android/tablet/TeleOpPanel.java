@@ -2717,12 +2717,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     IconFactory mIconFactory = IconFactory.getInstance(this);
     Drawable mboundry = ContextCompat.getDrawable(this, R.drawable.boundary);
     final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
-    //touchpointList = boatPath.getQuickHullList();
-    boatPath.updateRegionPoints();
-      System.out.println("nullhaha");
-      System.out.println("null" + (boatPath==null));
-      System.out.println("null" + (boatPath.getPoints()==null));
-      System.out.println("null" + (mMapboxMap==null));
+
+    if (boatPath != null)
+    {
+        boatPath.updateRegionPoints();
+    }
+    else
+    {
+        return;
+    }
 
     if (boatPath != null && boatPath.getPoints().size() > 0) {
       Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.GREEN).width(5));
