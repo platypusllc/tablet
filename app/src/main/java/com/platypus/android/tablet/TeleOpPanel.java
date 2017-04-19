@@ -303,7 +303,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   Date d = new Date();
   SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
-  private static final String logTag = TeleOpPanel.class.getName();
+  private static final String logTag = "TeleOpPanel"; //TeleOpPanel.class.getName();
   String sensorLogTag = "Sensor";
   String waypointLogTag = "Sensor";
 
@@ -1440,18 +1440,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   }
 
   public void LoadWaypointsFromFile(String filename) throws IOException {
-      //final File waypointFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + filename);//new File(getFilesDir() + "/waypoints.txt");
-      final File waypointFile = new File(Environment.getExternalStorageDirectory() + "/waypoints/" + filename);//new File(getFilesDir() + "/waypoints.txt");
+      final File waypointFile = new File(Environment.getExternalStorageDirectory() + "/waypoints/" + filename);
       try
       {
           touchpointList.clear();
-          boatPath.clearPoints();
+          if (boatPath != null) boatPath.clearPoints();
           invalidate();
       }
       catch(Exception e)
-      {}
-    //waypointFile.delete();
-    Scanner fileScanner = new Scanner(waypointFile); //Scans each//line of the file
+      {
+          Log.e(logTag, "LoadWaypointsFromFile error...");
+          Log.e(logTag, e.toString());
+      }
+
+    Scanner fileScanner = new Scanner(waypointFile); //Scans each line of the file
     final ArrayList<ArrayList<ILatLng>> waypointsaves = new ArrayList<ArrayList<ILatLng>>();
     final ArrayList<String> saveName = new ArrayList<String>();
     /* scans each line of the file as a waypoint save
@@ -1460,40 +1462,46 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
      * chose between arraylist later on
      */
 
-    if (waypointFile.exists()) {
-      while (fileScanner.hasNext()) {
+    if (waypointFile.exists())
+    {
+      while (fileScanner.hasNext())
+      {
         final ArrayList<ILatLng> currentSave = new ArrayList<ILatLng>();
         String s = fileScanner.nextLine();
-        //System.out.println(s);
+        Log.i(logTag, "fileScanner.nextLine():  " + s);
+
         final Scanner stringScanner = new Scanner(s);
 
-        //get save name
-        if (stringScanner.hasNext()) {
-          if (stringScanner.next().equals("\"")) { //found first "
+        //get save name (everything between quotes)
+        if (stringScanner.hasNext())
+        {
+          if (stringScanner.next().equals("\""))
+          { //found first "
             String currentdata = stringScanner.next();
             String name = currentdata;
-            while (!currentdata.equals("\"")) {
+            while (!currentdata.equals("\""))
+            {
               currentdata = stringScanner.next();
-              if (!currentdata.equals("\"")) {
+              if (!currentdata.equals("\""))
+              {
                 name = name + " " + currentdata;
               }
             }
-
             saveName.add(name);
           }
         }
-        while (stringScanner.hasNext()) {
-          // System.out.println(stringScanner.next());
-          //                    System.out.println(Double.parseDouble(stringScanner.next()) + " " + Double.parseDouble(stringScanner.next()));
 
+        while (stringScanner.hasNext())
+        {
           final double templat = Double.parseDouble(stringScanner.next());
           final double templon = Double.parseDouble(stringScanner.next());
-          ILatLng temp = new ILatLng() {
-              @Override
-              public double getLatitude() {
-                return templat;
+          Log.d(logTag, "load waypoints from file iteration");
+          Log.d(logTag, Double.toString(templat) + " " + Double.toString(templon));
 
-              }
+          ILatLng temp = new ILatLng()
+          {
+              @Override
+              public double getLatitude() { return templat;}
 
               @Override
               public double getLongitude() {
@@ -1504,12 +1512,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               public double getAltitude() {
                 return 0;
               }
-            };
-
+          };
           currentSave.add(temp);
-
         }
-        if (currentSave.size() > 0) { //make sure no empty arrays (throws offset of wpsaves also why this?!?!)
+        if (currentSave.size() > 0)
+        { //make sure no empty arrays
           waypointsaves.add(currentSave);
         }
         stringScanner.close();
@@ -1527,11 +1534,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                                                     TeleOpPanel.this,
                                                                     android.R.layout.select_dialog_singlechoice);
       wpsaves.setAdapter(adapter);
-      for (String s : saveName) {
+      for (String s : saveName)
+      {
         adapter.add(s);
-          adapter.notifyDataSetChanged();
+        adapter.notifyDataSetChanged();
       }
-      final int chosensave;
+
       wpsaves.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
           @Override
           public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
@@ -1548,7 +1556,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                   //delete object from list since update wont occur until you press load wp again
                   adapter.remove(adapter.getItem(position));
-                  try {
+                  try
+                  {
                     File inputFile = new File(getFilesDir() + "/waypoints.txt");
                     File tempFile = new File(getFilesDir() + "/tempwaypoints.txt");
 
@@ -1558,10 +1567,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     String lineToRemove = "\" " + saveName.get(position) + " \"";
                     String currentLine;
 
-                    while ((currentLine = reader.readLine()) != null) {
+                    while ((currentLine = reader.readLine()) != null)
+                    {
 
                       String trimmedLine = currentLine.trim();
-                      if (trimmedLine.contains(lineToRemove)) {
+                      if (trimmedLine.contains(lineToRemove))
+                      {
                         continue;
                       }
                       writer.write(currentLine + System.getProperty("line.separator"));
@@ -1569,7 +1580,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     writer.close();
                     reader.close();
                     tempFile.renameTo(inputFile);
-                  } catch (Exception e) {
+                  }
+                  catch (Exception e)
+                  {
                   }
                   confirmdialog.dismiss();
                 }
@@ -1600,25 +1613,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
             waypointList.clear();
             markerList.clear();
-            //System.out.println(currentselected);
-            //for (ArrayList<ILatLng> i : waypointsaves)
-            {
-              //System.out.println(i.size());
-            }
 
             int num = 1;
             for (ILatLng i : waypointsaves.get(currentselected)) //tbh not sure why there is a 1 offset but there is
-              {
-                //System.out.println(i.getLatitude() + " " + i.getLongitude());
+            {
                 markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude())).title(Integer.toString(num))));
                 waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
                 num++;
-              }
+            }
               /*ASDF*/
               // TODO: need to use updated polylines code here too
             //Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
               //Waypath_outline_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.BLACK).width(8));
               //Waypath_top_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.WHITE).width(5));
+
+            boatPath = new Path(waypointList); // also need to put things into boatPath
 
             dialog.dismiss();
           }
@@ -2210,7 +2219,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
             catch(Exception e)
             {
-
+            }
+            if (boatPath == null)
+            {
+                Log.e(logTag, "TeleOpPanel.startWaypoints():  boatPath is null");
+                return;
             }
             if (boatPath.getPoints() == null)
             {
@@ -2280,7 +2293,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               runOnUiThread(new Runnable() {
                   @Override
                   public void run() {
-                    System.out.println("wp list size: " + waypointList.size());
+                    Log.i(logTag, "wp list size: " + waypointList.size());
                     Toast.makeText(getApplicationContext(), "Please Select Waypoints", Toast.LENGTH_LONG).show();
                   }
                 });
@@ -2788,12 +2801,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     IconFactory mIconFactory = IconFactory.getInstance(this);
     Drawable mboundry = ContextCompat.getDrawable(this, R.drawable.boundary);
     final Icon Iboundry = mIconFactory.fromDrawable(mboundry);
-    //touchpointList = boatPath.getQuickHullList();
-    boatPath.updateRegionPoints();
-      System.out.println("nullhaha");
-      System.out.println("null" + (boatPath==null));
-      System.out.println("null" + (boatPath.getPoints()==null));
-      System.out.println("null" + (mMapboxMap==null));
+
+    if (boatPath != null)
+    {
+        boatPath.updateRegionPoints();
+    }
+    else
+    {
+        return;
+    }
 
     if (boatPath != null && boatPath.getPoints().size() > 0) {
         add_waypaths();
@@ -2836,8 +2852,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
   public void loadWayointFiles() throws IOException
   {
-      File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
-    //File waypointDir = new File(getFilesDir() + "/waypoints"); //FOLDER CALLED WAYPOINTS
+    File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
     if (waypointDir.exists() == false)
     {
       waypointDir.mkdir();
@@ -2869,7 +2884,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         adapter.add(i.getName());
         adapter.notifyDataSetChanged();
     }
-      fileList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+    fileList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
       @Override
       public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         currentselected = position; //Use a different variable, this is used by the list adapter in loading waypoints ..
@@ -2884,8 +2899,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         catch(Exception e)
         {
-          System.out.println("err loading file in waypoint file load");
-          System.out.println(e.toString());
+          Log.e(logTag, "err loading file in waypoint file load: ");
+          Log.e(logTag, e.toString());
         }
       }
     });
@@ -2916,30 +2931,30 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 switch (vehicle_speed)
                 {
                     case "SLOW":
-                        tPID[0] = 0.06;
+                        tPID[0] = 0.07;
                         tPID[1] = 0.0;
                         tPID[2] = 0.0;
-                        rPID[0] = 0.35;
+                        rPID[0] = 0.45;
                         rPID[1] = 0;
-                        rPID[2] = 0.15;
+                        rPID[2] = 0.45;
                         break;
 
                     case "MEDIUM":
                         tPID[0] = 0.2;
                         tPID[1] = 0.0;
                         tPID[2] = 0.0;
-                        rPID[0] = 1.0;
+                        rPID[0] = 0.8;
                         rPID[1] = 0.0;
-                        rPID[2] = 0.2;
+                        rPID[2] = 0.8;
                         break;
 
                     case "FAST":
-                        tPID[0] = 0.5;
+                        tPID[0] = 0.6;
                         tPID[1] = 0.0;
                         tPID[2] = 0.0;
-                        rPID[0] = 1.0;
+                        rPID[0] = 0.7;
                         rPID[1] = 0;
-                        rPID[2] = 0.4;
+                        rPID[2] = 0.9;
                         break;
 
                     case "CUSTOM":
