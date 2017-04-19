@@ -684,7 +684,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     touchpointList = boatPath.getQuickHullList();
                   }
                 }
-                  //System.out.println("tp list after quickhull: " + touchpointList.size());
                 invalidate();
               }
           });
@@ -1622,12 +1621,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 num++;
             }
               /*ASDF*/
-              // TODO: need to use updated polylines code here too
-            //Waypath = mMapboxMap.addPolyline(new PolylineOptions().addAll(waypointList).color(Color.GREEN).width(5));
-              //Waypath_outline_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.BLACK).width(8));
-              //Waypath_top_layer = mMapboxMap.addPolyline(new PolylineOptions().addAll(boatPath.getPoints()).color(Color.WHITE).width(5));
-
             boatPath = new Path(waypointList); // also need to put things into boatPath
+            remove_waypaths();
+            add_waypaths();
 
             dialog.dismiss();
           }
@@ -2072,7 +2068,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                           @Override
                           public void failed(FunctionError functionError) {
-                              Log.e(logTag, "Did not receive waypoint index");
+                              Log.w(logTag, "Did not receive waypoint index");
                           }
                       });
                   }
@@ -2746,10 +2742,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       });
   }
 
-  /*
-   * Not calling update transect
-   *
-   * */
   private void remove_waypaths()
   {
       for (Polyline p : Waypath_outline)
@@ -2769,6 +2761,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
   private void add_waypaths()
   {
+      if (boatPath == null) return;
       ArrayList<ArrayList<LatLng>> point_pairs = boatPath.getPointPairs();
       for (int i = 0; i < point_pairs.size(); i++)
       {
@@ -2777,14 +2770,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           // i = 0 is waypoints (0, 1) --> should be white until current wp index = 2
           // i = 1 is waypoints (1, 2) --> should be white until current wp index = 3
           // ...
-          Log.i(logTag, String.format("line i = %d, current_waypoint = %d", i, current_waypoint_index));
           if (current_waypoint_index > i+1)
           {
               Waypath_top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.GRAY).width(5)));
+              Log.d(logTag, String.format("line i = %d, current_waypoint = %d, color = GRAY", i, current_waypoint_index));
           }
           else
           {
               Waypath_top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.WHITE).width(5)));
+              Log.d(logTag, String.format("line i = %d, current_waypoint = %d, color = WHITE", i, current_waypoint_index));
           }
       }
   }
@@ -2808,14 +2802,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
     else
     {
+        Log.w(logTag, "TeleOpPanel invalidate(): boatPath is null");
         return;
     }
 
-    if (boatPath != null && boatPath.getPoints().size() > 0) {
-        add_waypaths();
-    }
     if (touchpointList.size() == 0 && Waypath_outline.size() > 0) {
         remove_waypaths();
+    }
+    if (boatPath != null && boatPath.getPoints().size() > 0) {
+        add_waypaths();
     }
 
     if (boatPath instanceof Region) {
@@ -2831,8 +2826,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           }
 
       }
-    //System.out.println("spiral full " + boatPath.getPoints().size());
-
   }
 
   public void saveSession() throws IOException
