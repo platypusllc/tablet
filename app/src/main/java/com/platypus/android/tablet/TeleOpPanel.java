@@ -294,6 +294,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   Polyline boat_to_waypoint_line; // TODO: implement line from boat to current WP
   int current_waypoint_index = -1;
   int last_waypoint_index = -2;
+  final Object _wpGraphicsLock = new Object();
 
   boolean isFirstWaypointCompleted = false;
   public static final String PREF_NAME = "DataFile";
@@ -1620,7 +1621,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
                 num++;
             }
-              /*ASDF*/
+
             boatPath = new Path(waypointList); // also need to put things into boatPath
             remove_waypaths();
             add_waypaths();
@@ -2744,41 +2745,47 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
   private void remove_waypaths()
   {
-      for (Polyline p : Waypath_outline)
+      synchronized (_wpGraphicsLock)
       {
-          mMapboxMap.removeAnnotation(p);
-          p.remove();
+          for (Polyline p : Waypath_outline)
+          {
+              mMapboxMap.removeAnnotation(p);
+              p.remove();
+          }
+          for (Polyline p : Waypath_top)
+          {
+              mMapboxMap.removeAnnotation(p);
+              p.remove();
+          }
+          // TODO: make a boat to waypoint line
+          //mMapboxMap.removeAnnotation(boat_to_waypoint_line);
+          //boat_to_waypoint_line.remove();
       }
-      for (Polyline p : Waypath_top)
-      {
-          mMapboxMap.removeAnnotation(p);
-          p.remove();
-      }
-      // TODO: make a boat to waypoint line
-      //mMapboxMap.removeAnnotation(boat_to_waypoint_line);
-      //boat_to_waypoint_line.remove();
   }
 
   private void add_waypaths()
   {
-      if (boatPath == null) return;
-      ArrayList<ArrayList<LatLng>> point_pairs = boatPath.getPointPairs();
-      for (int i = 0; i < point_pairs.size(); i++)
+      synchronized (_wpGraphicsLock)
       {
-          ArrayList<LatLng> pair = point_pairs.get(i);
-          Waypath_outline.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.BLACK).width(8)));
-          // i = 0 is waypoints (0, 1) --> should be white until current wp index = 2
-          // i = 1 is waypoints (1, 2) --> should be white until current wp index = 3
-          // ...
-          if (current_waypoint_index > i+1)
+          if (boatPath == null) return;
+          ArrayList<ArrayList<LatLng>> point_pairs = boatPath.getPointPairs();
+          for (int i = 0; i < point_pairs.size(); i++)
           {
-              Waypath_top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.GRAY).width(5)));
-              Log.d(logTag, String.format("line i = %d, current_waypoint = %d, color = GRAY", i, current_waypoint_index));
-          }
-          else
-          {
-              Waypath_top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.WHITE).width(5)));
-              Log.d(logTag, String.format("line i = %d, current_waypoint = %d, color = WHITE", i, current_waypoint_index));
+              ArrayList<LatLng> pair = point_pairs.get(i);
+              Waypath_outline.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.BLACK).width(8)));
+              // i = 0 is waypoints (0, 1) --> should be white until current wp index = 2
+              // i = 1 is waypoints (1, 2) --> should be white until current wp index = 3
+              // ...
+              if (current_waypoint_index > i+1)
+              {
+                  Waypath_top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.GRAY).width(5)));
+                  Log.d(logTag, String.format("line i = %d, current_waypoint = %d, color = GRAY", i, current_waypoint_index));
+              }
+              else
+              {
+                  Waypath_top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.WHITE).width(5)));
+                  Log.d(logTag, String.format("line i = %d, current_waypoint = %d, color = WHITE", i, current_waypoint_index));
+              }
           }
       }
   }
