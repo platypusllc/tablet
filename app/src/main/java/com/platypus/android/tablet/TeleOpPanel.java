@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -32,6 +33,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -107,6 +109,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -156,7 +159,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     public EditText ipAddress = null;
     public EditText color = null;
     public EditText transectDistance;
-    public Button startWaypoints = null;
+    public ImageButton startWaypoints = null;
     public RadioButton direct = null;
     public RadioButton reg = null;
     public CheckBox autoBox;
@@ -172,7 +175,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     ToggleButton spirallawn;
     ImageButton drawPoly = null;
     ImageButton waypointButton = null;
-    Button deleteWaypoint = null;
+    ImageButton deleteWaypoint = null;
     Button connectButton = null;
     Button advancedOptions = null;
     Button makeConvex = null; //for testing remove later
@@ -181,6 +184,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Button startRegion = null;
     Button clearRegion = null;
     Button updateTransect = null;
+    Button rcButton = null;
     TextView sensorData1 = null;
     TextView sensorData2 = null;
     TextView sensorData3 = null;
@@ -195,6 +199,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     View waypointregion = null;
     ToggleButton sensorvalueButton = null;
     JoystickView joystick;
+    JoystickView joystickBig;
     Switch speed = null;
     int updateRateMili = 50;
     boolean checktest;
@@ -274,12 +279,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     // Joystick related
     //
     //
-    private JoystickMovedListener _listener = new JoystickMovedListener() {
+    // private JoystickMovedListener _listener = new JoystickMovedListener() {
+    private class JoystickMovedHandler implements JoystickMovedListener {
+
+        float range = 10.0f;
+
+        public JoystickMovedHandler(float range) {
+            this.range = range;
+        }
+
         @Override
         public void OnMoved(int x, int y) {
             Log.e(logTag, String.format("joystick (x, y) = %d, %d", x, y));
             thrustTemp = fromProgressToRange(y, THRUST_MIN, THRUST_MAX);
             rudderTemp = fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX);
+
+            // System.out.println(x + " " + y + " " + thrustTemp + " " + rudderTemp);
         }
 
         @Override
@@ -309,22 +324,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 thread.start();
             }
         }
-    };
 
-    // Converts from progress bar value to linear scaling between min and max
-    private double fromProgressToRange(int progress, double min, double max) {
-        // progress will be between -10 and 10, with 0 being the center
-        //return ((max - min) * ((double) progress) / 20.0);
-        // evaluate linear range above and below zero separately
-        double value;
-        if (progress < 0) {
-            value = min * Math.abs(progress) / 10.0;
-            return value;
-        } else {
-            value = max * progress / 10.0;
-            return value;
+        // Converts from progress bar value to linear scaling between min and max
+        private double fromProgressToRange(int progress, double min, double max) {
+            // progress will be between -range and range, with 0 being the center
+            // return ((max - min) * ((double) progress) / 20.0);
+            // evaluate linear range above and below zero separately
+            double value;
+            if (progress < 0) {
+                value = min * Math.abs(progress) / range;
+                return value;
+            } else {
+                value = max * progress / range;
+                return value;
+            }
         }
-    }
+    };
 
     //
     //
@@ -429,6 +444,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         int icon_Index_old = -1;
         IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
         BitmapFactory.Options options = new BitmapFactory.Options();
+
+        ArrayList<Double> batteryReadings = new ArrayList<>();
+        double batteryReadingSum = 0.0;
+        DecimalFormat df = new DecimalFormat("##.#");
 
         public void setOptions(BitmapFactory.Options options) {
             this.options = options;
@@ -550,13 +569,43 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                     if (Data.channel == 4) {
                         String[] batteries = sensorV.split(",");
-                        battery.setText(batteries[0]);
-                        battery.setTextColor(isAverage(Data, batteries[0]));
-                        double value = (Double.parseDouble(batteries[0]) + getAverage(Data)) / 2;
-                        //Log.i(logTag,"Average = "+ value);
 
+                        // battery.setText(batteries[0]);
+                        // battery.setTextColor(Color.BLACK);
+                        // battery.setTextColor(isAverage(Data, batteries[0]));
+
+                        // Paul: I don't know what this is for?
+                        double value = (Double.parseDouble(batteries[0]) + getAverage(Data)) / 2;
                         editor.putString(Data.type.toString(), Double.toString(value));
                         editor.commit();
+                        //Log.i(logTag,"Average = "+ value);
+
+                        // Get the new value and update averages
+                        double batteryLevel = Double.parseDouble(batteries[0]);
+                        batteryReadings.add(batteryLevel);
+                        batteryReadingSum += batteryLevel;
+                        // Arbitrarily use the last 10 readings to get an average
+                        if (batteryReadings.size() > 10) {
+                            batteryReadingSum -= batteryReadings.get(0);
+                            batteryReadings.remove(0);
+                        }
+
+                        // Now use the moving average
+                        batteryLevel = batteryReadingSum / batteryReadings.size();
+
+                        // Colors based on 4-cell battery
+                        // todo make the warning levels configurable
+                        if (batteryLevel > 15.8) {
+                            battery.setBackgroundColor(Color.rgb(100, 255, 100));
+                        } else if (batteryLevel > 15.0) {
+                            battery.setBackgroundColor(Color.rgb(244, 185, 66));
+                        } else if (batteryLevel > 14.8){
+                            battery.setBackgroundColor(Color.rgb(244, 119, 66));
+                        } else {
+                            battery.setBackgroundColor(Color.rgb(255, 0, 0));
+                        }
+
+                        battery.setText(df.format(batteryLevel));
 
                     }
 
@@ -618,7 +667,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             //********************************//
             // Adding Joystick move listener//
             // ******************************//
-            joystick.setOnJostickMovedListener(_listener);
+            joystick.setOnJostickMovedListener(new JoystickMovedHandler(10.0f));
             joystick.setOnJostickClickedListener(new JoystickClickedListener() {
                 @Override
                 public void OnClicked() {
@@ -774,8 +823,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         linlay = (RelativeLayout) this.findViewById(R.id.linlay);
 
         connectButton = (Button) this.findViewById(R.id.connectButton);
+        rcButton = (Button) this.findViewById(R.id.rcButton);
         log = (TextView) this.findViewById(R.id.log);
-        autoBox = (CheckBox) this.findViewById(R.id.autonomousBox);
+        // autoBox = (CheckBox) this.findViewById(R.id.autonomousBox);
         makeConvex = (Button) this.findViewById(R.id.makeconvex);
         sensorData1 = (TextView) this.findViewById(R.id.SValue1);
         sensorData2 = (TextView) this.findViewById(R.id.SValue2);
@@ -788,19 +838,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         sensorvalueButton.setTextColor(Color.GRAY);
         battery = (TextView) this.findViewById(R.id.batteryVoltage);
         joystick = (JoystickView) findViewById(R.id.joystickView);
+
         Title = (TextView) this.findViewById(R.id.controlScreenEnter);
         advancedOptions = (Button) this.findViewById(R.id.advopt);
         centerToBoat = (Button) this.findViewById(R.id.centermap);
         mapInfo = (TextView) this.findViewById(R.id.mapinfo);
         final ToggleButton switchView = (ToggleButton) this.findViewById(R.id.switchviewbutton);
 
-        mapInfo.setText("Map Information \n Nothing Pending");
+        mapInfo.setText("Map data: OK");
         loadPreferences();
 
         sensorData1.setText("Waiting");
         sensorData2.setText("Waiting");
         sensorData3.setText("Waiting");
-
 
         // Create folder for the first time if it does not exist
         File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
@@ -815,7 +865,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             @Override
             public void onClick(View view1) {
                 if (switchView.isChecked()) {
-                    waypointlayout.removeAllViews();
+                    // Paul: This is a bit hacky below, probably will break, clean up when cleaning this up overall
+                    waypointlayout.removeViewAt(1); // removeAllViews();
                     onLoadRegionLayout();
                     waypointLayoutEnabled = false;
                     startDraw = startDrawWaypoints;
@@ -841,7 +892,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
 
                 } else {
-                    regionlayout.removeAllViews();
+                    waypointlayout.removeViewAt(1); // removeAllViews();
+                    // regionlayout.removeAllViews();
                     onLoadWaypointLayout();
                     waypointLayoutEnabled = true;
                     startDrawWaypoints = startDraw;
@@ -984,8 +1036,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         // *****************//
         //      Joystick   //
         // ****************//
-
         joystick.setYAxisInverted(false);
+
+        rcButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                rcBox();
+            }
+        });
 
         //*****************************************************************************
         //  Initialize Poselistener
@@ -1045,10 +1104,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         currentBoat = new Boat(pl, sl);
 
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        senAccelerometer = senSensorManager
-                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        senSensorManager.registerListener(this, senAccelerometer,
-                SensorManager.SENSOR_DELAY_NORMAL);
+        senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
         final IconFactory mIconFactory = IconFactory.getInstance(this);
         Drawable mhome = ContextCompat.getDrawable(this, R.drawable.home1);
@@ -1308,6 +1365,25 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         networkThread = new NetworkAsync().execute(); //launch networking asnyc task
     }
 
+    Dialog dialog = null;
+    public void rcBox() {
+        if (dialog == null) {
+            dialog = new Dialog(context);
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            dialog.setContentView(R.layout.rc_layout);
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+
+            dialog.create();
+
+            // Setup the listener
+            joystickBig = (JoystickView) dialog.findViewById(R.id.joystickViewBig);
+            joystickBig.setMovementRange(100.0f);
+            joystickBig.setOnJostickMovedListener(new JoystickMovedHandler(100.0f));
+        }
+
+        dialog.show();
+    }
+
     /**
      * This is the dialog box that lets the operator choose the ip address
      *
@@ -1440,10 +1516,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         waypointlayout = (LinearLayout) findViewById(R.id.relativeLayout_sensor);
         waypointregion = inflater.inflate(R.layout.waypoint_layout, waypointlayout);
         waypointButton = (ImageButton) waypointregion.findViewById(R.id.waypointButton);
-        waypointButton.setBackgroundResource(R.drawable.draw_icon);
-        deleteWaypoint = (Button) waypointregion.findViewById(R.id.waypointDeleteButton);
+        //waypointButton.setBackgroundResource(R.drawable.draw_icon);
+        deleteWaypoint = (ImageButton) waypointregion.findViewById(R.id.waypointDeleteButton);
         pauseWP = (ToggleButton) waypointregion.findViewById(R.id.pause);
-        startWaypoints = (Button) waypointregion.findViewById(R.id.waypointStartButton);
+        startWaypoints = (ImageButton) waypointregion.findViewById(R.id.waypointStartButton);
+        //startWaypoints.setBackgroundResource(R.drawable.play);
         speed = (Switch) waypointregion.findViewById(R.id.switch1);
         waypointInfo = (TextView) waypointregion.findViewById(R.id.waypoints_waypointstatus);
         if (speed == null) {
@@ -1451,8 +1528,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
         speed.setTextOn("Slow");
         speed.setTextOff("Normal");
-        Button dropWP = (Button) waypointregion.findViewById(R.id.waypointDropWaypointButton);
-
+        ImageButton dropWP = (ImageButton) waypointregion.findViewById(R.id.waypointDropWaypointButton);
 
         dropWP.setOnClickListener(new OnClickListener() {
             @Override
@@ -2540,7 +2616,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mapInfo.setText("Map Information \n Nothing Pending");
+                    mapInfo.setText("Map data: OK");
                 }
             });
 
@@ -2606,8 +2682,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 (100.0 * status.getCompletedResourceCount() / status.getRequiredResourceCount()) : 0.0;
                         percentage = Math.round(percentage);
                         if (status.isComplete()) {
-                            mapInfo.setText("Map Information \n Map Downloaded");
-                            System.out.println("download complete");
+                            mapInfo.setText("Map data: Downloaded");
+                            System.out.println("Map data download complete");
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -2626,7 +2702,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                             });
 
                         } else if (status.isRequiredResourceCountPrecise()) {
-                            mapInfo.setText("Map Information \n " + percentage + "% Downloaded");
+                            mapInfo.setText("Map downloading: " + percentage + "%");
                             //setPercentage((int) Math.round(percentage));
                         }
                     }

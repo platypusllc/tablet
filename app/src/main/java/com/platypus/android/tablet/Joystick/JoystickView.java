@@ -197,6 +197,11 @@ public class JoystickView extends View {
         return clickThreshold;
     }
 
+    /**
+     * This is the max and min values that will be returned by the joystick
+     *
+     * @param movementRange
+     */
     public void setMovementRange(float movementRange) {
         this.movementRange = movementRange;
     }
@@ -250,7 +255,7 @@ public class JoystickView extends View {
         cY = d / 2;
 
         bgRadius = dimX/2 - innerPadding;
-        handleRadius = (int)(d * 0.25);
+        handleRadius = (int)(Math.min(75, d * 0.25));
         handleInnerBoundaries = handleRadius;
         movementRadius = Math.min(cX, cY) - handleInnerBoundaries;
     }
@@ -413,7 +418,8 @@ public class JoystickView extends View {
     }
 
     private void reportOnMoved() {
-        if ( movementConstraint == CONSTRAIN_CIRCLE )
+
+        if (movementConstraint == CONSTRAIN_CIRCLE )
             constrainCircle();
         else
             constrainBox();

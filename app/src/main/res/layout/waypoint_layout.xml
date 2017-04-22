@@ -2,83 +2,108 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <LinearLayout
+
+    <GridLayout
         android:id="@+id/waypointbuttons"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation = "vertical"
-        android:weightSum="1">
+        android:columnCount="2"
+        android:rowCount="3"
+        android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/waypointButton"
-            android:layout_width="wrap_content"
+            android:src="@drawable/draw_icon"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:layout_gravity="left|top"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp" />
+
+        <ImageButton
+            android:id="@+id/waypointStartButton"
+            android:src="@drawable/play"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:layout_gravity="left|top"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:layout_marginLeft="10dp"
-            android:layout_height="wrap_content"/>
+            android:text="Start Waypoints" />
 
-        <Button
-        style="?android:attr/buttonStyleSmall"
-        android:id="@+id/waypointStartButton"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Start Waypoints" />
+        <ToggleButton
+            android:id="@+id/pause"
+            android:background="@drawable/pause_selector"
+            android:layout_gravity="left|top"
+            android:textOff=""
+            android:textOn=""
+            android:textSize="0dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp"
+            android:checked="false" />
 
+        <ImageButton
+            android:id="@+id/waypointDeleteButton"
+            android:src="@drawable/trash"
+            android:layout_gravity="left|top"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp"
+            android:text="Delete All Waypoints" />
 
-    <!--<ImageButton-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/"-->
-        <!--android:layout_marginLeft="10dp"-->
-        <!--android:layout_alignStart="@+id/removeMap" />-->
+        <ImageButton
+            android:id="@+id/waypointDropWaypointButton"
+            android:src="@drawable/default_marker"
+            android:layout_gravity="left|top"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp" />
 
-        <!--android:textOn="Add Waypoints"-->
-        <!--android:textOff="Add Waypoints"-->
-        <!--android:checked="false"/>-->
-
-    <ToggleButton
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/pause"
-        android:textOff="Pause Waypoints"
-        android:textOn="Resume Waypoints"
-        android:checked="false"
-        android:singleLine="false"
-        android:layout_below="@+id/waypointButton"
-        android:layout_alignParentLeft="true" />
-
-    <Button
-        style="?android:attr/buttonStyleSmall"
-        android:id="@+id/waypointDeleteButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Delete All Waypoints"
-        android:layout_below="@+id/pause"
-        android:layout_alignParentLeft="true" />
-
-        <Button
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Drop Waypoint"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:id="@+id/waypointDropWaypointButton" />
+        <ImageButton
+            android:id="@+id/place_holder"
+            android:src="@drawable/ic_launcher"
+            android:layout_gravity="left|top"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp" />
 
         <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Mapping Speed"
-        android:id="@+id/textView7"
-            android:layout_gravity="center_horizontal"
-        android:layout_below="@+id/waypointDeleteButton"/>
+            android:layout_rowSpan="1"
+            android:layout_columnSpan="2"
+            android:layout_gravity="left|top"
+            android:text="Mapping Speed"
+            android:id="@+id/textView7"
+            android:layout_marginLeft="10dp"/>
 
-    <Switch
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/switch1"
-        android:checked="false"
-        android:layout_below="@+id/textView7"
-        android:layout_alignEnd="@+id/waypointStartButton"
-        android:layout_gravity="center_horizontal" />
+        <Switch
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/switch1"
+            android:checked="false"
+            android:layout_rowSpan="1"
+            android:layout_columnSpan="2"
+            android:layout_gravity="left|top"
+            android:layout_marginLeft="10dp" />
+
+
+    </GridLayout>
+
+
+
+
+
+
 
     <TextView
         android:textAppearance="?android:attr/textAppearanceSmall"
@@ -90,5 +115,5 @@
         android:layout_gravity="center"
         android:layout_below="@+id/switch1"
         android:layout_alignStart="@+id/switch1" />
-    </LinearLayout>
+
 </LinearLayout>
