@@ -243,8 +243,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     Sensor senAccelerometer;
     SensorData Data;
     // Paul: Temp for testing sensors
-    // boolean sensorReady = false;
-    boolean sensorReady = true;
+    boolean sensorReady = false;
+    // boolean sensorReady = true;
     boolean Mapping_S = false;
     double[] low_tPID = {.06, .0, .0};
     double[] tPID = {.2, .0, .0};
@@ -1383,6 +1383,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
             // Setup the listener
             joystickBig = (JoystickView) dialog.findViewById(R.id.joystickViewBig);
+            joystickBig.setYAxisInverted(false);
             joystickBig.setMovementRange(100.0f);
             joystickBig.setOnJostickMovedListener(new JoystickMovedHandler(100.0f));
         }
