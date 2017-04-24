@@ -446,7 +446,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         @Override
         protected String doInBackground(String... arg0) {
 
-            //currentBoat.isConnected();
+            currentBoat.isConnected();
             networkRun = new Runnable() {
                 @Override
                 public void run() {
