@@ -2,19 +2,18 @@ package com.platypus.android.tablet;
 
 import android.util.Log;
 
-import java.net.InetSocketAddress;
-
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.FunctionObserver;
 import com.platypus.crw.PoseListener;
 import com.platypus.crw.SensorListener;
 import com.platypus.crw.WaypointListener;
+import com.platypus.crw.data.Pose3D;
 import com.platypus.crw.data.Twist;
 import com.platypus.crw.data.Utm;
 import com.platypus.crw.data.UtmPose;
 import com.platypus.crw.udp.UdpVehicleServer;
 
-import com.platypus.crw.data.Pose3D;
+import java.net.InetSocketAddress;
 
 
 public class Boat
