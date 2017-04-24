@@ -97,23 +97,15 @@
             android:layout_marginLeft="10dp" />
 
 
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/waypoints_waypointstatus"
+            android:layout_rowSpan="1"
+            android:layout_columnSpan="2"
+            android:text="Waypoint Status"
+            android:layout_gravity="left|top"
+            android:layout_marginLeft="10dp" />
+
     </GridLayout>
-
-
-
-
-
-
-
-    <TextView
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:id="@+id/waypoints_waypointstatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Waypoint Status"
-        android:layout_marginTop="25dp"
-        android:layout_gravity="center"
-        android:layout_below="@+id/switch1"
-        android:layout_alignStart="@+id/switch1" />
 
 </LinearLayout>

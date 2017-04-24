@@ -27,6 +27,7 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -197,10 +198,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     LinearLayout regionlayout = null;
     LinearLayout waypointlayout = null;
     View waypointregion = null;
-    ToggleButton sensorvalueButton = null;
+    //ToggleButton sensorvalueButton = null;
     JoystickView joystick;
     JoystickView joystickBig;
-    Switch speed = null;
+    Switch mappingSpeedSwitch = null;
     int updateRateMili = 50;
     boolean checktest;
     boolean waypointLayoutEnabled = true; //if false were on region layout
@@ -241,7 +242,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     SensorManager senSensorManager;
     Sensor senAccelerometer;
     SensorData Data;
-    boolean sensorReady = false;
+    // Paul: Temp for testing sensors
+    // boolean sensorReady = false;
+    boolean sensorReady = true;
     boolean Mapping_S = false;
     double[] low_tPID = {.06, .0, .0};
     double[] tPID = {.2, .0, .0};
@@ -561,9 +564,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             if (sensorReady == true) {
                 try {
 
-                    sensorvalueButton.setClickable(sensorReady);
-                    sensorvalueButton.setTextColor(Color.BLACK);
-                    sensorvalueButton.setText("Show SensorData");
+                    //sensorvalueButton.setClickable(sensorReady);
+                    //sensorvalueButton.setTextColor(Color.BLACK);
+                    //sensorvalueButton.setText("Show SensorData");
                     SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
                     SharedPreferences.Editor editor = settings.edit();
 
@@ -609,7 +612,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                     }
 
-                    if (sensorvalueButton.isChecked()) {
+                    //if (sensorvalueButton.isChecked()) {
                         double value;
                         switch (Data.channel) {
                             case 4:
@@ -619,11 +622,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 sensorType1.setText(unit(Data.type));
                                 sensorData1.setTextColor(isAverage(Data, sensorV));
                                 value = (Double.parseDouble(sensorV) + getAverage(Data)) / 2;
-
                                 editor.putString(Data.type.toString(), Double.toString(value));
                                 editor.commit();
-
                                 break;
+
                             case 2:
                                 sensorData2.setText(sensorV);
                                 sensorType2.setText(unit(Data.type));
@@ -631,8 +633,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 value = (Double.parseDouble(sensorV) + getAverage(Data)) / 2;
                                 editor.putString(Data.type.toString(), Double.toString(value));
                                 editor.commit();
-
                                 break;
+
                             case 3:
                                 sensorData3.setText(sensorV);
                                 sensorType3.setText(unit(Data.type));
@@ -641,16 +643,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                                 editor.putString(Data.type.toString(), Double.toString(value));
                                 editor.commit();
                                 break;
+
                             case 9:
                                 break;
                             default:
                         }
 
-                    }
+                    //}
                 } catch (Exception e) {
                     Log.i(sensorLogTag, e.toString());
                     System.out.println("Sensor error " + e.toString());
                 }
+                /*
                 if (!sensorvalueButton.isChecked()) {
                     //sensorV = "";
                     sensorData1.setText("----");
@@ -658,8 +662,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     sensorData3.setText("----");
                     //sensorValueBox.setBackgroundColor(Color.DKGRAY);
                 }
+                */
             } else {
-                sensorvalueButton.setText("Sensor Unavailable");
+                // sensorvalueButton.setText("Sensor Unavailable");
                 sensorData1.setText("----");
                 sensorData2.setText("----");
                 sensorData3.setText("----");
@@ -686,7 +691,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     status = "\t\t-----";
                 }
                 waypointInfo.setText("Waypoint Status: \n" + status);
-                if (speed.isChecked()) {
+                if (mappingSpeedSwitch.isChecked()) {
                     Mapping_S = true;
                 } else {
                     Mapping_S = false;
@@ -833,10 +838,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         sensorType1 = (TextView) this.findViewById(R.id.sensortype1);
         sensorType2 = (TextView) this.findViewById(R.id.sensortype2);
         sensorType3 = (TextView) this.findViewById(R.id.sensortype3);
-        sensorvalueButton = (ToggleButton) this.findViewById(R.id.SensorStart);
-        sensorvalueButton.setClickable(sensorReady);
-        sensorvalueButton.setTextColor(Color.GRAY);
-        battery = (TextView) this.findViewById(R.id.batteryVoltage);
+        //sensorvalueButton = (ToggleButton) this.findViewById(R.id.SensorStart);
+        //sensorvalueButton.setClickable(sensorReady);
+        //sensorvalueButton.setTextColor(Color.GRAY);
+        //battery = (TextView) this.findViewById(R.id.batteryVoltage);
+        battery = (TextView) this.findViewById(R.id.batteryTextView);
         joystick = (JoystickView) findViewById(R.id.joystickView);
 
         Title = (TextView) this.findViewById(R.id.controlScreenEnter);
@@ -848,9 +854,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         mapInfo.setText("Map data: OK");
         loadPreferences();
 
-        sensorData1.setText("Waiting");
-        sensorData2.setText("Waiting");
-        sensorData3.setText("Waiting");
+        sensorData1.setText("Sensor 1");
+        sensorData2.setText("Sensor 2");
+        sensorData3.setText("Sensor 3");
 
         // Create folder for the first time if it does not exist
         File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
@@ -866,7 +872,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             public void onClick(View view1) {
                 if (switchView.isChecked()) {
                     // Paul: This is a bit hacky below, probably will break, clean up when cleaning this up overall
-                    waypointlayout.removeViewAt(1); // removeAllViews();
+                    waypointlayout.removeViewAt(2); // removeAllViews();
                     onLoadRegionLayout();
                     waypointLayoutEnabled = false;
                     startDraw = startDrawWaypoints;
@@ -892,7 +898,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
 
                 } else {
-                    waypointlayout.removeViewAt(1); // removeAllViews();
+                    waypointlayout.removeViewAt(2); // removeAllViews();
                     // regionlayout.removeAllViews();
                     onLoadWaypointLayout();
                     waypointLayoutEnabled = true;
@@ -1434,9 +1440,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             public void onClick(View v) {
 
                 if (ipAddress.getText() == null || ipAddress.getText().equals("") || ipAddress.getText().length() == 0) {
-                    ipAddressBox.setText("IP Address: 127.0.0.1 (localhost)");
+                    ipAddressBox.setText("IP: 127.0.0.1 (localhost)");
                 } else {
-                    ipAddressBox.setText("IP Address: " + ipAddress.getText());
+                    ipAddressBox.setText("IP: " + ipAddress.getText());
                 }
 
                 textIpAddress = ipAddress.getText().toString();
@@ -1516,18 +1522,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         waypointlayout = (LinearLayout) findViewById(R.id.relativeLayout_sensor);
         waypointregion = inflater.inflate(R.layout.waypoint_layout, waypointlayout);
         waypointButton = (ImageButton) waypointregion.findViewById(R.id.waypointButton);
-        //waypointButton.setBackgroundResource(R.drawable.draw_icon);
         deleteWaypoint = (ImageButton) waypointregion.findViewById(R.id.waypointDeleteButton);
         pauseWP = (ToggleButton) waypointregion.findViewById(R.id.pause);
         startWaypoints = (ImageButton) waypointregion.findViewById(R.id.waypointStartButton);
-        //startWaypoints.setBackgroundResource(R.drawable.play);
-        speed = (Switch) waypointregion.findViewById(R.id.switch1);
+        mappingSpeedSwitch = (Switch) waypointregion.findViewById(R.id.switch1);
+        mappingSpeedSwitch.setTextOn("On");
+        mappingSpeedSwitch.setTextOff("Off");
         waypointInfo = (TextView) waypointregion.findViewById(R.id.waypoints_waypointstatus);
-        if (speed == null) {
-            System.out.println("NULL");
-        }
-        speed.setTextOn("Slow");
-        speed.setTextOff("Normal");
         ImageButton dropWP = (ImageButton) waypointregion.findViewById(R.id.waypointDropWaypointButton);
 
         dropWP.setOnClickListener(new OnClickListener() {
@@ -1714,14 +1715,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             }
         });
 
-        speed.setOnClickListener(new OnClickListener() {
+        mappingSpeedSwitch.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
 
                 Thread thread = new Thread() {
                     public void run() {
                         if (currentBoat != null) {
-                            if (speed.isChecked()) {
+                            if (mappingSpeedSwitch.isChecked()) {
                                 currentBoat.returnServer().setGains(0, low_tPID, null);
                                 currentBoat.returnServer().setGains(5, low_rPID, null);
                             } else {
