@@ -982,7 +982,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     // IconFactory mIconFactory = IconFactory.getInstance(context);
 
     int tempnum = 100;
-    Pointarrow Arrow = new Pointarrow();
     int icon_Index;
     int icon_Index_old = -1;
     IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
