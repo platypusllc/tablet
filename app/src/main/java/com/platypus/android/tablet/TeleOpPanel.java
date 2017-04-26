@@ -274,8 +274,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
   private UtmPose _pose;
   private UtmPose[] wpPose = null, tempPose = null;
-  private int N_waypoint = 0;
-  private boolean waypointlistener = false;
 
   Icon Ihome;
 
@@ -609,7 +607,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         public void waypointUpdate(WaypointState waypointState) {
           boatwaypoint = waypointState.toString();
         }
-      };
+    };
 
     //****************************************************************************
     //  Initialize the Boat
@@ -664,22 +662,23 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               @Override
               public void onMapLongClick(LatLng point)
               {
-
-                System.out.println("start draw waypoints: " + startDrawWaypoints);
-                System.out.println("start draw region: " + startDraw);
-                if (startDrawWaypoints == true && startDraw == false) {
+                if (startDrawWaypoints == true && startDraw == false)
+                {
                   touchpointList.add(point);
                   System.out.println(touchpointList.size());
                   boatPath = new Path(touchpointList);
-                } else if (startDraw && !startDrawWaypoints) {
-                    //System.out.println("tp list before add point: " + touchpointList.size());
+                }
+                else if (startDraw && !startDrawWaypoints)
+                {
                   touchpointList.add(point);
-                  //System.out.println("tp list after add point: " + touchpointList.size());
-                  if (spirallawn.isChecked()) {
+                  if (spirallawn.isChecked())
+                  {
                     ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
                     boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
                     touchpointList = boatPath.getQuickHullList();
-                  } else {
+                  }
+                  else
+                  {
                     ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
                     boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
                     touchpointList = boatPath.getQuickHullList();
@@ -688,9 +687,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 invalidate();
               }
           });
-
-          Drawable userDraw = ContextCompat.getDrawable(context, R.drawable.userloc);
-          Icon userIcon  = mIconFactory.fromDrawable(userDraw);
           updateMarkers(); //Launch update markers thread
           alertsAndAlarms(); // Launch alerts and alarms thread
           latestWaypointPoll(); // Launch waypoint polling thread
@@ -699,38 +695,35 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     connectButton.setOnClickListener(new OnClickListener() {
         @Override
-        public void onClick(View view) {
-
-          new AlertDialog.Builder(context)
-            .setTitle("Connect")
-            .setMessage("You are already connected,\n do you want to reconnect?")
-            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                  currentBoat = new Boat(pl, sl);
-                  currentBoat.returnServer().addWaypointListener(wl, new FunctionObserver<Void>() {
-                      @Override
-                        public void completed(Void aVoid) {
-
+        public void onClick(View view)
+        {
+          // ask the currentBoat server if it is connected
+          if (currentBoat.getConnected())
+          {
+              new AlertDialog.Builder(context)
+                  .setTitle("Connect")
+                  .setMessage("You are already connected,\n do you want to reconnect?")
+                  .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                      public void onClick(DialogInterface dialog, int which)
+                      {
+                          currentBoat = new Boat(pl, sl); // this is the line that forces a reconnection
+                          connectBox();
+                          Log.i(logTag, "Reconnect");
                       }
-
-                      @Override
-                        public void failed(FunctionError functionError) {
-
-                      }
-                    });
-                  connectBox();
-                  Log.i(logTag, "Reconnect");
-                }
-              })
-            .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                  Log.i(logTag, "Nothing");
-                }
-              })
-            .show();
+                  })
+                  .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                      public void onClick(DialogInterface dialog, int which) { /*nothing*/ }
+                  })
+                  .show();
+          }
+          else
+          {
+              connectBox();
+              Log.i(logTag, "Initial connection");
+          }
         }
     });
-    connectBox();
+    connectBox(); // start the app with the connect dialog popped up
   }
   @Override
   protected void onStart() {
@@ -1274,22 +1267,29 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             ipAddressBox.setText("IP Address: " + ipAddress.getText());
           }
           markerList = new ArrayList<Marker>();
-          //actual = actualBoat.isChecked();
-
           textIpAddress = ipAddress.getText().toString();
-          //System.out.println("IP Address entered is: " + textIpAddress);
-          if (direct.isChecked()) {
+          if (direct.isChecked())
+          {
             if (ipAddress.getText() == null || ipAddress.getText().equals("")) {
               address = CrwNetworkUtils.toInetSocketAddress("127.0.0.1:" + boatPort);
             }
-              else {
+            else {
                 address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":" + boatPort);
             }
-            // address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
-            //                    log.append("\n" + address.toString());
-            //currentBoat = new Boat(address);
-            currentBoat.setAddress(address);
-          } else if (reg.isChecked()) {
+            currentBoat.setAddress(address); // actual call that establishes a connection
+
+            currentBoat.returnServer().addWaypointListener(wl, new FunctionObserver<Void>() {
+                @Override
+                public void completed(Void aVoid) {
+                }
+
+                @Override
+                public void failed(FunctionError functionError) {
+                }
+            });
+          }
+          else if (reg.isChecked())
+          {
             Log.i(logTag, "finding ip");
             FindIP();
           }
@@ -1310,7 +1310,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
       });
     dialog.show();
-
   }
 
   public static InetSocketAddress getAddress() {
@@ -1331,10 +1330,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   }
 
   public void FindIP() {
-
-
     Thread thread = new Thread() {
-
         public void run() {
           address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":6077");
           currentBoat.returnServer().setRegistryService(address);
@@ -1357,7 +1353,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
       };
     thread.start();
-
   }
 
   //  Make return button same as home button
@@ -1370,14 +1365,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     startActivity(setIntent);
   }
 
-  /*
-   * format of waypoint file
-   * x x x x x x (first save)
-   * x x x x x x (second save) ..etc
-   * */
   public void SaveWaypointsToFile() throws IOException {
-    //nothing to
-    // save if no waypoints
+    //nothing to save if no waypoints
     if (boatPath.getOriginalPoints().isEmpty() == true) {
         System.out.println("path empty returning");
       return;
@@ -1407,18 +1396,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
           //if (!(saveName.contains(" ") || saveName.matches(".*\\d+.*"))) {
           if (!(saveName.contains("\""))) {
-
-            //                if (!(saveName.contains(" ") || saveName.matches("^.*[^a-zA-Z0-9._-].*$"))) {
+            //   if (!(saveName.contains(" ") || saveName.matches("^.*[^a-zA-Z0-9._-].*$"))) {
 
             try {
               writer.append("\n\" " + input.getText() + " \"");
               writer.flush();
-              //writer.append(input.getText());
               for (ILatLng i : savePointList) {
                 writer.append(" " + i.getLatitude() + " " + i.getLongitude());
                 writer.flush();
               }
-              //writer.write("\n");
 
               writer.close();
             } catch (Exception e) {
@@ -1435,8 +1421,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         }
       });
     dialog.show();
-    File waypointFile = new File(getFilesDir() + "/waypoints.txt");
-
   }
 
   public void LoadWaypointsFromFile(String filename) throws IOException {
@@ -1455,7 +1439,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
     Scanner fileScanner = new Scanner(waypointFile); //Scans each line of the file
     final ArrayList<ArrayList<ILatLng>> waypointsaves = new ArrayList<ArrayList<ILatLng>>();
-    final ArrayList<String> saveName = new ArrayList<String>();
+    final ArrayList<String> saveName = new ArrayList<>();
     /* scans each line of the file as a waypoint save
      * then scans each line every two elements makes a latlng
      * adds all saves to arraylist
@@ -1530,9 +1514,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       Button submitButton = (Button) dialog.findViewById(R.id.submitsave);
 
 
-      final ArrayAdapter<String> adapter = new ArrayAdapter<String>(
-                                                                    TeleOpPanel.this,
-                                                                    android.R.layout.select_dialog_singlechoice);
+      final ArrayAdapter<String> adapter = new ArrayAdapter<>(TeleOpPanel.this, android.R.layout.select_dialog_singlechoice);
       wpsaves.setAdapter(adapter);
       for (String s : saveName)
       {
@@ -2428,7 +2410,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             waypointButton.setBackgroundResource(R.drawable.draw_icon);
           }
           startDrawWaypoints = !startDrawWaypoints;
-          System.out.println("startdraw wp is: " + startDrawWaypoints);
 
           Thread thread = new Thread() {
               public void run() {
@@ -2453,22 +2434,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     drawPoly.setClickable(true);
                   }
                 }
-                if (!waypointlistener) {
-                  currentBoat.returnServer().addWaypointListener(wl, new FunctionObserver<Void>() {
-                      @Override
-                        public void completed(Void aVoid) {
-                        waypointlistener = true;
-                      }
-
-                      @Override
-                        public void failed(FunctionError functionError) {
-                        waypointlistener = false;
-                      }
-                    });
-                }
-
-
-                //System.out.println(currentBoat.returnServer().getGains(0);)
               }
             };
           thread.start();
