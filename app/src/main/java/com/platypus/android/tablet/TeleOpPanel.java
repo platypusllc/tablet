@@ -2251,7 +2251,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                   }
                 });
-              currentBoat.returnServer().startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>() {
+              currentBoat.returnServer().startWaypoints(wpPose, "LINE_FOLLOWING", new FunctionObserver<Void>() {
                   @Override
                     public void completed(Void aVoid) {
 
