@@ -51,6 +51,7 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.offline.OfflineManager;
 import com.mapbox.mapboxsdk.offline.OfflineRegion;
+import com.mapbox.mapboxsdk.maps.Projection;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -198,6 +199,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
   MapView mv;
   MapboxMap mMapboxMap;
+  public MapboxMap getMapboxMap() { return mMapboxMap; }
   String zone;
   String rotation;
 
@@ -388,14 +390,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
             if (spirallawn.isChecked()) {
               boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
-              System.out.println("switched mode to lawnmower");
+              //System.out.println("switched mode to lawnmower");
             } else {
 
               boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
-              System.out.println("switched mode to spiral");
+              //System.out.println("switched mode to spiral");
             }
-
-
           }
           else {
             regionlayout.removeAllViews();
@@ -409,7 +409,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             } else {
               drawPoly.setBackgroundResource(R.drawable.draw_icon);
             }
-
 
             if (boatPath == null) {
               boatPath = new Path();
@@ -632,7 +631,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     mv.getMapAsync(new OnMapReadyCallback()
     {
         @Override
-        public void onMapReady(@NonNull MapboxMap mapboxMap)
+        public void onMapReady(@NonNull final MapboxMap mapboxMap)
         {
           System.out.println("mapboxmap ready");
           mMapboxMap = mapboxMap;
@@ -662,12 +661,36 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
               @Override
               public void onMapLongClick(LatLng point)
               {
-                if (startDrawWaypoints == true && startDraw == false)
+                if (startDrawWaypoints && !startDraw)
                 {
                   touchpointList.add(point);
-                  System.out.println(touchpointList.size());
                   boatPath = new Path(touchpointList);
                 }
+/*ASDF*/
+                else if (!startDrawWaypoints && ! startDraw)
+                {
+                    final LatLng clicked_point = point;
+                    mMapboxMap.snapshot(new MapboxMap.SnapshotReadyCallback() {
+                        @Override
+                        public void onSnapshotReady(Bitmap snapshot) {
+                            Log.i(logTag, "snapshot!");
+                            Projection projection = mMapboxMap.getProjection();
+                            android.graphics.PointF screen_location = projection.toScreenLocation(clicked_point);
+                            int pixel_x = (int)screen_location.x;
+                            int pixel_y = (int)screen_location.y;
+                            Log.i(logTag, String.format("    pixel coordinate = %d, %d", pixel_x, pixel_y));
+                            double metersPerPixelAtLatitude = projection.getMetersPerPixelAtLatitude(clicked_point.getLatitude());
+                            Log.i(logTag, "    meters per pixel = " + metersPerPixelAtLatitude);
+                            int pixel_argb, r, g, b;
+                            pixel_argb = snapshot.getPixel(pixel_x, pixel_y);
+                            r = Color.red(pixel_argb);
+                            g = Color.green(pixel_argb);
+                            b = Color.blue(pixel_argb);
+                            Log.i(logTag, String.format("    rgb = (%d, %d, %d)", r, g, b));
+                        }
+                    });
+                }
+/*ASDF*/
                 else if (startDraw && !startDrawWaypoints)
                 {
                   touchpointList.add(point);
@@ -2408,7 +2431,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     waypointButton.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View view) {
-          System.out.println("called");
           if (!startDrawWaypoints) {
             waypointButton.setBackgroundResource(R.drawable.draw_icon2);
           }
