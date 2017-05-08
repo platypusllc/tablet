@@ -1663,6 +1663,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             public void onClick(DialogInterface dialog, int which) {
 
               Location tempLocation = LocationServices.FusedLocationApi.getLastLocation();
+              if (tempLocation == null)
+              {
+                  Log.w(logTag, "TeleOpPanel.setHome(): tablet does not have a location. Cannot be used as home.");
+                  Toast.makeText(getApplicationContext(), "Tablet doesn't have a location", Toast.LENGTH_SHORT).show();
+                  return;
+              }
               LatLng loc = new LatLng(tempLocation.getLatitude(),tempLocation.getLongitude());
               //LatLng loc = new LatLng(mMapboxMap.getMyLocation());
 
