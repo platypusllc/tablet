@@ -21,7 +21,6 @@ import java.util.List;
 //taken from stack overflow answer..
 public class DrawView extends View {
     private Paint paint;
-    private Paint black;
     private Path path;
     private boolean close = false;
     ArrayList<PointF> points;
