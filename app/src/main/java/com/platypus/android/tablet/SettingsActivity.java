@@ -14,8 +14,6 @@ import android.widget.ListView;
 
 import java.util.Map;
 
-import static com.platypus.android.tablet.R.id.map;
-
 /*
 * Only things that should be automatically saved from the teleop panel activity when its closed:
 * IP Address
@@ -123,7 +121,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
             if (currentPref instanceof EditTextPreference)
             {
                 currentPref.setSummary(entry.getValue().toString());
-                System.out.println("entry: " + entry.getValue().toString());
+                //System.out.println("entry: " + entry.getValue().toString());
             }
         }
 

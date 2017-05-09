@@ -240,7 +240,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		public static String boatPort = "11411";
 		public static Boat currentBoat;
 		public static InetSocketAddress address;
-		public CheckBox autoBox;
 		private final Object _waypointLock = new Object();
 
 		public double[] data;
@@ -312,8 +311,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				linlay = (RelativeLayout) this.findViewById(R.id.linlay);
 
 				connectButton = (Button) this.findViewById(R.id.connectButton);
-				log = (TextView) this.findViewById(R.id.log);
-				autoBox = (CheckBox) this.findViewById(R.id.autonomousBox);
 				makeConvex = (Button) this.findViewById(R.id.makeconvex);
 				sensorData1 = (TextView) this.findViewById(R.id.SValue1);
 				sensorData2 = (TextView) this.findViewById(R.id.SValue2);

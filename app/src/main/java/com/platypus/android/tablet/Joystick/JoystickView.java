@@ -8,7 +8,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
@@ -84,8 +83,8 @@ public class JoystickView extends View {
     private int userX, userY;
 
     //Offset co-ordinates (used when touch events are received from parent's coordinate origin)
-    private int offsetX;
-    private int offsetY;
+    private int offsetX = 0;
+    private int offsetY = 0;
 
     // =========================================
     // Constructors
