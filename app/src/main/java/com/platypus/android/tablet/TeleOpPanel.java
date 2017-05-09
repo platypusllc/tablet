@@ -179,11 +179,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     ImageButton deleteWaypoint = null;
     Button connectButton = null;
     Button advancedOptions = null;
-    Button makeConvex = null; //for testing remove later
-    Button perimeter = null;
+    ImageButton makeConvex = null; //for testing remove later
+    ImageButton perimeter = null;
     Button centerToBoat = null;
-    Button startRegion = null;
-    Button clearRegion = null;
+    ImageButton startRegion = null;
+    ImageButton clearRegion = null;
     Button updateTransect = null;
     Button rcButton = null;
     TextView sensorData1 = null;
@@ -831,7 +831,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         rcButton = (Button) this.findViewById(R.id.rcButton);
         log = (TextView) this.findViewById(R.id.log);
         // autoBox = (CheckBox) this.findViewById(R.id.autonomousBox);
-        makeConvex = (Button) this.findViewById(R.id.makeconvex);
+        makeConvex = (ImageButton) this.findViewById(R.id.makeconvex);
         sensorData1 = (TextView) this.findViewById(R.id.SValue1);
         sensorData2 = (TextView) this.findViewById(R.id.SValue2);
         sensorData3 = (TextView) this.findViewById(R.id.SValue3);
@@ -1753,11 +1753,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         LayoutInflater inflater = (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         regionlayout = (LinearLayout) findViewById(R.id.relativeLayout_sensor);
         waypointregion = inflater.inflate(R.layout.region_layout, regionlayout);
-        startRegion = (Button) regionlayout.findViewById(R.id.region_start); //start button
+        startRegion = (ImageButton) regionlayout.findViewById(R.id.region_start); //start button
         drawPoly = (ImageButton) regionlayout.findViewById(R.id.region_draw); //toggle adding points to region
-        perimeter = (Button) regionlayout.findViewById(R.id.region_perimeter); //perimeter* start perimeter? didnt write this
-        clearRegion = (Button) regionlayout.findViewById(R.id.region_clear); //region, not implemented yet
-        Button stopButton = (Button) regionlayout.findViewById(R.id.stopButton);
+        perimeter = (ImageButton) regionlayout.findViewById(R.id.region_perimeter); //perimeter* start perimeter? didnt write this
+        clearRegion = (ImageButton) regionlayout.findViewById(R.id.region_clear); //region, not implemented yet
+        ImageButton stopButton = (ImageButton) regionlayout.findViewById(R.id.stopButton);
         transectDistance = (EditText) regionlayout.findViewById(R.id.region_transect);
         drawPoly.setBackgroundResource(R.drawable.draw_icon);
         spirallawn = (ToggleButton) regionlayout.findViewById(R.id.region_spiralorlawn);
