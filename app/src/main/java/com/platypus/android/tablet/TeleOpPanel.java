@@ -18,9 +18,6 @@ import java.util.Scanner;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
@@ -79,7 +76,6 @@ import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
 import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
 import com.mapzen.android.lost.api.LocationServices;
 
-
 import com.platypus.android.tablet.Path.AreaType;
 import com.platypus.android.tablet.Path.Path;
 import com.platypus.android.tablet.Path.Region;
@@ -135,16 +131,9 @@ import android.view.View.OnClickListener;
 
 import com.platypus.android.tablet.Joystick.*;
 
-/*
-  TODO somewhere invalidate is not getting called.
-  This is being caused by the points not being recalculated after adding a point
-*/
-
-//TODO somewhere an extra point is getting added to the list or doesn't remove a point when calculating quickhull
 public class TeleOpPanel extends Activity implements SensorEventListener
 {
 		final Context context = this;
-		final double GPSDIST = 0.0000449;
 		TextView ipAddressBox = null;
 		TextView mapInfo = null;
 		RelativeLayout linlay = null;
@@ -184,7 +173,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		ToggleButton sensorvalueButton = null;
 		JoystickView joystick;
-		//Switch speed = null;
 		private boolean speed_spinner_erroneous_call = true;
 		Spinner speed_spinner = null;
 
@@ -204,7 +192,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		String zone;
 		String rotation;
 
-		//Marker boat;
 		Marker home_M;
 		Location location;
 
@@ -270,7 +257,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		private boolean startDrawWaypoints = false;
 
 		double[] tPID = {.2, .0, .0};
-
 		double[] rPID = {1, 0, .2};
 
 		double battery_voltage = 0.0;
@@ -316,7 +302,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		final Object _batteryVoltageLock = new Object();
 		Ringtone alarm_ringtone;
 		Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-
 
 		protected void onCreate(final Bundle savedInstanceState)
 		{
@@ -398,13 +383,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										if (spirallawn.isChecked())
 										{
 												boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
-												System.out.println("switched mode to lawnmower");
 										}
 										else
 										{
 
 												boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
-												System.out.println("switched mode to spiral");
 										}
 								}
 								else
@@ -2289,7 +2272,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				});
 		}
 
-
 		public void updateMarkers()
 		{
 				final Handler handler = new Handler();
@@ -3070,7 +3052,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				fileList.setAdapter(adapter);
 				for (File i : listOfFiles)
 				{
-						//adapter.add(i.getCanonicalPath());
 						System.out.println(i.getName());
 						adapter.add(i.getName());
 						adapter.notifyDataSetChanged();
