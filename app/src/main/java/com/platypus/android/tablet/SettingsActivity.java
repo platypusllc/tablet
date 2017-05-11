@@ -9,7 +9,6 @@ import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.ListView;
 
 import java.util.Map;
@@ -111,7 +110,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 
         v.addHeaderView(restore_defaults_button);
 
-        Preference pref = findPreference("pref_category");
         SharedPreferences sharedpref = PreferenceManager.getDefaultSharedPreferences(this);
         Map<String, ?> listOfPref = sharedpref.getAll();
         for (Map.Entry<String, ?> entry : listOfPref.entrySet())
@@ -121,7 +119,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
             if (currentPref instanceof EditTextPreference)
             {
                 currentPref.setSummary(entry.getValue().toString());
-                //System.out.println("entry: " + entry.getValue().toString());
             }
         }
 

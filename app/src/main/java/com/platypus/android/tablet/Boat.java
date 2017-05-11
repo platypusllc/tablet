@@ -3,6 +3,9 @@ package com.platypus.android.tablet;
 import android.util.Log;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.FunctionObserver;
@@ -15,27 +18,31 @@ import com.platypus.crw.data.UtmPose;
 import com.platypus.crw.udp.UdpVehicleServer;
 import com.platypus.crw.data.Pose3D;
 
-
 public class Boat
 {
 		UdpVehicleServer server = null;
 		private InetSocketAddress ipAddress;
 		private PoseListener pl;
 		private SensorListener sl;
+		private WaypointListener wl;
 		private boolean connected;
-		private String logTag = Boat.class.getName();
+		private boolean autonomous;
+		private int current_waypoint_index;
+		private String logTag = "Boat"; //Boat.class.getName();
 		private LatLng currentLocation = null;
+		private ExecutorService comms_thread_pool = Executors.newFixedThreadPool(5);
 
 		public Boat()
 		{
 				server = new UdpVehicleServer();
 		}
 
-		public Boat(PoseListener _pl, SensorListener _sl)
+		public Boat(PoseListener _pl, SensorListener _sl, WaypointListener _wl)
 		{
 
 				pl = _pl;
 				sl = _sl;
+				wl = _wl;
 				server = new UdpVehicleServer();
 				try
 				{
@@ -46,14 +53,11 @@ public class Boat
 										@Override
 										public void completed(Void aVoid)
 										{
-												Log.i("Boat", "addPoseListener");
+												Log.i(logTag, "addPoseListener");
 										}
 
 										@Override
-										public void failed(FunctionError functionError)
-										{
-
-										}
+										public void failed(FunctionError functionError) { }
 								});
 						}
 						if (sl != null)
@@ -63,18 +67,23 @@ public class Boat
 										server.addSensorListener(channel, sl, new FunctionObserver<Void>()
 										{
 												@Override
-												public void completed(Void aVoid)
-												{
-
-												}
+												public void completed(Void aVoid) { Log.i(logTag, "add sensor listener"); }
 
 												@Override
-												public void failed(FunctionError functionError)
-												{
-
-												}
+												public void failed(FunctionError functionError) { }
 										});
 								}
+						}
+						if (wl != null)
+						{
+								server.addWaypointListener(wl, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid) { Log.i(logTag, "add waypoint listener"); }
+
+										@Override
+										public void failed(FunctionError functionError) { }
+								});
 						}
 				}
 				catch (Exception e)
@@ -94,6 +103,7 @@ public class Boat
 
 		public void setAddress(InetSocketAddress a)
 		{
+				Log.i(logTag, String.format("connection to ip address %s", a.toString()));
 				server.setVehicleService(a);
 		}
 
@@ -109,41 +119,31 @@ public class Boat
 
 		public boolean isConnected()
 		{
-				server.isConnected(new FunctionObserver<Boolean>()
+				class isConnectedCallable implements Callable<Boolean>
 				{
-						public void completed(Boolean v)
+						Boolean result;
+						public Boolean call()
 						{
-								connected = true;
-								try
+								server.isConnected(new FunctionObserver<Boolean>()
 								{
-										Thread.sleep(300);
-								}
-								catch (InterruptedException e)
-								{
-										System.out.println(e.toString());
-								}
-								isConnected();
-						}
+										@Override
+										public void completed(Boolean aBoolean)
+										{
+												Log.i(logTag, String.format("isConnected() returned %s", Boolean.toString(aBoolean)));
+												result = aBoolean;
+										}
 
-						public void failed(FunctionError fe)
-						{
-								connected = false;
-								try
-								{
-										Thread.sleep(300);
-								}
-								catch (InterruptedException e)
-								{
-										System.out.println(e.toString());
-								}
-								isConnected();
+										@Override
+										public void failed(FunctionError functionError) { }
+								});
+								return result;
 						}
-				});
-				return connected;
-		}
-
-		public boolean getConnected()
-		{
+				}
+				try
+				{
+						connected = comms_thread_pool.submit(new isConnectedCallable()).get();
+				}
+				catch (Exception ex) { }
 				return connected;
 		}
 
@@ -155,18 +155,7 @@ public class Boat
 				UtmPose[] wpPose = new UtmPose[1];
 
 				wpPose[0] = new UtmPose(_pose, _origin);
-				server.startWaypoints(wpPose, "POINT_AND_SHOOT", new FunctionObserver<Void>()
-				{
-						public void completed(Void v)
-						{
-								Log.i(logTag, "Start waypoint");
-						}
-
-						public void failed(FunctionError fe)
-						{
-								Log.i(logTag, "Failed to start waypoint");
-						}
-				});
+				startWaypoints(wpPose, "POINT_AND_SHOOT");
 		}
 
 		public LatLng getLocation()
@@ -177,6 +166,184 @@ public class Boat
 		public void setLocation(LatLng loc)
 		{
 				currentLocation = loc;
+		}
+
+		public void startWaypoints(final UtmPose[] waypoints, final String controller_name)
+		{
+				class startWaypointsCallable implements Callable<Void>
+				{
+						public Void call()
+						{
+								server.startWaypoints(waypoints, controller_name, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												Log.i(logTag, "startwaypoints completed with " + "wp count = " + waypoints.length);
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.e(logTag, "startwaypoints failed");
+										}
+								});
+								return null;
+						}
+				}
+				try
+				{
+						Log.i(logTag, "new startWaypointsCallable...");
+						comms_thread_pool.submit(new startWaypointsCallable()).get();
+				}
+				catch (Exception ex) { }
+		}
+
+		public void stopWaypoints()
+		{
+				class stopWaypointsCallable implements Callable<Void>
+				{
+						public Void call()
+						{
+								server.stopWaypoints(new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												Log.i(logTag, "Waypoints stopped");
+										}
+
+										@Override
+										public void failed(FunctionError functionError) { Log.i(logTag, "Failed to stop waypoints"); }
+								});
+								return null;
+						}
+				}
+				try
+				{
+						comms_thread_pool.submit(new stopWaypointsCallable()).get();
+				}
+				catch (Exception ex) { }
+		}
+
+		public void updateControlSignals(final double thrust, final double heading)
+		{
+				class updateControlSignalsCallable implements Callable<Void>
+				{
+						public Void call()
+						{
+								Twist twist = new Twist();
+								twist.dx(thrust);
+								twist.drz(-1.0*heading); // left-right is backwards
+								server.setVelocity(twist, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid) { }
+
+										@Override
+										public void failed(FunctionError functionError) { }
+								});
+								return null;
+						}
+				}
+				try
+				{
+						comms_thread_pool.submit(new updateControlSignalsCallable()).get();
+				}
+				catch (Exception ex) { }
+		}
+
+		public void setAutonomous(final boolean b)
+		{
+				class setAutonomousCallable implements Callable<Void>
+				{
+						public Void call() throws Exception
+						{
+								server.setAutonomous(b, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												Log.i(logTag, String.format("set autonomous to %s", Boolean.toString(b)));
+												autonomous = b;
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+										}
+								});
+								return null;
+						}
+				}
+				try
+				{
+						comms_thread_pool.submit(new setAutonomousCallable()).get();
+				}
+				catch (Exception ex) { }
+		}
+
+		public boolean isAutonomous()
+		{
+				class isAutonomousCallable implements Callable<Boolean>
+				{
+						Boolean result;
+						public Boolean call() throws Exception
+						{
+								server.isAutonomous(new FunctionObserver<Boolean>()
+								{
+										@Override
+										public void completed(Boolean aBoolean)
+										{
+												result = aBoolean;
+												Log.i(logTag, "isAutonomous: " + result);
+										}
+
+										@Override
+										public void failed(FunctionError functionError) { }
+								});
+								return result;
+						}
+				}
+				try
+				{
+						autonomous = comms_thread_pool.submit(new isAutonomousCallable()).get();
+				}
+				catch (Exception ex) { }
+				return autonomous;
+		}
+
+		public int getWaypointsIndex()
+		{
+				class getWaypointsIndexCallable implements Callable<Integer>
+				{
+						Integer result;
+						public Integer call()
+						{
+								server.getWaypointsIndex(new FunctionObserver<Integer>()
+								{
+										@Override
+										public void completed(Integer waypoint_index)
+										{
+												Log.i(logTag, String.format("Boat current waypoint i = %d", waypoint_index));
+												result = waypoint_index;
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.w(logTag, "Did not receive waypoint index");
+										}
+								});
+								return result;
+						}
+				}
+				try
+				{
+						current_waypoint_index = comms_thread_pool.submit(new getWaypointsIndexCallable()).get();
+				}
+				catch (Exception ex) { }
+				return current_waypoint_index;
 		}
 
 }
