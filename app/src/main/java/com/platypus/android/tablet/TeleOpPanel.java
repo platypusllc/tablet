@@ -713,7 +713,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						public void onClick(View view)
 						{
 								// ask the currentBoat server if it is connected
-								if (currentBoat.isConnected())
+								if (currentBoat.isNetworkConnected())
 								{
 										new AlertDialog.Builder(context)
 														.setTitle("Connect")
@@ -872,46 +872,48 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		//                  check if the boat is connected and update the color bar
 		//                  show sensor data
 		//                  update the waypoint status
+		private final int CONNECTION_POLL_MS = 3000;
 		public void boatConnectionPoll()
 		{
-				boolean isConnected = currentBoat.isConnected();
-				/*
 				final Handler handler = new Handler();
 				handler.post(new Runnable()
 				{
 						@Override
 						public void run()
 						{
+								long start_time = System.currentTimeMillis();
 								if (currentBoat != null)
 								{
-										boolean isConnected = currentBoat.isConnected();
+										boolean[] isConnected = currentBoat.isConnected();
 
-										if (isConnected)
+										if (isConnected[0]) // network connection
 										{
-												ipAddressBox.setBackgroundColor(Color.GREEN);
+												if (isConnected[1]) // eboard connection
+												{
+														Log.i(logTag, "Phone is network and eboard connected");
+														ipAddressBox.setBackgroundColor(Color.GREEN);
+												}
+												else
+												{
+														Log.i(logTag, "Phone is network connected, but no eboard");
+														ipAddressBox.setBackgroundColor(Color.YELLOW);
+												}
 										}
 										else
 										{
+												Log.i(logTag, "Phone is not network connected");
 												ipAddressBox.setBackgroundColor(Color.RED);
 										}
-
-										LatLng curLoc;
-										if (latlongloc != null)
-										{
-												curLoc = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
-												try
-												{
-														currentBoat.setLocation(curLoc);
-												}
-												catch (Exception e)
-												{
-												}
-										}
 								}
-								handler.postDelayed(this, 3000);
+								else
+								{
+										ipAddressBox.setBackgroundColor(Color.RED);
+								}
+
+								long sleep_remaining = Math.max(10, CONNECTION_POLL_MS - (System.currentTimeMillis() - start_time));
+								handler.postDelayed(this, sleep_remaining);
 						}
 				});
-				*/
 		}
 
   /*
@@ -1742,7 +1744,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														{
 																public void run()
 																{
-																		if (currentBoat.isConnected())
+																		if (currentBoat.isNetworkConnected())
 																		{
 																				if (!isAutonomous)
 																				{
@@ -2183,7 +2185,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						Log.e(logTag, "TeleOpPanel.startWaypoints(): currentBoat is null");
 						return;
 				}
-				if (currentBoat.isConnected())
+				if (currentBoat.isNetworkConnected())
 				{
 						if (boatPath.getPoints() == null)
 						{

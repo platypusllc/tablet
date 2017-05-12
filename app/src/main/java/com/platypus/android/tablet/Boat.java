@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.FunctionObserver;
@@ -25,7 +26,7 @@ public class Boat
 		private PoseListener pl;
 		private SensorListener sl;
 		private WaypointListener wl;
-		private boolean connected;
+		private boolean[] connected ={false, false}; // network_connected, eboard_connected
 		private boolean autonomous;
 		private int current_waypoint_index;
 		private String logTag = "Boat"; //Boat.class.getName();
@@ -117,12 +118,19 @@ public class Boat
 				return server;
 		}
 
-		public boolean isConnected()
+		public boolean isNetworkConnected()
 		{
-				class isConnectedCallable implements Callable<Boolean>
+				boolean[] isConnected = isConnected();
+				return isConnected[0];
+		}
+
+		public boolean[] isConnected()
+		{
+				class isConnectedCallable implements Callable<boolean[]>
 				{
-						Boolean result;
-						public Boolean call()
+						boolean completed = false;
+						boolean[] result = {false, false};
+						public boolean[] call()
 						{
 								server.isConnected(new FunctionObserver<Boolean>()
 								{
@@ -130,20 +138,35 @@ public class Boat
 										public void completed(Boolean aBoolean)
 										{
 												Log.i(logTag, String.format("isConnected() returned %s", Boolean.toString(aBoolean)));
-												result = aBoolean;
+												result[0] = true;
+												result[1] = aBoolean;
+												completed = true;
 										}
 
 										@Override
-										public void failed(FunctionError functionError) { }
+										public void failed(FunctionError functionError)
+										{
+												Log.w(logTag, String.format("isConnected() did not return"));
+												completed = true;
+										}
 								});
+								while (!completed)
+								{
+										Thread.yield();
+								}
+								Log.d(logTag, String.format("-     isConnectedCallable output = [%s, %s]", Boolean.toString(result[0]), Boolean.toString(result[1])));
 								return result;
 						}
 				}
 				try
 				{
-						connected = comms_thread_pool.submit(new isConnectedCallable()).get();
+						connected = comms_thread_pool.submit(new isConnectedCallable()).get(3000, TimeUnit.MILLISECONDS).clone(); // have to clone an array!
 				}
-				catch (Exception ex) { }
+				catch (Exception ex)
+				{
+						Log.e(logTag, "isConnected call timed out...");
+						Log.e(logTag, ex.getMessage());
+				}
 				return connected;
 		}
 
