@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
@@ -175,16 +173,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		boolean waypointLayoutEnabled = true; //if false were on region layout
 		boolean containsRegion = false;
 
-		double currentTransectDist = 5;
-		double xValue;
-		double yValue;
-		double zValue;
-		LatLong latlongloc;
+		double currentTransectDist = 10;
 
 		MapView mv;
 		MapboxMap mMapboxMap;
-		String zone;
-		String rotation;
 
 		Marker home_M;
 		Location location;
@@ -195,20 +187,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						(float) -79.948825);
 		LatLng initialPan = new LatLng(0, 0);
 		boolean setInitialPan = true;
-		long lastTime = -1;
 		String waypointStatus = "";
 		double rudderTemp = 0;
 		double thrustTemp = 0;
-		double old_rudder = 0;
-		double old_thrust = 0;
-		double rot;
 		String boatwaypoint;
 		boolean networkConnection = true;
-		ScheduledFuture future;
-		ScheduledThreadPoolExecutor exec;
-		Runnable networkRun;
-
-		boolean isAutonomous;
 
 		SensorManager senSensorManager;
 		Sensor senAccelerometer;
@@ -249,7 +232,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		double battery_voltage = 0.0;
 
-		private UtmPose _pose;
+		//private UtmPose _pose;
 		private UtmPose[] wpPose = null;
 
 		Icon Ihome;
@@ -289,6 +272,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		final Object _batteryVoltageLock = new Object();
 		Ringtone alarm_ringtone;
 		Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+
+		/*ASDF*/
+		public com.mapbox.mapboxsdk.geometry.LatLng jscienceLatLng_to_mapboxLatLng(org.jscience.geography.coordinates.LatLong jlatlng)
+		{
+				LatLng result = new LatLng(
+								jlatlng.latitudeValue(SI.RADIAN)*180./Math.PI,
+								jlatlng.longitudeValue(SI.RADIAN)*180./Math.PI);
+				return result;
+		}
 
 		protected void onCreate(final Bundle savedInstanceState)
 		{
@@ -575,25 +567,28 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				{ //gets the location of the boat
 						public void receivedPose(UtmPose upwcs)
 						{
-
-								_pose = upwcs.clone();
+								//xValue = _pose.pose.getX();
+								//yValue = _pose.pose.getY();
+								//zValue = _pose.pose.getZ();
+								//rotation = String.valueOf(Math.PI / 2 - upwcs.pose.getRotation().toYaw());
+								if (currentBoat != null)
 								{
-										xValue = _pose.pose.getX();
-										yValue = _pose.pose.getY();
-										zValue = _pose.pose.getZ();
-										rotation = String.valueOf(Math.PI / 2
-														- _pose.pose.getRotation().toYaw());
-										rot = Math.PI / 2 - _pose.pose.getRotation().toYaw();
-
-										zone = String.valueOf(_pose.origin.zone);
-
-										latlongloc = UTM.utmToLatLong(UTM.valueOf(
-														_pose.origin.zone, 'T', _pose.pose.getX(),
-														_pose.pose.getY(), SI.METER),
-														ReferenceEllipsoid.WGS84);
+										currentBoat.setYaw(Math.PI / 2 - upwcs.pose.getRotation().toYaw());
+										currentBoat.setUtmZone(String.valueOf(upwcs.origin.zone));
+										currentBoat.setLocation(
+														jscienceLatLng_to_mapboxLatLng(
+																		UTM.utmToLatLong(
+																						UTM.valueOf(
+																										upwcs.origin.zone,
+																										upwcs.origin.isNorth ? 'T' : 'L',
+																										upwcs.pose.getX(),
+																										upwcs.pose.getY(),
+																										SI.METER),
+																						ReferenceEllipsoid.WGS84)));
 								}
 						}
 				};
+
 
 				//*******************************************************************************
 				//  Initialize Sensorlistener
@@ -867,12 +862,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		};
 
 
-		/*ASDF*/ // replace this abomination!!!
+		/*ASDF*/
 		// Need a thread to update control signals sent from the joystick
 		//                  check if the boat is connected and update the color bar
 		//                  show sensor data
-		//                  update the waypoint status
+		//                  update the waypoint status text
 		private final int CONNECTION_POLL_MS = 3000;
+		private final int SENSOR_POLL_MS = 1000;
 		public void boatConnectionPoll()
 		{
 				final Handler handler = new Handler();
@@ -1617,9 +1613,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										{
 												public void onClick(DialogInterface dialog, int which)
 												{
+														/*ASDF*/
+														/*
 														if (latlongloc != null)
 														{
-																home = new LatLng(latlongloc.latitudeValue(SI.RADIAN) * 180 / Math.PI, latlongloc.longitudeValue(SI.RADIAN) * 180 / Math.PI);
+																home = currentBoat.getLocation();
 																try
 																{
 																		JPhone.put("Lat", home.getLatitude());
@@ -1644,6 +1642,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														{
 																Toast.makeText(getApplicationContext(), "Phone doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
 														}
+														*/
 												}
 										})
 										.setNegativeButton("Tablet", new DialogInterface.OnClickListener()
@@ -1740,26 +1739,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										{
 												public void onClick(DialogInterface dialog, int which)
 												{
-														Thread threadhome = new Thread()
+														if (currentBoat.isNetworkConnected())
 														{
-																public void run()
+																if (!currentBoat.isAutonomous())
 																{
-																		if (currentBoat.isNetworkConnected())
-																		{
-																				if (!isAutonomous)
-																				{
-																						currentBoat.setAutonomous(true);
-																						isAutonomous = currentBoat.isAutonomous();
-																				}
-
-																				UtmPose homeUTM = convertLatLngUtm(home);
-																				currentBoat.addWaypoint(homeUTM.pose, homeUTM.origin);
-																				Log.i(logTag, "Go home");
-																		}
+																		currentBoat.setAutonomous(true);
 																}
-														};
-														threadhome.start();
-														Log.i(logTag, "Go home");
+																UtmPose homeUTM = convertLatLngUtm(home);
+																currentBoat.addWaypoint(homeUTM.pose, homeUTM.origin);
+																Log.i(logTag, "Go home");
+														}
 												}
 										})
 										.setNegativeButton("No", new DialogInterface.OnClickListener()
@@ -1776,107 +1765,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		public void sendPID()
 		{
 				loadPreferences(); //update values should be replaced automatically with
-				final int THRUST_GAIN_AXIS = 0;
-				final int RUDDER_GAIN_AXIS = 5;
-				final Thread thread = new Thread()
-				{
-						public void run()
-						{
-								currentBoat.returnServer().setGains(THRUST_GAIN_AXIS, tPID, new FunctionObserver<Void>()
-								{
-										@Override
-										public void completed(Void aVoid)
-										{
-												Log.i(logTag, "Setting thrust PID completed.");
-										}
-
-										@Override
-										public void failed(FunctionError functionError)
-										{
-												Log.i(logTag, "Setting thrust PID failed: " + functionError);
-										}
-								});
-								currentBoat.returnServer().setGains(RUDDER_GAIN_AXIS, rPID, new FunctionObserver<Void>()
-								{
-										@Override
-										public void completed(Void aVoid)
-										{
-												Log.i(logTag, "Setting rudder PID completed ");
-										}
-
-										@Override
-										public void failed(FunctionError functionError)
-										{
-												Log.i(logTag, "Setting rudder PID failed: " + functionError);
-										}
-								});
-						}
-				};
-				thread.start();
-				Thread PIDthread = new Thread()
-				{
-						@Override
-						public void run()
-						{
-								currentBoat.returnServer().getGains(THRUST_GAIN_AXIS, new FunctionObserver<double[]>()
-								{
-										@Override
-										public void completed(final double[] doubles)
-										{
-												Log.i(logTag, "thrust pids are now: " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
-										}
-
-										@Override
-										public void failed(FunctionError functionError)
-										{
-												Log.e(logTag, "FAILED TO GET PIDS");
-										}
-								});
-								currentBoat.returnServer().getGains(RUDDER_GAIN_AXIS, new FunctionObserver<double[]>()
-								{
-										@Override
-										public void completed(final double[] doubles)
-										{
-												Log.i(logTag, "rudder pids are now: " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
-										}
-
-										@Override
-										public void failed(FunctionError functionError)
-										{
-												Log.e(logTag, "FAILED TO GET PIDS");
-										}
-								});
-
-						}
-				};
-				PIDthread.start();
-		}
-
-		public int isAverage(SensorData data, String value)
-		{
-				double v = Double.parseDouble(value);
-				double average = getAverage(data);
-				if ((average - v) > average * 0.001)
-				{
-						return Color.RED;
-				}
-				else if ((v - average) > average * 0.001)
-				{
-						return Color.GREEN;
-				}
-				else
-				{
-						return Color.GRAY;
-				}
-		}
-
-		public double getAverage(SensorData data)
-		{
-				double average;
-				SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
-				String v = settings.getString(data.type.toString(), "0");
-				average = Double.parseDouble(v);
-				return average;
+				currentBoat.setPID(tPID, rPID);
+				currentBoat.getPID();
 		}
 
 		public void saveMap()
@@ -2149,12 +2039,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void run()
 						{
-								if (currentBoat != null && currentBoat.getLocation() != null && mMapboxMap != null)
+								if (currentBoat == null || currentBoat.getLocation() == null || mMapboxMap == null)
 								{
-										boat_markerview.setPosition(currentBoat.getLocation());
+										return;
 								}
+								boat_markerview.setPosition(currentBoat.getLocation());
 
-								float degree = (float) (rot * 180 / Math.PI);  // degree is -90 to 270
+								float degree = (float) (currentBoat.getYaw() * 180 / Math.PI);  // degree is -90 to 270
 								degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
 								if (mMapboxMap != null)
 								{
@@ -2210,7 +2101,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 								/*ASDF*/
 								currentBoat.setAutonomous(true);
-								isAutonomous = currentBoat.isAutonomous();
+								currentBoat.isAutonomous();
 								currentBoat.startWaypoints(wpPose, "POINT_AND_SHOOT");
 								current_waypoint_index = 0;
 								invalidate();
@@ -2405,7 +2296,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								thread.start();
 								*/
 								currentBoat.setAutonomous(false);
-								isAutonomous = currentBoat.isAutonomous();
+								currentBoat.isAutonomous();
 								currentBoat.stopWaypoints();
 
 								boatPath = new Path();
@@ -2563,22 +2454,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View view)
 						{
-								/*ASDF
-								Thread thread = new Thread()
-								{
-										public void run()
-										{
-												currentBoat.setAutonomous(false);
-												isAutonomous = currentBoat.isAutonomous();
-												currentBoat.stopWaypoints();
-										}
-								};
-								thread.start();
-								*/
 								if (currentBoat != null)
 								{
 										currentBoat.setAutonomous(false);
-										isAutonomous = currentBoat.isAutonomous();
+										currentBoat.isAutonomous();
 										currentBoat.stopWaypoints();
 								}
 						}

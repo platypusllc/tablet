@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.FunctionObserver;
@@ -27,11 +28,17 @@ public class Boat
 		private SensorListener sl;
 		private WaypointListener wl;
 		private boolean[] connected ={false, false}; // network_connected, eboard_connected
-		private boolean autonomous;
+		private AtomicBoolean autonomous = new AtomicBoolean(false);
 		private int current_waypoint_index;
 		private String logTag = "Boat"; //Boat.class.getName();
 		private LatLng currentLocation = null;
+		private double currentYaw = 0.0; // [-pi, pi]
+		private String utmZone;
+		final int THRUST_GAIN_AXIS = 0;
+		final int RUDDER_GAIN_AXIS = 5;
+		private double[][] PID_gains = {{0., 0., 0.}, {0., 0., 0.}};
 		private ExecutorService comms_thread_pool = Executors.newFixedThreadPool(5);
+
 
 		public Boat()
 		{
@@ -102,6 +109,20 @@ public class Boat
 				server.setVehicleService(ipAddress);
 		}
 
+		public double getYaw() { return currentYaw; }
+		public void setYaw(double yaw)
+		{
+				while (Math.abs(yaw) > Math.PI)
+				{
+						yaw -= 2*Math.PI*Math.signum(yaw);
+				}
+				currentYaw = yaw;
+		}
+		public void setUtmZone(String _utmZone)
+		{
+				utmZone = _utmZone;
+		}
+
 		public void setAddress(InetSocketAddress a)
 		{
 				Log.i(logTag, String.format("connection to ip address %s", a.toString()));
@@ -128,7 +149,7 @@ public class Boat
 		{
 				class isConnectedCallable implements Callable<boolean[]>
 				{
-						boolean completed = false;
+						boolean response_received = false;
 						boolean[] result = {false, false};
 						public boolean[] call()
 						{
@@ -140,17 +161,17 @@ public class Boat
 												Log.i(logTag, String.format("isConnected() returned %s", Boolean.toString(aBoolean)));
 												result[0] = true;
 												result[1] = aBoolean;
-												completed = true;
+												response_received = true;
 										}
 
 										@Override
 										public void failed(FunctionError functionError)
 										{
 												Log.w(logTag, String.format("isConnected() did not return"));
-												completed = true;
+												response_received = true;
 										}
 								});
-								while (!completed)
+								while (!response_received)
 								{
 										Thread.yield();
 								}
@@ -288,7 +309,7 @@ public class Boat
 										public void completed(Void aVoid)
 										{
 												Log.i(logTag, String.format("set autonomous to %s", Boolean.toString(b)));
-												autonomous = b;
+												autonomous.set(b);
 										}
 
 										@Override
@@ -310,6 +331,7 @@ public class Boat
 		{
 				class isAutonomousCallable implements Callable<Boolean>
 				{
+						boolean response_received = false;
 						Boolean result;
 						public Boolean call() throws Exception
 						{
@@ -318,29 +340,38 @@ public class Boat
 										@Override
 										public void completed(Boolean aBoolean)
 										{
+												response_received = true;
 												result = aBoolean;
 												Log.i(logTag, "isAutonomous: " + result);
 										}
 
 										@Override
-										public void failed(FunctionError functionError) { }
+										public void failed(FunctionError functionError)
+										{
+												response_received = true;
+										}
 								});
+								while (!response_received)
+								{
+										Thread.yield();
+								}
 								return result;
 						}
 				}
 				try
 				{
-						autonomous = comms_thread_pool.submit(new isAutonomousCallable()).get();
+						autonomous.set(comms_thread_pool.submit(new isAutonomousCallable()).get());
 				}
 				catch (Exception ex) { }
-				return autonomous;
+				return autonomous.get();
 		}
 
 		public int getWaypointsIndex()
 		{
 				class getWaypointsIndexCallable implements Callable<Integer>
 				{
-						Integer result;
+						boolean response_received = false;
+						Integer result = -2;
 						public Integer call()
 						{
 								server.getWaypointsIndex(new FunctionObserver<Integer>()
@@ -350,14 +381,20 @@ public class Boat
 										{
 												Log.i(logTag, String.format("Boat current waypoint i = %d", waypoint_index));
 												result = waypoint_index;
+												response_received = true;
 										}
 
 										@Override
 										public void failed(FunctionError functionError)
 										{
+												response_received = true;
 												Log.w(logTag, "Did not receive waypoint index");
 										}
 								});
+								while (!response_received)
+								{
+										Thread.yield();
+								}
 								return result;
 						}
 				}
@@ -369,4 +406,104 @@ public class Boat
 				return current_waypoint_index;
 		}
 
+		public void setPID(final double[] thrustPID, final double[] headingPID)
+		{
+				class setPIDCallable implements Callable<Void>
+				{
+						public Void call()
+						{
+								server.setGains(THRUST_GAIN_AXIS, thrustPID, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												Log.i(logTag, "Setting thrust PID completed.");
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.i(logTag, "Setting thrust PID failed: " + functionError);
+										}
+								});
+								server.setGains(RUDDER_GAIN_AXIS, headingPID, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												Log.i(logTag, "Setting rudder PID completed.");
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.i(logTag, "Setting rudder PID failed: " + functionError);
+										}
+								});
+								return null;
+						}
+				}
+				try
+				{
+						comms_thread_pool.submit(new setPIDCallable()).get();
+				}
+				catch (Exception ex) { }
+		}
+
+		public double[][] getPID()
+		{
+				class getPIDCallable implements Callable<double[][]>
+				{
+						boolean thrust_response_received = false;
+						boolean heading_response_received = false;
+						double[][] result = {{0., 0., 0.}, {0., 0., 0.}};
+
+						public double[][] call()
+						{
+								server.getGains(THRUST_GAIN_AXIS, new FunctionObserver<double[]>()
+								{
+										@Override
+										public void completed(double[] doubles)
+										{
+												result[0] = doubles.clone();
+												thrust_response_received = true;
+												Log.i(logTag, "thrust pids are now: " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												thrust_response_received = true;
+										}
+								});
+								server.getGains(RUDDER_GAIN_AXIS, new FunctionObserver<double[]>()
+								{
+										@Override
+										public void completed(double[] doubles)
+										{
+												result[1] = doubles.clone();
+												heading_response_received = true;
+												Log.i(logTag, "heading pids are now: " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												heading_response_received = true;
+										}
+								});
+								while (!thrust_response_received || !heading_response_received)
+								{
+										Thread.yield();
+								}
+								return result;
+						}
+				}
+				try
+				{
+						PID_gains = comms_thread_pool.submit(new getPIDCallable()).get().clone();
+				}
+				catch (Exception ex) { }
+				return PID_gains;
+		}
 }
