@@ -7,8 +7,10 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.FunctionObserver;
@@ -29,7 +31,8 @@ public class Boat
 		private PoseListener pl;
 		private SensorListener sl;
 		private WaypointListener wl;
-		private Boolean[] connected = {false, false}; // network_connected, eboard_connected
+		private AtomicLong time_of_last_connection = new AtomicLong(0);
+		private AtomicBoolean connected = new AtomicBoolean(false);
 		private AtomicBoolean autonomous = new AtomicBoolean(false);
 		private int current_waypoint_index;
 		private String logTag = "Boat"; //Boat.class.getName();
@@ -38,8 +41,9 @@ public class Boat
 		private double[][] PID_gains = {{0., 0., 0.}, {0., 0., 0.}}; // thrust, heading
 		final int THRUST_GAIN_AXIS = 0;
 		final int RUDDER_GAIN_AXIS = 5;
-		final int LONG_TIMEOUT_S = 3; // important messages drop from the thread pool after X seconds
-		private ExecutorService comms_thread_pool = Executors.newFixedThreadPool(5);
+		private final int CONNECTION_POLL_S = 3;
+		private ScheduledThreadPoolExecutor polling_thread_pool;
+		private ExecutorService oneshot_thread_pool;
 
 
 		public Boat()
@@ -100,6 +104,9 @@ public class Boat
 				{
 						Log.i(logTag, "Failed to add listener");
 				}
+				polling_thread_pool = new ScheduledThreadPoolExecutor(1);
+				polling_thread_pool.scheduleAtFixedRate(isConnectedPoll, 0, CONNECTION_POLL_S, TimeUnit.SECONDS);
+				oneshot_thread_pool = Executors.newFixedThreadPool(5);
 		}
 
 		public Boat(InetSocketAddress _ipAddress)
@@ -121,6 +128,47 @@ public class Boat
 				currentYaw = yaw;
 		}
 
+		/*
+		public long getTimeOfLastConnection() { return time_of_last_connection.get(); }
+		public void setTimeOfLastConnection(long ms)
+		{
+				if (ms > time_of_last_connection.get()) time_of_last_connection.set(ms);
+		}
+		*/
+		private Runnable isConnectedPoll = new Runnable()
+		{
+				@Override
+				public void run()
+				{
+						if (System.currentTimeMillis() - time_of_last_connection.get() > 1000)
+						{
+								server.isConnected(new FunctionObserver<Boolean>()
+								{
+										@Override
+										public void completed(Boolean aBoolean)
+										{
+												Log.i(logTag, String.format("isConnected() returned %s", Boolean.toString(aBoolean)));
+												time_of_last_connection.set(System.currentTimeMillis());
+												connected.set(true);
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.w(logTag, String.format("isConnected() did not return"));
+												connected.set(false);
+										}
+								});
+						}
+						else
+						{
+								connected.set(true);
+								Log.i(logTag, "skipping isConnected() due to recent traffic");
+						}
+				}
+		};
+
+
 		public void setAddress(InetSocketAddress a)
 		{
 				Log.i(logTag, String.format("connection to ip address %s", a.toString()));
@@ -137,96 +185,15 @@ public class Boat
 				return server;
 		}
 
-		public boolean isNetworkConnected()
+		public void setConnected(boolean b)
 		{
-				//Boolean[] isConnected = isConnected();
-				//return isConnected[0];
-				return false;
+				connected.set(b);
+				time_of_last_connection.set(System.currentTimeMillis());
 		}
-
-		public void isConnected(final TeleOpPanel.GUICallback callback)
+		public boolean isConnected()
 		{
-				class IsConnectedAsyncTask extends AsyncTask<Void, Boolean, Void>
-				{
-						@Override
-						protected Void doInBackground(Void... params)
-						{
-								server.isConnected(new FunctionObserver<Boolean>()
-								{
-										@Override
-										public void completed(Boolean aBoolean)
-										{
-												Log.i(logTag, String.format("isConnected() returned %s", Boolean.toString(aBoolean)));
-												publishProgress(true, aBoolean);
-										}
-
-										@Override
-										public void failed(FunctionError functionError)
-										{
-												Log.w(logTag, String.format("isConnected() did not return"));
-												publishProgress(false, false);
-										}
-								});
-								return null;
-						}
-
-						@Override
-						protected void onProgressUpdate(Boolean... values)
-						{
-								callback.run(values);
-						}
-				}
-				new IsConnectedAsyncTask().execute();
+				return connected.get();
 		}
-
-		/*
-		public boolean[] isConnected()
-		{
-				class isConnectedCallable implements Callable<Boolean[]>
-				{
-						boolean response_received = false;
-						boolean[] result = {false, false};
-						public Boolean[] call()
-						{
-								server.isConnected(new FunctionObserver<Boolean>()
-								{
-										@Override
-										public void completed(Boolean aBoolean)
-										{
-												Log.i(logTag, String.format("isConnected() returned %s", Boolean.toString(aBoolean)));
-												result[0] = true;
-												result[1] = aBoolean;
-												response_received = true;
-										}
-
-										@Override
-										public void failed(FunctionError functionError)
-										{
-												Log.w(logTag, String.format("isConnected() did not return"));
-												response_received = true;
-										}
-								});
-								while (!response_received)
-								{
-										Thread.yield();
-								}
-								Log.d(logTag, String.format("-     isConnectedCallable output = [%s, %s]", Boolean.toString(result[0]), Boolean.toString(result[1])));
-								return result;
-						}
-				}
-				try
-				{
-						connected = comms_thread_pool.submit(new isConnectedCallable())
-										.get(LONG_TIMEOUT_S, TimeUnit.SECONDS).clone();
-				}
-				catch (Exception ex)
-				{
-						Log.e(logTag, "isConnected() call exception");
-						Log.e(logTag, ex.getMessage());
-				}
-				return connected;
-		}
-		*/
 
 		public void addWaypoint(Pose3D _pose, Utm _origin)
 		{
@@ -251,6 +218,7 @@ public class Boat
 
 		public void startWaypoints(final UtmPose[] waypoints, final String controller_name)
 		{
+				/*
 				class startWaypointsCallable implements Callable<Void>
 				{
 						public Void call()
@@ -278,10 +246,12 @@ public class Boat
 						comms_thread_pool.submit(new startWaypointsCallable()).get();
 				}
 				catch (Exception ex) { }
+				*/
 		}
 
 		public void stopWaypoints()
 		{
+				/*
 				class stopWaypointsCallable implements Callable<Void>
 				{
 						public Void call()
@@ -305,10 +275,12 @@ public class Boat
 						comms_thread_pool.submit(new stopWaypointsCallable()).get();
 				}
 				catch (Exception ex) { }
+				*/
 		}
 
 		public void updateControlSignals(final double thrust, final double heading)
 		{
+				/*
 				class updateControlSignalsCallable implements Callable<Void>
 				{
 						public Void call()
@@ -332,10 +304,12 @@ public class Boat
 						comms_thread_pool.submit(new updateControlSignalsCallable()).get();
 				}
 				catch (Exception ex) { }
+				*/
 		}
 
 		public void setAutonomous(final boolean b)
 		{
+				/*
 				class setAutonomousCallable implements Callable<Void>
 				{
 						public Void call() throws Exception
@@ -362,10 +336,12 @@ public class Boat
 						comms_thread_pool.submit(new setAutonomousCallable()).get();
 				}
 				catch (Exception ex) { }
+				*/
 		}
 
 		public boolean isAutonomous()
 		{
+				/*
 				class isAutonomousCallable implements Callable<Boolean>
 				{
 						boolean response_received = false;
@@ -406,10 +382,13 @@ public class Boat
 						Log.e(logTag, ex.getMessage());
 				}
 				return autonomous.get();
+				*/
+				return false;
 		}
 
 		public int getWaypointsIndex()
 		{
+				/*
 				class getWaypointsIndexCallable implements Callable<Integer>
 				{
 						boolean response_received = false;
@@ -451,10 +430,13 @@ public class Boat
 						Log.e(logTag, ex.getMessage());
 				}
 				return current_waypoint_index;
+				*/
+				return -2;
 		}
 
 		public void setPID(final double[] thrustPID, final double[] headingPID)
 		{
+				/*
 				class setPIDCallable implements Callable<Void>
 				{
 						public Void call()
@@ -495,10 +477,12 @@ public class Boat
 						comms_thread_pool.submit(new setPIDCallable()).get();
 				}
 				catch (Exception ex) { }
+				*/
 		}
 
 		public double[][] getPID()
 		{
+				/*
 				class getPIDCallable implements Callable<double[][]>
 				{
 						boolean thrust_response_received = false;
@@ -557,5 +541,7 @@ public class Boat
 						Log.e(logTag, ex.getMessage());
 				}
 				return PID_gains;
+				*/
+				return null;
 		}
 }

@@ -173,6 +173,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		private boolean speed_spinner_erroneous_call = true;
 		Spinner speed_spinner = null;
 
+		ScheduledThreadPoolExecutor polling_thread_pool = new ScheduledThreadPoolExecutor(1);
 		int updateRateMili = 200;
 		boolean waypointLayoutEnabled = true; //if false were on region layout
 		boolean containsRegion = false;
@@ -397,6 +398,35 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												.icon(mIconFactory.fromResource(R.drawable.pointarrow)).rotation(0));
 						}
 				});
+
+				/*ASDF*/
+				polling_thread_pool.scheduleAtFixedRate(new Runnable()
+				{
+						@Override
+						public void run()
+						{
+								if (currentBoat != null)
+								{
+										final boolean isConnected = currentBoat.isConnected();
+										runOnUiThread(new Runnable()
+										{
+												@Override
+												public void run()
+												{
+														if (isConnected)
+														{
+																ipAddressBox.setBackgroundColor(Color.GREEN);
+														}
+														else
+														{
+																ipAddressBox.setBackgroundColor(Color.RED);
+														}
+												}
+										});
+								}
+						}
+				}, 0, 1, TimeUnit.SECONDS);
+
 
 				//load inital waypoint menu
 				onLoadWaypointLayout();
@@ -639,6 +669,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						{
 								if (currentBoat != null)
 								{
+										currentBoat.setConnected(true);
 										currentBoat.setYaw(Math.PI / 2 - upwcs.pose.getRotation().toYaw());
 										//currentBoat.setUtmZone(String.valueOf(upwcs.origin.zone));
 										currentBoat.setLocation(
@@ -720,7 +751,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						public void onClick(View view)
 						{
 								// ask the currentBoat server if it is connected
-								if (currentBoat.isNetworkConnected())
+								if (currentBoat.isConnected())
 								{
 										new AlertDialog.Builder(context)
 														.setTitle("Connect")
@@ -891,64 +922,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		//                   Essentially you are giving the Boat handles on the GUI
 		//
 
-
-		private final int CONNECTION_POLL_S = 3;
-		private final int SENSOR_POLL_MS = 1000;
-		interface GUICallback
-		{
-				void run(Boolean... results);
-		}
-		public void boatConnectionPoll()
-		{
-				class ConnectionGUICallback implements GUICallback
-				{
-						public void run(Boolean... results)
-						{
-								Log.i(logTag, String.format("ConnectionGUICallback.run(), results = %s, %s",
-												Boolean.toString(results[0]),
-												Boolean.toString(results[1])));
-								if (results[0]) // network connection
-								{
-										if (results[1]) // eboard connection
-										{
-												Log.i(logTag, "Phone is network and eboard connected");
-												ipAddressBox.setBackgroundColor(Color.GREEN);
-										}
-										else
-										{
-												Log.i(logTag, "Phone is network connected, but no eboard");
-												ipAddressBox.setBackgroundColor(Color.YELLOW);
-										}
-								}
-								else
-								{
-										Log.i(logTag, "Phone is not network connected");
-										ipAddressBox.setBackgroundColor(Color.RED);
-								}
-						}
-				}
-				final ConnectionGUICallback guiCallback = new ConnectionGUICallback();
-				ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
-				exec.scheduleAtFixedRate(new Runnable()
-				{
-						@Override
-						public void run()
-						{
-								Log.i(logTag, "boatConnectionPoll iteration...");
-								if (currentBoat != null)
-								{
-										Log.i(logTag, "..... creating an AsyncTask and providing a GUI callback");
-										currentBoat.isConnected(guiCallback);
-								}
-								else
-								{
-										Log.i(logTag, "..... currentBoat is null");
-										guiCallback.run(false, false);
-								}
-
-						}
-				}, 0, CONNECTION_POLL_S, TimeUnit.SECONDS);
-		}
 
   /*
    * this async task handles all of the networking on the boat since networking has to be done on
@@ -1302,7 +1275,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								dialog.dismiss();
 								/*ASDF*/
 								//networkThread = new NetworkAsync().execute(); //launch networking asnyc task
-								boatConnectionPoll(); // Launch boat connection check thread
+								//boatConnectionPoll(); // Launch boat connection check thread
 								//latestWaypointPoll(); // Launch waypoint polling thread
 								//alertsAndAlarms(); // Launch alerts and alarms thread
 								SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -1779,7 +1752,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										{
 												public void onClick(DialogInterface dialog, int which)
 												{
-														if (currentBoat.isNetworkConnected())
+														if (currentBoat.isConnected())
 														{
 																if (!currentBoat.isAutonomous())
 																{
@@ -2115,7 +2088,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						Log.e(logTag, "TeleOpPanel.startWaypoints(): currentBoat is null");
 						return;
 				}
-				if (currentBoat.isNetworkConnected())
+				if (currentBoat.isConnected())
 				{
 						if (boatPath.getPoints() == null)
 						{
