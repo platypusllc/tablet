@@ -109,6 +109,11 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import com.platypus.crw.FunctionObserver;
 import com.platypus.crw.PoseListener;
@@ -870,53 +875,79 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 
 		/*ASDF*/
-		// Need a thread to update control signals sent from the joystick
-		//                  check if the boat is connected and update the color bar
-		//                  show sensor data
-		//                  update the waypoint status text
-		private final int CONNECTION_POLL_MS = 3000;
+
+		// Shantanu: use AsyncTask to launch isConnected (which calls itself endlessly) and launches a runnable to poll the boat state, then call progressUpdate
+		//           The AsyncTask then updates the UI with the onProgressUpdate and the results of the boat state poll
+		//           This setup completely disconnects the main UI thread from waiting for the real result of the core comms call
+		//               and therefore the UI may show incorrect state, but it doesn't look choppy at all
+		// My stuff: use a Handler.postDelayed to periodically call isConnected, which creates a Future and waits for the result
+		//           This guarantees a correct result, but causes the UI to look choppy, even if I use callbacks too
+		//
+		// How can I combine these two methods?
+		//           Idea 1) Instead of a handler.postDelayed, why don't I use the asyncTask task to schedule the isConnected call
+		//                   When isConnected returns, use the result as Progress and in onProgressUpdate, update the UI
+		//           Idea 2) Put the AsyncTask inside the Boat method, like I was doing with Callable.
+		//                   Set up callbacks in TeleOpPanel and feed them to the Boat method for the different parts of the AsyncTask
+		//                   Essentially you are giving the Boat handles on the GUI
+		//
+
+
+		private final int CONNECTION_POLL_S = 3;
 		private final int SENSOR_POLL_MS = 1000;
+		interface GUICallback
+		{
+				void run(Boolean... results);
+		}
 		public void boatConnectionPoll()
 		{
-				final Handler handler = new Handler();
-				handler.post(new Runnable()
+				class ConnectionGUICallback implements GUICallback
 				{
-						@Override
-						public void run()
+						public void run(Boolean... results)
 						{
-								long start_time = System.currentTimeMillis();
-								if (currentBoat != null)
+								Log.i(logTag, String.format("ConnectionGUICallback.run(), results = %s, %s",
+												Boolean.toString(results[0]),
+												Boolean.toString(results[1])));
+								if (results[0]) // network connection
 								{
-										boolean[] isConnected = currentBoat.isConnected();
-
-										if (isConnected[0]) // network connection
+										if (results[1]) // eboard connection
 										{
-												if (isConnected[1]) // eboard connection
-												{
-														Log.i(logTag, "Phone is network and eboard connected");
-														ipAddressBox.setBackgroundColor(Color.GREEN);
-												}
-												else
-												{
-														Log.i(logTag, "Phone is network connected, but no eboard");
-														ipAddressBox.setBackgroundColor(Color.YELLOW);
-												}
+												Log.i(logTag, "Phone is network and eboard connected");
+												ipAddressBox.setBackgroundColor(Color.GREEN);
 										}
 										else
 										{
-												Log.i(logTag, "Phone is not network connected");
-												ipAddressBox.setBackgroundColor(Color.RED);
+												Log.i(logTag, "Phone is network connected, but no eboard");
+												ipAddressBox.setBackgroundColor(Color.YELLOW);
 										}
 								}
 								else
 								{
+										Log.i(logTag, "Phone is not network connected");
 										ipAddressBox.setBackgroundColor(Color.RED);
 								}
-
-								long sleep_remaining = Math.max(10, CONNECTION_POLL_MS - (System.currentTimeMillis() - start_time));
-								handler.postDelayed(this, sleep_remaining);
 						}
-				});
+				}
+				final ConnectionGUICallback guiCallback = new ConnectionGUICallback();
+				ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
+				exec.scheduleAtFixedRate(new Runnable()
+				{
+						@Override
+						public void run()
+						{
+								Log.i(logTag, "boatConnectionPoll iteration...");
+								if (currentBoat != null)
+								{
+										Log.i(logTag, "..... creating an AsyncTask and providing a GUI callback");
+										currentBoat.isConnected(guiCallback);
+								}
+								else
+								{
+										Log.i(logTag, "..... currentBoat is null");
+										guiCallback.run(false, false);
+								}
+
+						}
+				}, 0, CONNECTION_POLL_S, TimeUnit.SECONDS);
 		}
 
   /*
@@ -1272,8 +1303,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								/*ASDF*/
 								//networkThread = new NetworkAsync().execute(); //launch networking asnyc task
 								boatConnectionPoll(); // Launch boat connection check thread
-								latestWaypointPoll(); // Launch waypoint polling thread
-								alertsAndAlarms(); // Launch alerts and alarms thread
+								//latestWaypointPoll(); // Launch waypoint polling thread
+								//alertsAndAlarms(); // Launch alerts and alarms thread
 								SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 								SharedPreferences.Editor editor = sharedPref.edit();
 								editor.putString(SettingsActivity.KEY_PREF_IP, currentBoat.getIpAddress().getAddress().toString());

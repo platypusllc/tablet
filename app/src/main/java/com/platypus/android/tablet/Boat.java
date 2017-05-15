@@ -1,5 +1,6 @@
 package com.platypus.android.tablet;
 
+import android.os.AsyncTask;
 import android.util.Log;
 
 import java.net.InetSocketAddress;
@@ -20,7 +21,6 @@ import com.platypus.crw.data.UtmPose;
 import com.platypus.crw.udp.UdpVehicleServer;
 import com.platypus.crw.data.Pose3D;
 
-import javax.measure.unit.Unit;
 
 public class Boat
 {
@@ -29,7 +29,7 @@ public class Boat
 		private PoseListener pl;
 		private SensorListener sl;
 		private WaypointListener wl;
-		private boolean[] connected ={false, false}; // network_connected, eboard_connected
+		private Boolean[] connected = {false, false}; // network_connected, eboard_connected
 		private AtomicBoolean autonomous = new AtomicBoolean(false);
 		private int current_waypoint_index;
 		private String logTag = "Boat"; //Boat.class.getName();
@@ -139,17 +139,54 @@ public class Boat
 
 		public boolean isNetworkConnected()
 		{
-				boolean[] isConnected = isConnected();
-				return isConnected[0];
+				//Boolean[] isConnected = isConnected();
+				//return isConnected[0];
+				return false;
 		}
 
+		public void isConnected(final TeleOpPanel.GUICallback callback)
+		{
+				class IsConnectedAsyncTask extends AsyncTask<Void, Boolean, Void>
+				{
+						@Override
+						protected Void doInBackground(Void... params)
+						{
+								server.isConnected(new FunctionObserver<Boolean>()
+								{
+										@Override
+										public void completed(Boolean aBoolean)
+										{
+												Log.i(logTag, String.format("isConnected() returned %s", Boolean.toString(aBoolean)));
+												publishProgress(true, aBoolean);
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.w(logTag, String.format("isConnected() did not return"));
+												publishProgress(false, false);
+										}
+								});
+								return null;
+						}
+
+						@Override
+						protected void onProgressUpdate(Boolean... values)
+						{
+								callback.run(values);
+						}
+				}
+				new IsConnectedAsyncTask().execute();
+		}
+
+		/*
 		public boolean[] isConnected()
 		{
-				class isConnectedCallable implements Callable<boolean[]>
+				class isConnectedCallable implements Callable<Boolean[]>
 				{
 						boolean response_received = false;
 						boolean[] result = {false, false};
-						public boolean[] call()
+						public Boolean[] call()
 						{
 								server.isConnected(new FunctionObserver<Boolean>()
 								{
@@ -189,6 +226,7 @@ public class Boat
 				}
 				return connected;
 		}
+		*/
 
 		public void addWaypoint(Pose3D _pose, Utm _origin)
 		{
