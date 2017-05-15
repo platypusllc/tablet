@@ -20,6 +20,8 @@ import com.platypus.crw.data.UtmPose;
 import com.platypus.crw.udp.UdpVehicleServer;
 import com.platypus.crw.data.Pose3D;
 
+import javax.measure.unit.Unit;
+
 public class Boat
 {
 		UdpVehicleServer server = null;
@@ -33,12 +35,12 @@ public class Boat
 		private String logTag = "Boat"; //Boat.class.getName();
 		private LatLng currentLocation = null;
 		private double currentYaw = 0.0; // [-pi, pi]
-		private String utmZone;
+		private double[][] PID_gains = {{0., 0., 0.}, {0., 0., 0.}}; // thrust, heading
+		private ExecutorService comms_thread_pool = Executors.newFixedThreadPool(10);
 		final int THRUST_GAIN_AXIS = 0;
 		final int RUDDER_GAIN_AXIS = 5;
-		private double[][] PID_gains = {{0., 0., 0.}, {0., 0., 0.}};
-		private ExecutorService comms_thread_pool = Executors.newFixedThreadPool(5);
-
+		final int LONG_TIMEOUT_S = 3; // important messages drop from the thread pool after X seconds
+		final int SHORT_TIMEOUT_MS = 500; // short messages drop from the thread pool after X milliseconds
 
 		public Boat()
 		{
@@ -118,10 +120,6 @@ public class Boat
 				}
 				currentYaw = yaw;
 		}
-		public void setUtmZone(String _utmZone)
-		{
-				utmZone = _utmZone;
-		}
 
 		public void setAddress(InetSocketAddress a)
 		{
@@ -181,11 +179,12 @@ public class Boat
 				}
 				try
 				{
-						connected = comms_thread_pool.submit(new isConnectedCallable()).get(3000, TimeUnit.MILLISECONDS).clone(); // have to clone an array!
+						connected = comms_thread_pool.submit(new isConnectedCallable())
+										.get(LONG_TIMEOUT_S, TimeUnit.SECONDS).clone();
 				}
 				catch (Exception ex)
 				{
-						Log.e(logTag, "isConnected call timed out...");
+						Log.e(logTag, "isConnected() call exception");
 						Log.e(logTag, ex.getMessage());
 				}
 				return connected;
@@ -360,9 +359,14 @@ public class Boat
 				}
 				try
 				{
-						autonomous.set(comms_thread_pool.submit(new isAutonomousCallable()).get());
+						autonomous.set(comms_thread_pool.submit(new isAutonomousCallable())
+										.get(LONG_TIMEOUT_S, TimeUnit.SECONDS));
 				}
-				catch (Exception ex) { }
+				catch (Exception ex)
+				{
+						Log.e(logTag, "isAutonomous() call exception");
+						Log.e(logTag, ex.getMessage());
+				}
 				return autonomous.get();
 		}
 
@@ -400,9 +404,14 @@ public class Boat
 				}
 				try
 				{
-						current_waypoint_index = comms_thread_pool.submit(new getWaypointsIndexCallable()).get();
+						current_waypoint_index = comms_thread_pool.submit(new getWaypointsIndexCallable())
+										.get(LONG_TIMEOUT_S, TimeUnit.SECONDS);
 				}
-				catch (Exception ex) { }
+				catch (Exception ex)
+				{
+						Log.e(logTag, "getWaypointsIndex() call exception");
+						Log.e(logTag, ex.getMessage());
+				}
 				return current_waypoint_index;
 		}
 
@@ -501,9 +510,14 @@ public class Boat
 				}
 				try
 				{
-						PID_gains = comms_thread_pool.submit(new getPIDCallable()).get().clone();
+						PID_gains = comms_thread_pool.submit(new getPIDCallable())
+										.get(LONG_TIMEOUT_S, TimeUnit.SECONDS).clone();
 				}
-				catch (Exception ex) { }
+				catch (Exception ex)
+				{
+						Log.e(logTag, "getPID() call exception");
+						Log.e(logTag, ex.getMessage());
+				}
 				return PID_gains;
 		}
 }
