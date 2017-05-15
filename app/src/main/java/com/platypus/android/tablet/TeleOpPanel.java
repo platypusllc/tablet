@@ -85,7 +85,6 @@ import android.app.Activity;
 import android.content.Context;
 
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -179,7 +178,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		MapboxMap mMapboxMap;
 
 		Marker home_M;
-		Location location;
+		IconFactory mIconFactory;
+		MarkerView boat_markerview;
 
 		int currentselected = -1; //which element selected
 		String saveName; //shouldnt be here?
@@ -224,7 +224,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		private PoseListener pl;
 		private SensorListener sl;
 		private WaypointListener wl;
-		private boolean startDraw = false;
+		private boolean startDrawRegions = false;
 		private boolean startDrawWaypoints = false;
 
 		double[] tPID = {.2, .0, .0};
@@ -254,8 +254,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		int last_waypoint_index = -2;
 		final Object _wpGraphicsLock = new Object();
 
-		boolean isFirstWaypointCompleted = false;
-		public static final String PREF_NAME = "DataFile";
 		private TabletLogger mlogger;
 
 		LatLng home = null;
@@ -263,7 +261,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
 		private static final String logTag = "TeleOpPanel"; //TeleOpPanel.class.getName();
-		String sensorLogTag = "Sensor";
 
 		NotificationManager notificationManager;
 		Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -328,6 +325,74 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						waypointDir.mkdir();
 				}
 
+				mv = (MapView) findViewById(R.id.mapview);
+				//mv.setAccessToken(ApiAccess.getToken(this));
+
+				MapboxAccountManager.start(this, getString(R.string.mapbox_access_token));
+				mv.onCreate(savedInstanceState);
+				mv.getMapAsync(new OnMapReadyCallback()
+				{
+						@Override
+						public void onMapReady(@NonNull MapboxMap mapboxMap)
+						{
+								Log.i(logTag, "mapboxmap ready");
+								mMapboxMap = mapboxMap;
+								if (setInitialPan == true && initialPan.getLatitude() != 0 || initialPan.getLongitude() != 0)
+								{
+										mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
+														new CameraPosition.Builder()
+																		.target(initialPan)
+																		.zoom(16)
+																		.build()
+										));
+								}
+
+								mMapboxMap.setStyle(Style.MAPBOX_STREETS); //vector map
+								mMapboxMap.getUiSettings().setRotateGesturesEnabled(false); //broken on mapbox side, currently fixing issue 4635 https://github.com/mapbox/mapbox-gl-native/issues/4635
+								mMapboxMap.setOnMarkerClickListener(new MapboxMap.OnMarkerClickListener()
+								{
+										@Override
+										public boolean onMarkerClick(@NonNull Marker marker)
+										{
+												return false;
+										}
+								});
+								mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener()
+								{
+										@Override
+										public void onMapLongClick(LatLng point)
+										{
+												if (startDrawWaypoints == true && startDrawRegions == false)
+												{
+														touchpointList.add(point);
+														Log.i(logTag, Integer.toString(touchpointList.size()));
+														boatPath = new Path(touchpointList);
+												}
+												else if (startDrawRegions && !startDrawWaypoints)
+												{
+														touchpointList.add(point);
+														if (spirallawn.isChecked())
+														{
+																ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
+																boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
+																touchpointList = boatPath.getQuickHullList();
+														}
+														else
+														{
+																ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
+																boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
+																touchpointList = boatPath.getQuickHullList();
+														}
+												}
+												invalidate();
+										}
+								});
+								mIconFactory = IconFactory.getInstance(context);
+								boat_markerview = mMapboxMap.addMarker(new MarkerViewOptions().position(pHollowStartingPoint).title("Boat")
+												.icon(mIconFactory.fromResource(R.drawable.pointarrow)).rotation(0));
+						}
+				});
+
 				//load inital waypoint menu
 				onLoadWaypointLayout();
 				switchView.setOnClickListener(new OnClickListener()
@@ -340,7 +405,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										waypointlayout.removeAllViews();
 										onLoadRegionLayout();
 										waypointLayoutEnabled = false;
-										startDraw = startDrawWaypoints;
+										startDrawRegions = startDrawWaypoints;
 										startDrawWaypoints = false;
 
 										if (!startDrawWaypoints)
@@ -371,10 +436,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										regionlayout.removeAllViews();
 										onLoadWaypointLayout();
 										waypointLayoutEnabled = true;
-										startDrawWaypoints = startDraw;
-										startDraw = false;
+										startDrawWaypoints = startDrawRegions;
+										startDrawRegions = false;
 
-										if (!startDraw)
+										if (!startDrawRegions)
 										{
 												createVertexStatusButton.setBackgroundResource(R.drawable.draw_icon2);
 										}
@@ -567,14 +632,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				{ //gets the location of the boat
 						public void receivedPose(UtmPose upwcs)
 						{
-								//xValue = _pose.pose.getX();
-								//yValue = _pose.pose.getY();
-								//zValue = _pose.pose.getZ();
-								//rotation = String.valueOf(Math.PI / 2 - upwcs.pose.getRotation().toYaw());
 								if (currentBoat != null)
 								{
 										currentBoat.setYaw(Math.PI / 2 - upwcs.pose.getRotation().toYaw());
-										currentBoat.setUtmZone(String.valueOf(upwcs.origin.zone));
+										//currentBoat.setUtmZone(String.valueOf(upwcs.origin.zone));
 										currentBoat.setLocation(
 														jscienceLatLng_to_mapboxLatLng(
 																		UTM.utmToLatLong(
@@ -585,6 +646,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																										upwcs.pose.getY(),
 																										SI.METER),
 																						ReferenceEllipsoid.WGS84)));
+
+										// update the boat marker
+										/*ASDF*/
+										runOnUiThread(new Runnable()
+										{
+												@Override
+												public void run()
+												{
+														if (boat_markerview == null) return;
+														boat_markerview.setPosition(currentBoat.getLocation());
+														float degree = (float) (currentBoat.getYaw() * 180 / Math.PI);  // degree is -90 to 270
+														degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+														boat_markerview.setRotation(degree);
+												}
+										});
 								}
 						}
 				};
@@ -632,75 +708,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				final IconFactory mIconFactory = IconFactory.getInstance(this);
 				Drawable mhome = ContextCompat.getDrawable(this, R.drawable.home1);
 				Ihome = mIconFactory.fromDrawable(mhome);
-
-				mv = (MapView) findViewById(R.id.mapview);
-				//mv.setAccessToken(ApiAccess.getToken(this));
-
-				MapboxAccountManager.start(this, getString(R.string.mapbox_access_token));
-				mv.onCreate(savedInstanceState);
-				mv.getMapAsync(new OnMapReadyCallback()
-				{
-						@Override
-						public void onMapReady(@NonNull MapboxMap mapboxMap)
-						{
-								System.out.println("mapboxmap ready");
-								mMapboxMap = mapboxMap;
-								if (setInitialPan == true && initialPan.getLatitude() != 0 || initialPan.getLongitude() != 0)
-								{
-										mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-														new CameraPosition.Builder()
-																		.target(initialPan)
-																		.zoom(16)
-																		.build()
-										));
-								}
-
-								mMapboxMap.setStyle(Style.MAPBOX_STREETS); //vector map
-								mMapboxMap.getUiSettings().setRotateGesturesEnabled(false); //broken on mapbox side, currently fixing issue 4635 https://github.com/mapbox/mapbox-gl-native/issues/4635
-								mMapboxMap.setOnMarkerClickListener(new MapboxMap.OnMarkerClickListener()
-								{
-										@Override
-										public boolean onMarkerClick(@NonNull Marker marker)
-										{
-												final int index = markerList.indexOf(marker);
-												return false;
-										}
-								});
-								mMapboxMap.setOnMapLongClickListener(new MapboxMap.OnMapLongClickListener()
-								{
-										@Override
-										public void onMapLongClick(LatLng point)
-										{
-												if (startDrawWaypoints == true && startDraw == false)
-												{
-														touchpointList.add(point);
-														System.out.println(touchpointList.size());
-														boatPath = new Path(touchpointList);
-												}
-												else if (startDraw && !startDrawWaypoints)
-												{
-														touchpointList.add(point);
-														if (spirallawn.isChecked())
-														{
-																ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
-																boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
-																touchpointList = boatPath.getQuickHullList();
-														}
-														else
-														{
-																ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
-																boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
-																touchpointList = boatPath.getQuickHullList();
-														}
-												}
-												invalidate();
-										}
-								});
-								updateMarkers(); //Launch update markers thread
-								alertsAndAlarms(); // Launch alerts and alarms thread
-								latestWaypointPoll(); // Launch waypoint polling thread
-						}
-				});
 
 				connectButton.setOnClickListener(new OnClickListener()
 				{
@@ -1265,6 +1272,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								/*ASDF*/
 								//networkThread = new NetworkAsync().execute(); //launch networking asnyc task
 								boatConnectionPoll(); // Launch boat connection check thread
+								latestWaypointPoll(); // Launch waypoint polling thread
+								alertsAndAlarms(); // Launch alerts and alarms thread
 								SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 								SharedPreferences.Editor editor = sharedPref.edit();
 								editor.putString(SettingsActivity.KEY_PREF_IP, currentBoat.getIpAddress().getAddress().toString());
@@ -2023,6 +2032,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				});
 		}
 
+		/*ASDF*/
+		/*
 		public void updateMarkers()
 		{
 				final Handler handler = new Handler();
@@ -2034,23 +2045,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				final MarkerView boat_markerview = mMapboxMap.addMarker(new MarkerViewOptions().position(pHollowStartingPoint).title("Boat")
 								.icon(mIconFactory.fromResource(R.drawable.pointarrow)).rotation(0));
 
+
 				Runnable markerRun = new Runnable()
 				{
 						@Override
 						public void run()
 						{
-								if (currentBoat == null || currentBoat.getLocation() == null || mMapboxMap == null)
-								{
-										return;
-								}
+								if (currentBoat == null || currentBoat.getLocation() == null || mMapboxMap == null) return;
+
 								boat_markerview.setPosition(currentBoat.getLocation());
 
 								float degree = (float) (currentBoat.getYaw() * 180 / Math.PI);  // degree is -90 to 270
 								degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
-								if (mMapboxMap != null)
-								{
-										boat_markerview.setRotation(degree);
-								}
+								boat_markerview.setRotation(degree);
 
 								location = LocationServices.FusedLocationApi.getLastLocation();
 								if (location != null)
@@ -2062,6 +2069,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				};
 				handler.post(markerRun);
 		}
+		*/
 
 		public void startWaypoints()
 		{
@@ -2232,7 +2240,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																		Toast.makeText(getApplicationContext(), "Use long press to add waypoints", Toast.LENGTH_LONG).show();
 																}
 														});
-														startDraw = false;
+														startDrawRegions = false;
 														if (waypointLayoutEnabled == false)
 														{
 																createVertexStatusButton.setClickable(false);
@@ -2502,7 +2510,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
-								if (startDraw == false)
+								if (startDrawRegions == false)
 								{
 										createVertexStatusButton.setBackgroundResource(R.drawable.draw_icon2);
 								}
@@ -2510,7 +2518,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										createVertexStatusButton.setBackgroundResource(R.drawable.draw_icon);
 								}
-								startDraw = !startDraw;
+								startDrawRegions = !startDrawRegions;
 						}
 				});
 		}

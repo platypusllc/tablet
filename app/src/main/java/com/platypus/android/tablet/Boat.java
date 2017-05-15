@@ -36,11 +36,11 @@ public class Boat
 		private LatLng currentLocation = null;
 		private double currentYaw = 0.0; // [-pi, pi]
 		private double[][] PID_gains = {{0., 0., 0.}, {0., 0., 0.}}; // thrust, heading
-		private ExecutorService comms_thread_pool = Executors.newFixedThreadPool(10);
 		final int THRUST_GAIN_AXIS = 0;
 		final int RUDDER_GAIN_AXIS = 5;
 		final int LONG_TIMEOUT_S = 3; // important messages drop from the thread pool after X seconds
-		final int SHORT_TIMEOUT_MS = 500; // short messages drop from the thread pool after X milliseconds
+		private ExecutorService comms_thread_pool = Executors.newFixedThreadPool(5);
+
 
 		public Boat()
 		{
