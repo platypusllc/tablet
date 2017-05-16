@@ -30,7 +30,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 
     public static final String KEY_PREF_IP = "pref_boat_ip";
     public static final String KEY_PREF_PORT = "pref_boat_port";
-    public static final String KEY_PREF_COMMAND_RATE = "pref_command_update_rate";
     public static final String KEY_PREF_LAT = "pref_latitude";
     public static final String KEY_PREF_LON = "pref_longitude";
     public static final String KEY_PREF_SAVE_MAP = "pref_save_location";
@@ -97,7 +96,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
                     default:
                         break;
                 }
-                editor.putString(KEY_PREF_COMMAND_RATE, "500");
                 editor.putString(KEY_PREF_VOLTAGE_ALERT, "15.0");
                 editor.putString(KEY_PREF_VOLTAGE_ALARM, "14.0");
                 editor.putString(KEY_PREF_SNOOZE, "5");

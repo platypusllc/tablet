@@ -1,10 +1,14 @@
 package com.platypus.android.tablet;
 
-import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.Callable;
+import java.net.SocketAddress;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -16,12 +20,18 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.FunctionObserver;
 import com.platypus.crw.PoseListener;
 import com.platypus.crw.SensorListener;
+import com.platypus.crw.VehicleServer;
 import com.platypus.crw.WaypointListener;
-import com.platypus.crw.data.Twist;
+import com.platypus.crw.data.SensorData;
 import com.platypus.crw.data.Utm;
 import com.platypus.crw.data.UtmPose;
 import com.platypus.crw.udp.UdpVehicleServer;
 import com.platypus.crw.data.Pose3D;
+
+import org.jscience.geography.coordinates.UTM;
+import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
+
+import javax.measure.unit.SI;
 
 
 public class Boat
@@ -34,6 +44,7 @@ public class Boat
 		private AtomicLong time_of_last_connection = new AtomicLong(0);
 		private AtomicBoolean connected = new AtomicBoolean(false);
 		private AtomicBoolean autonomous = new AtomicBoolean(false);
+		private AtomicBoolean sensors_ready = new AtomicBoolean(false);
 		private int current_waypoint_index;
 		private String logTag = "Boat"; //Boat.class.getName();
 		private LatLng currentLocation = null;
@@ -44,20 +55,63 @@ public class Boat
 		private final int CONNECTION_POLL_S = 3;
 		private ScheduledThreadPoolExecutor polling_thread_pool;
 		private ExecutorService oneshot_thread_pool;
-
+		Handler uiHandler = new Handler(Looper.getMainLooper());
+		SensorData lastSensorDataReceived;
+		String waypointState;
 
 		public Boat()
 		{
 				server = new UdpVehicleServer();
 		}
 
-		public Boat(PoseListener _pl, SensorListener _sl, WaypointListener _wl)
+		public void createListeners(
+						final Runnable poseListenerCallback,
+						final Runnable sensorListenerCallback,
+						final Runnable waypointListenerCallback)
 		{
-
-				pl = _pl;
-				sl = _sl;
-				wl = _wl;
-				server = new UdpVehicleServer();
+				pl = new PoseListener()
+				{
+						@Override
+						public void receivedPose(UtmPose utmPose)
+						{
+								connected.set(true);
+								setYaw(Math.PI / 2 - utmPose.pose.getRotation().toYaw());
+								setLocation(
+												jscienceLatLng_to_mapboxLatLng(
+																UTM.utmToLatLong(
+																				UTM.valueOf(
+																								utmPose.origin.zone,
+																								utmPose.origin.isNorth ? 'T' : 'L',
+																								utmPose.pose.getX(),
+																								utmPose.pose.getY(),
+																								SI.METER
+																				),
+																				ReferenceEllipsoid.WGS84
+																)
+												)
+								);
+								uiHandler.post(poseListenerCallback); // update GUI with result
+						}
+				};
+				sl = new SensorListener()
+				{
+						@Override
+						public void receivedSensor(SensorData sensorData)
+						{
+								lastSensorDataReceived = sensorData;
+								sensors_ready.set(true);
+								uiHandler.post(sensorListenerCallback); // update GUI with result
+						}
+				};
+				wl = new WaypointListener()
+				{
+						@Override
+						public void waypointUpdate(VehicleServer.WaypointState state)
+						{
+								waypointState = state.toString();
+								uiHandler.post(waypointListenerCallback); // update GUI with result
+						}
+				};
 				try
 				{
 						if (pl != null)
@@ -126,6 +180,14 @@ public class Boat
 						yaw -= 2*Math.PI*Math.signum(yaw);
 				}
 				currentYaw = yaw;
+		}
+		public SensorData getLastSensorDataReceived()
+		{
+				return lastSensorDataReceived;
+		}
+		public String getWaypointState()
+		{
+				return waypointState;
 		}
 
 		/*
@@ -543,5 +605,14 @@ public class Boat
 				return PID_gains;
 				*/
 				return null;
+		}
+
+
+		public com.mapbox.mapboxsdk.geometry.LatLng jscienceLatLng_to_mapboxLatLng(org.jscience.geography.coordinates.LatLong jlatlng)
+		{
+				LatLng result = new LatLng(
+								jlatlng.latitudeValue(SI.RADIAN)*180./Math.PI,
+								jlatlng.longitudeValue(SI.RADIAN)*180./Math.PI);
+				return result;
 		}
 }
