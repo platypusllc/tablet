@@ -242,7 +242,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		Ringtone alarm_ringtone;
 		Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
 
-		/*ASDF*/
 		void startNewBoat()
 		{
 				currentBoat = new Boat();
@@ -430,7 +429,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						}
 				});
 
-				/*ASDF*/
 				// Every second, display boat connection status
 				uiHandler.post(new Runnable()
 				{
@@ -977,11 +975,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 								}
 								dialog.dismiss();
-								/*ASDF*/
-								//networkThread = new NetworkAsync().execute(); //launch networking asnyc task
-								//boatConnectionPoll(); // Launch boat connection check thread
-								//latestWaypointPoll(); // Launch waypoint polling thread
-								//alertsAndAlarms(); // Launch alerts and alarms thread
+								latestWaypointPoll(); // Launch waypoint polling
+								alertsAndAlarms(); // Launch alerts and alarms thread
 								SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 								SharedPreferences.Editor editor = sharedPref.edit();
 								editor.putString(SettingsActivity.KEY_PREF_IP, currentBoat.getIpAddress().getAddress().toString());
@@ -1443,7 +1438,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		public void sendPID()
 		{
 				loadPreferences(); //update values should be replaced automatically with
-				/*ASDF*/
 				currentBoat.setPID(tPID, rPID, new ToastFailureCallback("Set PID Msg timed out"));
 		}
 
@@ -1606,7 +1600,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				});
 		}
 
-		/*ASDF*/
 		public void latestWaypointPoll()
 		{
 				final Handler handler = new Handler();
@@ -1642,62 +1635,64 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void run()
 						{
+								double batt_volt;
 								synchronized (_batteryVoltageLock)
 								{
-										Log.i(logTag, "checking battery voltage...");
-										String sleep_str = sharedPref.getString(SettingsActivity.KEY_PREF_SNOOZE, "1");
-										long sleep_ms = (int) Double.parseDouble(sleep_str) * 60 * 1000;
-										long current_time = System.currentTimeMillis();
-										if (current_time - sleep_start_time >= sleep_ms)
+										batt_volt = battery_voltage;
+								}
+								Log.i(logTag, "checking battery voltage...");
+								String sleep_str = sharedPref.getString(SettingsActivity.KEY_PREF_SNOOZE, "1");
+								long sleep_ms = (int) Double.parseDouble(sleep_str) * 60 * 1000;
+								long current_time = System.currentTimeMillis();
+								if (current_time - sleep_start_time >= sleep_ms)
+								{
+										sleep_start_time = 0;
+										double alert_voltage = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_VOLTAGE_ALERT, "15.0"));
+										double alarm_voltage = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_VOLTAGE_ALARM, "14.0"));
+										if (alarm_voltage > alert_voltage) alarm_voltage = (alert_voltage - 0.5);
+										String message = String.format("Boat battery = %.2fV", batt_volt);
+										Log.i(logTag, message);
+										if (batt_volt == 0.0)
 										{
-												sleep_start_time = 0;
-												double alert_voltage = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_VOLTAGE_ALERT, "15.0"));
-												double alarm_voltage = Double.parseDouble(sharedPref.getString(SettingsActivity.KEY_PREF_VOLTAGE_ALARM, "14.0"));
-												if (alarm_voltage > alert_voltage) alarm_voltage = (alert_voltage - 0.5);
-												String message = String.format("Boat battery = %.2fV", battery_voltage);
-												Log.i(logTag, message);
-												if (battery_voltage == 0.0)
+												// initial value before connecting to boat
+												handler.postDelayed(this, 10000);
+												return;
+										}
+										if (batt_volt < alert_voltage)
+										{
+												NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext())
+																.setSmallIcon(R.drawable.logo) //just some random icon placeholder
+																.setContentTitle("Boat battery warning")
+																.setContentText(message);
+												if (batt_volt < alarm_voltage)
 												{
-														// initial value before connecting to boat
-														handler.postDelayed(this, 10000);
-														return;
-												}
-												if (battery_voltage < alert_voltage)
-												{
-														NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext())
-																		.setSmallIcon(R.drawable.logo) //just some random icon placeholder
-																		.setContentTitle("Boat battery warning")
-																		.setContentText(message);
-														if (battery_voltage < alarm_voltage)
-														{
-																if (!alarm_on)
-																{
-																		alarm_ringtone.play();
-																		alarm_on = true;
-																}
-																Toast.makeText(getApplicationContext(), String.format("%s, retrieve the boat ASAP!", message), Toast.LENGTH_LONG).show();
-														}
 														if (!alarm_on)
 														{
-																mBuilder.setSound(soundUri); // Sound only if there isn't an alarm going
+																alarm_ringtone.play();
+																alarm_on = true;
 														}
-														notificationManager.notify(0, mBuilder.build());
+														Toast.makeText(getApplicationContext(), String.format("%s, retrieve the boat ASAP!", message), Toast.LENGTH_LONG).show();
 												}
-												else
+												if (!alarm_on)
 												{
-														if (alarm_ringtone.isPlaying()) alarm_ringtone.stop();
-														alarm_on = false;
+														mBuilder.setSound(soundUri); // Sound only if there isn't an alarm going
 												}
+												notificationManager.notify(0, mBuilder.build());
 										}
 										else
 										{
-												Log.i(logTag, "battery alerts snoozing...");
+												if (alarm_ringtone.isPlaying()) alarm_ringtone.stop();
+												alarm_on = false;
 										}
-
-										// run at least once every 60 seconds
-										long sleep_remaining = Math.max(100, Math.min(current_time - sleep_start_time, 60000));
-										handler.postDelayed(this, sleep_remaining);
 								}
+								else
+								{
+										Log.i(logTag, "battery alerts snoozing...");
+								}
+
+								// run at least once every 60 seconds
+								long sleep_remaining = Math.max(100, Math.min(current_time - sleep_start_time, 60000));
+								handler.postDelayed(this, sleep_remaining);
 						}
 				});
 		}
@@ -1736,7 +1731,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 						}
 						currentBoat.startWaypoints(wpPose, "POINT_AND_SHOOT", new ToastFailureCallback("Start Waypoints Msg Timed Out"));
-						/*ASDF*/
 						current_waypoint_index = 0;
 						invalidate();
 				}
@@ -1887,7 +1881,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								// If pauseWPButton.isChecked is true that means boat is paused
 								if (pauseWPButton.isChecked())
 								{
-										/*ASDF*/
 										currentBoat.setAutonomous(false, new ToastFailureCallback("Pause Msg Timed Out"));
 								}
 								else
@@ -2322,7 +2315,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								switch (vehicle_speed)
 								{
 										case "SLOW":
-												/*ASDF*/
 												tPID[0] = 0.07;
 												tPID[1] = 0.0;
 												tPID[2] = 0.0;

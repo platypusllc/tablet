@@ -43,7 +43,9 @@ public class Boat
 		private AtomicInteger current_waypoint_index = new AtomicInteger(-1);
 		private String logTag = "Boat"; //Boat.class.getName();
 		private LatLng currentLocation = null;
+		private Object location_lock = new Object();
 		private double currentYaw = 0.0; // [-pi, pi]
+		private Object yaw_lock = new Object();
 		private double[][] PID_gains = {{0., 0., 0.}, {0., 0., 0.}}; // thrust, heading
 		private Object PID_lock = new Object();
 		final int THRUST_GAIN_AXIS = 0;
@@ -51,9 +53,11 @@ public class Boat
 		private final int CONNECTION_POLL_S = 3;
 		private final int WAYPOINTS_INDEX_POLL_S = 1;
 		private ScheduledThreadPoolExecutor polling_thread_pool;
-		Handler uiHandler = new Handler(Looper.getMainLooper());
-		SensorData lastSensorDataReceived;
-		String waypointState;
+		private Handler uiHandler = new Handler(Looper.getMainLooper());
+		private SensorData lastSensorDataReceived;
+		private Object sensor_lock = new Object();
+		private String waypointState;
+		private Object waypoint_state_lock = new Object();
 
 		private Runnable isConnectedPoll = new Runnable()
 		{
@@ -148,7 +152,10 @@ public class Boat
 						public void receivedSensor(SensorData sensorData)
 						{
 								setConnected(true);
-								lastSensorDataReceived = sensorData;
+								synchronized (sensor_lock)
+								{
+										lastSensorDataReceived = sensorData;
+								}
 								sensors_ready.set(true);
 								uiHandler.post(sensorListenerCallback); // update GUI with result
 						}
@@ -159,7 +166,10 @@ public class Boat
 						public void waypointUpdate(VehicleServer.WaypointState state)
 						{
 								setConnected(true);
-								waypointState = state.toString();
+								synchronized (waypoint_state_lock)
+								{
+										waypointState = state.toString();
+								}
 								uiHandler.post(waypointListenerCallback); // update GUI with result
 						}
 				};
@@ -216,24 +226,38 @@ public class Boat
 								currentWaypointIndexPoll, 0, WAYPOINTS_INDEX_POLL_S, TimeUnit.SECONDS);
 		}
 
-		public double getYaw() { return currentYaw; }
+		public double getYaw()
+		{
+				synchronized (yaw_lock)
+				{
+						return currentYaw;
+				}
+		}
 		public void setYaw(double yaw)
 		{
 				while (Math.abs(yaw) > Math.PI)
 				{
 						yaw -= 2*Math.PI*Math.signum(yaw);
 				}
-				currentYaw = yaw;
+				synchronized (yaw_lock)
+				{
+						currentYaw = yaw;
+				}
 		}
 		public SensorData getLastSensorDataReceived()
 		{
-				return lastSensorDataReceived;
+				synchronized (sensor_lock)
+				{
+						return lastSensorDataReceived;
+				}
 		}
 		public String getWaypointState()
 		{
-				return waypointState;
+				synchronized (waypoint_state_lock)
+				{
+						return waypointState;
+				}
 		}
-
 
 		public void setAddress(InetSocketAddress a)
 		{
@@ -275,12 +299,17 @@ public class Boat
 
 		public LatLng getLocation()
 		{
-				return currentLocation;
+				synchronized (location_lock)
+				{
+						return currentLocation;
+				}
 		}
-
 		public void setLocation(LatLng loc)
 		{
-				currentLocation = loc;
+				synchronized (location_lock)
+				{
+						currentLocation = loc;
+				}
 		}
 
 		public void startWaypoints(final UtmPose[] waypoints, final String controller_name, final Runnable failureCallback)
