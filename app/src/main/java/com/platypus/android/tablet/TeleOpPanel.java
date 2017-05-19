@@ -9,10 +9,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Scanner;
 
 import javax.measure.unit.NonSI;
@@ -21,7 +19,6 @@ import javax.measure.unit.SI;
 import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.mapbox.mapboxsdk.MapboxAccountManager;
@@ -207,9 +204,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		double battery_voltage = 0.0;
 
-		private UtmPose[] wpPose = null;
-
-
 		Path boatPath = null;
 		ArrayList<LatLng> touchpointList = new ArrayList<LatLng>();
 		ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
@@ -226,9 +220,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		int current_waypoint_index = -1;
 		int last_waypoint_index = -2;
 		final Object _wpGraphicsLock = new Object();
-
-		Date d = new Date();
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
 		private static final String logTag = "TeleOpPanel"; //TeleOpPanel.class.getName();
 
@@ -307,8 +298,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				@Override
 				public void run() { Toast.makeText(context, toastString, Toast.LENGTH_SHORT).show(); }
 		}
-
-
 
 
 		protected void onCreate(final Bundle savedInstanceState)
@@ -564,28 +553,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																Thread thread = new Thread()
 																{
 																		@Override
-																		public void run()
-																		{
-																				saveMap();
-																		}
+																		public void run() { saveMap(); }
 																};
 																thread.start();
 																break;
 														}
 														case "Satellite Map":
 														{
-																if (mMapboxMap != null)
-																{
-																		mMapboxMap.setStyle(Style.SATELLITE);
-																}
+																if (mMapboxMap != null) mMapboxMap.setStyle(Style.SATELLITE);
 																break;
 														}
 														case "Vector Map":
 														{
-																if (mMapboxMap != null)
-																{
-																		mMapboxMap.setStyle(Style.MAPBOX_STREETS);
-																}
+																if (mMapboxMap != null) mMapboxMap.setStyle(Style.MAPBOX_STREETS);
 																break;
 														}
 														case "Set Home":
@@ -633,10 +613,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																{
 																		loadWayointFiles();
 																}
-																catch (Exception e)
-																{
-
-																}
+																catch (Exception e) { }
 																break;
 														}
 														case "Snooze Alarms":
@@ -653,7 +630,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														{
 																Intent intent = new Intent(context, SettingsActivity.class);
 																context.startActivity(intent);
-
 																break;
 														}
 												}
@@ -705,8 +681,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														})
 														.setNegativeButton("No", new DialogInterface.OnClickListener()
 														{
-																public void onClick(DialogInterface dialog, int which)
-																{ /*nothing*/ }
+																public void onClick(DialogInterface dialog, int which) { }
 														})
 														.show();
 								}
@@ -1118,22 +1093,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										ILatLng temp = new ILatLng()
 										{
 												@Override
-												public double getLatitude()
-												{
-														return templat;
-												}
+												public double getLatitude() { return templat; }
 
 												@Override
-												public double getLongitude()
-												{
-														return templon;
-												}
+												public double getLongitude() { return templon; }
 
 												@Override
-												public double getAltitude()
-												{
-														return 0;
-												}
+												public double getAltitude() { return 0; }
 										};
 										currentSave.add(temp);
 								}
@@ -1262,13 +1228,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 		}
 
-		public static double planarDistanceSq(Pose3D a, Pose3D b)
-		{
-				double dx = a.getX() - b.getX();
-				double dy = a.getY() - b.getY();
-				return dx * dx + dy * dy;
-		}
-
 		public void setHome()
 		{
 				if (home_location == null)
@@ -1390,7 +1349,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		{
 				if (mMapboxMap == null)
 				{
-						runOnUiThread(new Runnable()
+						uiHandler.post(new Runnable()
 						{
 								@Override
 								public void run()
@@ -1432,8 +1391,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						return;
 				}
 
-
-				runOnUiThread(new Runnable()
+				uiHandler.post(new Runnable()
 				{
 						@Override
 						public void run()
@@ -1441,7 +1399,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								Toast.makeText(getApplicationContext(), "Please leave app open and connected to the internet until the completion dialog shows", Toast.LENGTH_LONG).show();
 						}
 				});
-
 
 				// Set up the OfflineManager
 				OfflineManager offlineManager = OfflineManager.getInstance(this);
@@ -1666,7 +1623,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						//Convert all UTM to latlong
 						UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
 						waypointStatus = tempUtm.toString();
-						wpPose = new UtmPose[waypointList.size()];
+						UtmPose[] wpPose = new UtmPose[waypointList.size()];
 						synchronized (_waypointLock)
 						{
 								for (int i = 0; i < waypointList.size(); i++)
