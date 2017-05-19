@@ -165,7 +165,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		MapView mv;
 		MapboxMap mMapboxMap;
 
-		Marker home_M;
+		LatLng home_location = null;
+		Marker home_marker;
+		Icon Ihome;
 		IconFactory mIconFactory;
 		MarkerView boat_markerview;
 
@@ -207,7 +209,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		private UtmPose[] wpPose = null;
 
-		Icon Ihome;
 
 		Path boatPath = null;
 		ArrayList<LatLng> touchpointList = new ArrayList<LatLng>();
@@ -226,9 +227,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		int last_waypoint_index = -2;
 		final Object _wpGraphicsLock = new Object();
 
-		private TabletLogger mlogger;
-
-		LatLng home = null;
 		Date d = new Date();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
@@ -518,13 +516,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								invalidate();
 						}
 				});
-
-				if (mlogger != null)
-				{
-						mlogger.close();
-				}
-				mlogger = new TabletLogger();
-
 
 				centerToBoat.setOnClickListener(new OnClickListener()
 				{
@@ -1280,10 +1271,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		public void setHome()
 		{
-				final JSONObject Jhome = new JSONObject();
-				final JSONObject JPhone = new JSONObject();
-				final JSONObject JTablet = new JSONObject();
-				if (home == null)
+				if (home_location == null)
 				{
 						new AlertDialog.Builder(context)
 										.setTitle("Set Home")
@@ -1292,43 +1280,26 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										{
 												public void onClick(DialogInterface dialog, int which)
 												{
-														/*ASDF*/
-														/*
-														if (latlongloc != null)
+														if (currentBoat.getLocation() != null)
 														{
-																home = currentBoat.getLocation();
-																try
-																{
-																		JPhone.put("Lat", home.getLatitude());
-																		JPhone.put("Lng", home.getLongitude());
-																		Jhome.put("Phone", JPhone);
-																		mlogger.info(new JSONObject()
-																						.put("Time", sdf.format(d))
-																						.put("Home", Jhome));
-																}
-																catch (JSONException e)
-																{
-
-																}
+																home_location = currentBoat.getLocation();
 																MarkerOptions home_MO = new MarkerOptions()
-																				.position(home)
+																				.position(home_location)
 																				.title("Home")
 																				.icon(Ihome);
-																home_M = mMapboxMap.addMarker(home_MO);
-																mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home));
+																home_marker = mMapboxMap.addMarker(home_MO);
+																mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home_location));
 														}
 														else
 														{
 																Toast.makeText(getApplicationContext(), "Phone doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
 														}
-														*/
 												}
 										})
 										.setNegativeButton("Tablet", new DialogInterface.OnClickListener()
 										{
 												public void onClick(DialogInterface dialog, int which)
 												{
-
 														Location tempLocation = LocationServices.FusedLocationApi.getLastLocation();
 														if (tempLocation == null)
 														{
@@ -1340,25 +1311,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 														if (loc != null)
 														{
-																home = loc;
+																home_location = loc;
 																MarkerOptions home_MO = new MarkerOptions()
-																				.position(home)
+																				.position(home_location)
 																				.title("Home")
 																				.icon(Ihome);
-																home_M = mMapboxMap.addMarker(home_MO);
-																mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home));
-																try
-																{
-																		JTablet.put("Lat", home.getLatitude());
-																		JTablet.put("Lng", home.getLongitude());
-																		Jhome.put("Tablet", JTablet);
-																		mlogger.info(new JSONObject()
-																						.put("Time", sdf.format(d))
-																						.put("Home", Jhome));
-																}
-																catch (JSONException e)
-																{
-																}
+																home_marker = mMapboxMap.addMarker(home_MO);
+																mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home_location));
 														}
 														else
 														{
@@ -1378,19 +1337,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												public void onClick(DialogInterface dialog, int which)
 												{
 
-														try
-														{
-																Jhome.put("Lat", home.getLatitude());
-																Jhome.put("Lng", home.getLongitude());
-																mlogger.info(new JSONObject()
-																				.put("Time", sdf.format(d))
-																				.put("Removed home", Jhome));
-														}
-														catch (JSONException e)
-														{
-														}
-														mMapboxMap.removeMarker(home_M);
-														home = null;
+														mMapboxMap.removeMarker(home_marker);
+														home_location = null;
 												}
 										})
 										.setNegativeButton("No", new DialogInterface.OnClickListener()
@@ -1405,34 +1353,31 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		public void goHome()
 		{
-				if (home == null)
+				if (home_location == null)
 				{
-						Toast.makeText(getApplicationContext(), "Set home first!", Toast.LENGTH_LONG).show();
+						Toast.makeText(getApplicationContext(), "Set home first!", Toast.LENGTH_SHORT).show();
+						return;
 				}
-				else
-				{
-						new AlertDialog.Builder(context)
-										.setTitle("Go Home")
-										.setMessage("Let the boat go home ?")
-										.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+				new AlertDialog.Builder(context)
+								.setTitle("Go Home")
+								.setMessage("Let the boat go home ?")
+								.setPositiveButton("Yes", new DialogInterface.OnClickListener()
+								{
+										public void onClick(DialogInterface dialog, int which)
 										{
-												public void onClick(DialogInterface dialog, int which)
-												{
-														/*ASDF*/
-														UtmPose homeUTM = convertLatLngUtm(home);
-														//currentBoat.addWaypoint(homeUTM.pose, homeUTM.origin);
-														Log.i(logTag, "Go home");
-												}
-										})
-										.setNegativeButton("No", new DialogInterface.OnClickListener()
+												UtmPose homeUtmPose = convertLatLngUtm(home_location);
+												currentBoat.addWaypoint(homeUtmPose, "POINT_AND_SHOOT", new ToastFailureCallback("Go home msg timed out"));
+												Log.i(logTag, "Go home");
+										}
+								})
+								.setNegativeButton("No", new DialogInterface.OnClickListener()
+								{
+										public void onClick(DialogInterface dialog, int which)
 										{
-												public void onClick(DialogInterface dialog, int which)
-												{
-														Log.i(logTag, "Nothing");
-												}
-										})
-										.show();
-				}
+												Log.i(logTag, "Nothing");
+										}
+								})
+								.show();
 		}
 
 		public void sendPID()

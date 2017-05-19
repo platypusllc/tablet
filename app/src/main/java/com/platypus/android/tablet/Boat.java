@@ -285,17 +285,12 @@ public class Boat
 				return connected.get();
 		}
 
-		/*
-		public void addWaypoint(Pose3D _pose, Utm _origin)
+		public void addWaypoint(UtmPose waypoint, final String controller_name, final Runnable failureCallback)
 		{
 				if (server == null) return;
-
-				UtmPose[] wpPose = new UtmPose[1];
-
-				wpPose[0] = new UtmPose(_pose, _origin);
-				startWaypoints(wpPose, "POINT_AND_SHOOT");
+				UtmPose[] wpPose = {waypoint};
+				startWaypoints(wpPose, controller_name, failureCallback);
 		}
-		*/
 
 		public LatLng getLocation()
 		{
