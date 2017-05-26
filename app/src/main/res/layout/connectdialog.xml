@@ -78,27 +78,6 @@
             <!--android:text="Simulation" />-->
     <!--</RadioGroup>-->
 
-    <RadioGroup
-        android:id="@+id/connecttype"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-
-        <RadioButton
-            android:id="@+id/reg"
-            android:layout_width="wrap_content"
-            android:layout_height="52dp"
-            android:checked="false"
-            android:text="Registry" />
-        <RadioButton
-            android:id="@+id/wifi"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:paddingRight="15dp"
-            android:text="Direct IP" />
-    </RadioGroup>
-
 
     <Button
         android:id="@+id/submit"

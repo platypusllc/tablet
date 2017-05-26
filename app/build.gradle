@@ -72,18 +72,13 @@ android {
 }
 dependencies {
 
-    //compile('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.0-beta.2@aar') {
-    //compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.1.1@aar'){
     compile ('com.mapbox.mapboxsdk:mapbox-android-sdk:4.2.0@aar') {
         transitive = true
     }
 
-    //transitive = true
-    //}
     compile files('libs/activation.jar')
     compile files('libs/mail.jar')
     compile files('libs/additionnal.jar')
-    // compile files('libs/mapbox-android-sdk-0.7.4.jar')
     compile files('libs/microlog4android-1.0.0.jar')
     compile files('libs/jscience.jar')
     compile files('libs/platypus-core.jar')
@@ -97,4 +92,4 @@ repositories {
     mavenCentral()
     maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
 }
-//apply plugin: 'com.google.gms.google-services'
+
