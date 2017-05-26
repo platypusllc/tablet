@@ -216,7 +216,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		ArrayList<Polyline> Waypath_outline = new ArrayList<>();
 		ArrayList<Polyline> Waypath_top = new ArrayList<>();
-		Polyline boat_to_waypoint_line; // TODO: implement line from boat to current WP
+		Polyline boat_to_waypoint_line;
 		int current_waypoint_index = -1;
 		int last_waypoint_index = -2;
 		final Object _wpGraphicsLock = new Object();
@@ -238,6 +238,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		}
 		Runnable boatMarkerUpdate = new Runnable()
 		{
+				long last_redraw = 0;
 				@Override
 				public void run()
 				{
@@ -246,6 +247,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						float degree = (float) (currentBoat.getYaw() * 180 / Math.PI);  // degree is -90 to 270
 						degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
 						boat_markerview.setRotation(degree);
+
+						// boat to current waypoint line
+						if (System.currentTimeMillis() - last_redraw < 200) return; // don't update the line too often
+						if (boat_to_waypoint_line != null)
+						{
+								mMapboxMap.removeAnnotation(boat_to_waypoint_line);
+								boat_to_waypoint_line.remove();
+						}
+						if (boatPath == null) return;
+						ArrayList<ArrayList<LatLng>> point_pairs = boatPath.getPointPairs();
+						if (current_waypoint_index < 0 || point_pairs.size() < 1) return;
+						ArrayList<LatLng> pair = new ArrayList<>();
+						pair.add(currentBoat.getLocation());
+						pair.add(point_pairs.get(current_waypoint_index).get(0));
+						boat_to_waypoint_line = mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.MAGENTA).width(1));
+						last_redraw = System.currentTimeMillis();
 				}
 		};
 		Runnable sensorDataReceived = new Runnable()
@@ -2033,9 +2050,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								mMapboxMap.removeAnnotation(p);
 								p.remove();
 						}
-						// TODO: make a boat to waypoint line
-						//mMapboxMap.removeAnnotation(boat_to_waypoint_line);
-						//boat_to_waypoint_line.remove();
+						if (boat_to_waypoint_line != null)
+						{
+								mMapboxMap.removeAnnotation(boat_to_waypoint_line);
+								boat_to_waypoint_line.remove();
+						}
 				}
 		}
 
@@ -2045,9 +2064,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				{
 						if (boatPath == null) return;
 						ArrayList<ArrayList<LatLng>> point_pairs = boatPath.getPointPairs();
+						ArrayList<LatLng> pair;
 						for (int i = 0; i < point_pairs.size(); i++)
 						{
-								ArrayList<LatLng> pair = point_pairs.get(i);
+								pair = point_pairs.get(i);
 								Waypath_outline.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.BLACK).width(8)));
 								// i = 0 is waypoints (0, 1) --> should be white until current wp index = 2
 								// i = 1 is waypoints (1, 2) --> should be white until current wp index = 3
