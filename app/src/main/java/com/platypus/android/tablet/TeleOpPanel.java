@@ -241,7 +241,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		Ringtone alarm_ringtone;
 		Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
 
-		void startNewBoat(String boat_name) /*ASDF*/
+		void startNewBoat(final String boat_name) /*ASDF*/
 		{
 				// look at boat_map, first make sure boat_name isn't already used
 				// if not, generate Boat object and put it into the boat_map
@@ -256,6 +256,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								.title(boat_name)
 								.icon(mIconFactory.fromResource(R.drawable.pointarrow)).rotation(0));
 
+				// try to add the marker until mMapboxMap exists and it is added
+				uiHandler.post(new Runnable()
+				{
+						@Override
+						public void run()
+						{
+								if (mMapboxMap != null)
+								{
+										Log.i(logTag, String.format("Adding boat marker for %s", boat_name));
+										mMapboxMap.addMarker(boat_markers_map.get(boat_name));
+								}
+								else
+								{
+										uiHandler.postDelayed(this, 1000);
+								}
+						}
+				});
+
 				// Path
 				path_map.put(boat_name, null);
 
@@ -264,9 +282,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								new SensorDataReceivedRunnable(newBoat),
 								new WaypointStateReceivedRunnable(newBoat));
 				boats_map.put(boat_name, newBoat);
-
-				//currentBoat = new Boat();
-				//currentBoat.createListeners(boatMarkerUpdate, sensorDataReceived, waypointStateReceived);
 		}
 		class BoatMarkerUpdateRunnable implements Runnable
 		{
@@ -288,6 +303,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						marker_view.setPosition(boat.getLocation());
 						float degree = (float) (boat.getYaw() * 180 / Math.PI);  // degree is -90 to 270
 						degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+						Log.d(logTag, "BoatMarkerUpdateRunnable: \n" +
+										String.format("%s, yaw = %f", name, degree));
 						marker_view.setRotation(degree);
 
 						// boat to current waypoint line
@@ -519,6 +536,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								});
 								mIconFactory = IconFactory.getInstance(context);
 
+								// TODO: this needs to run later, after the boat is added
+								// This being async is really annoying
 								for (MarkerViewOptions entry : boat_markers_map.values())
 								{
 										mMapboxMap.addMarker(entry);
