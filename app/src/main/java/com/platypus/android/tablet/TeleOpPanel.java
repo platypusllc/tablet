@@ -154,10 +154,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		Spinner speed_spinner = null;
 
 		Handler uiHandler = new Handler(Looper.getMainLooper()); // anything post to this is run on the main GUI thread
-		boolean waypointLayoutEnabled = true; //if false were on region layout
+		boolean waypointLayoutEnabled = true; //if false we're on region layout
 		boolean containsRegion = false;
 
-		double currentTransectDist = 10;
+		double currentTransectDist = 20;
 
 		MapView mv;
 		MapboxMap mMapboxMap;
@@ -170,8 +170,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		int currentselected = -1; //which element selected
 		String saveName; //shouldnt be here?
-		LatLng pHollowStartingPoint = new LatLng((float) 40.436871,
-						(float) -79.948825);
+		LatLng pHollowStartingPoint = new LatLng((float) 40.436871, (float) -79.948825);
 		LatLng initialPan = new LatLng(0, 0);
 		boolean setInitialPan = true;
 		String waypointStatus = "";
@@ -214,8 +213,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		ArrayList<UtmPose> allWaypointsSent = new ArrayList<UtmPose>();
 
-		ArrayList<Polyline> Waypath_outline = new ArrayList<>();
-		ArrayList<Polyline> Waypath_top = new ArrayList<>();
+		ArrayList<Polyline> waypath_outline = new ArrayList<>();
+		ArrayList<Polyline> waypath_top = new ArrayList<>();
 		Polyline boat_to_waypoint_line;
 		int current_waypoint_index = -1;
 		int last_waypoint_index = -2;
@@ -1949,15 +1948,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View view)
 						{
-								if (currentBoat == null)
-								{
-										return;
-								}
-
+								if (currentBoat == null) return;
 								currentTransectDist = Double.parseDouble(transectDistance.getText().toString());
 								boatPath.updateTransect(currentTransectDist);
-
-								//boatPath = new Region(touchpointList,Are);
 								invalidate();
 						}
 				});
@@ -1967,6 +1960,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								/*ASDF*/ // TODO: fix this
 								//addPointToRegion(currentBoat.getLocation());
 						}
 				});
@@ -2040,12 +2034,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		{
 				synchronized (_wpGraphicsLock)
 				{
-						for (Polyline p : Waypath_outline)
+						for (Polyline p : waypath_outline)
 						{
 								mMapboxMap.removeAnnotation(p);
 								p.remove();
 						}
-						for (Polyline p : Waypath_top)
+						for (Polyline p : waypath_top)
 						{
 								mMapboxMap.removeAnnotation(p);
 								p.remove();
@@ -2068,18 +2062,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						for (int i = 0; i < point_pairs.size(); i++)
 						{
 								pair = point_pairs.get(i);
-								Waypath_outline.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.BLACK).width(8)));
+								waypath_outline.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.BLACK).width(8)));
 								// i = 0 is waypoints (0, 1) --> should be white until current wp index = 2
 								// i = 1 is waypoints (1, 2) --> should be white until current wp index = 3
 								// ...
 								if (current_waypoint_index > i + 1)
 								{
-										Waypath_top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.GRAY).width(5)));
+										waypath_top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.GRAY).width(5)));
 										Log.d(logTag, String.format("line i = %d, current_waypoint = %d, color = GRAY", i, current_waypoint_index));
 								}
 								else
 								{
-										Waypath_top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.WHITE).width(5)));
+										waypath_top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.WHITE).width(5)));
 										Log.d(logTag, String.format("line i = %d, current_waypoint = %d, color = WHITE", i, current_waypoint_index));
 								}
 						}
@@ -2088,7 +2082,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		public void invalidate()
 		{
-				if (Waypath_outline.size() > 0)
+				if (waypath_outline.size() > 0)
 				{
 						remove_waypaths();
 				}
@@ -2111,7 +2105,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						return;
 				}
 
-				if (touchpointList.size() == 0 && Waypath_outline.size() > 0)
+				if (touchpointList.size() == 0 && waypath_outline.size() > 0)
 				{
 						remove_waypaths();
 				}
