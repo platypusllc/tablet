@@ -47,6 +47,7 @@ import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.media.Ringtone;
@@ -113,7 +114,6 @@ import com.platypus.android.tablet.Joystick.*;
 public class TeleOpPanel extends Activity implements SensorEventListener
 {
 		HashMap<String, Boat> boats_map = new HashMap<>();
-		//List<String> boat_names = new ArrayList<>();
 		HashMap<String, MarkerViewOptions> boat_markers_map = new HashMap<>();
 		HashMap<String, Path> path_map = new HashMap<>();
 		HashMap<String, ArrayList<Polyline>> waypath_outline_map = new HashMap<>();
@@ -246,7 +246,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				// look at boat_map, first make sure boat_name isn't already used
 				// if not, generate Boat object and put it into the boat_map
 				Boat newBoat = new Boat(boat_name);
-				//boat_names.add(boat_name);
 				available_boats_spinner_adapter.add(boat_name);
 				available_boats_spinner_adapter.notifyDataSetChanged();
 
@@ -303,8 +302,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						marker_view.setPosition(boat.getLocation());
 						float degree = (float) (boat.getYaw() * 180 / Math.PI);  // degree is -90 to 270
 						degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
+						marker_view.setVisible(true);
 						Log.d(logTag, "BoatMarkerUpdateRunnable: \n" +
-										String.format("%s, yaw = %f", name, degree));
+										String.format("%s, yaw = %f, isVisible = %s", name, degree, Boolean.toString(marker_view.isVisible())));
 						marker_view.setRotation(degree);
 
 						// boat to current waypoint line
@@ -386,6 +386,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						waypointInfo.setText(waypointState);
 						*/
 				}
+		}
+
+		Boat currentBoat()
+		{
+				Object result = available_boats_spinner.getSelectedItem();
+				if (result == null) return null;
+				String boat_name = result.toString();
+				return boats_map.get(boat_name);
 		}
 
 		class ToastFailureCallback implements Runnable
@@ -553,10 +561,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void run()
 						{
-								/*ASDF
-								if (currentBoat != null)
+								Boat boat = currentBoat();
+								if (boat != null)
 								{
-										boolean isConnected = currentBoat.isConnected();
+										boolean isConnected = boat.isConnected();
 										if (isConnected)
 										{
 												ipAddressBox.setBackgroundColor(Color.GREEN);
@@ -566,7 +574,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												ipAddressBox.setBackgroundColor(Color.RED);
 										}
 								}
-								*/
+								else
+								{
+										ipAddressBox.setBackgroundColor(Color.RED);
+								}
 								uiHandler.postDelayed(this, 1000);
 						}
 				});
@@ -652,26 +663,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										Toast.makeText(getApplicationContext(), "Please wait for the map to load", Toast.LENGTH_LONG).show();
 										return;
 								}
-								/*ASDF
-								if (currentBoat == null)
+								Boat boat = currentBoat();
+								if (boat == null)
 								{
 										Toast.makeText(getApplicationContext(), "Please Connect to a boat first", Toast.LENGTH_LONG).show();
 										return;
 								}
-								if (currentBoat.getLocation() == null)
+								LatLng location = currentBoat().getLocation();
+								if (location == null)
 								{
 										Toast.makeText(getApplicationContext(), "Boat still finding GPS location", Toast.LENGTH_LONG).show();
 										return;
 								}
-								mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(
-												new CameraPosition.Builder()
-																.target(currentBoat.getLocation())
-																.zoom(16)
-																.build()
-								));
-								*/
+								mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(location).zoom(16).build()));
 						}
 				});
+
 				//Options menu
 				advancedOptions.setOnClickListener(new OnClickListener()
 				{
@@ -872,14 +879,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 				SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 				SharedPreferences.Editor editor = sharedPref.edit();
-				/*ASDF
-				if (currentBoat.getLocation() != null)
+				Boat boat = currentBoat();
+				if (boat != null)
 				{
-						editor.putString(SettingsActivity.KEY_PREF_LAT, Double.toString(currentBoat.getLocation().getLatitude()));
-						editor.putString(SettingsActivity.KEY_PREF_LON, Double.toString(currentBoat.getLocation().getLongitude()));
+						LatLng location = boat.getLocation();
+						if (location != null)
+						{
+								editor.putString(SettingsActivity.KEY_PREF_LAT, Double.toString(location.getLatitude()));
+								editor.putString(SettingsActivity.KEY_PREF_LON, Double.toString(location.getLongitude()));
+						}
 				}
-				*/
-
 				editor.apply();
 				editor.commit();
 		}
@@ -1078,9 +1087,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										address = CrwNetworkUtils.toInetSocketAddress(textIpAddress + ":" + boatPort);
 								}
-								/*ASDF
-								currentBoat.setAddress(address); // actual call that establishes a connection
-								*/
+								/*ASDF*/
 								int boat_count = boats_map.size();
 								String boat_name = String.format("boat_%d", boat_count);
 								startNewBoat(boat_name); // initialize the Boat
@@ -1089,18 +1096,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										saveSession(); //save ip address
 								}
-								catch (Exception e)
-								{
-
-								}
+								catch (Exception e) { }
 								dialog.dismiss();
 								latestWaypointPoll(); // Launch waypoint polling
 								alertsAndAlarms(); // Launch alerts and alarms thread
 								SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 								SharedPreferences.Editor editor = sharedPref.edit();
-								/*ASDF
-								editor.putString(SettingsActivity.KEY_PREF_IP, currentBoat.getIpAddress().getAddress().toString());
-								*/
+								/*ASDF*/
+								editor.putString(SettingsActivity.KEY_PREF_IP, boats_map.get(boat_name).getIpAddress().getAddress().toString());
 								editor.apply();
 								editor.commit();
 						}
