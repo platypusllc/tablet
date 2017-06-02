@@ -1687,7 +1687,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		public void onLoadWaypointLayout()
 		{
 				LayoutInflater inflater = (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				waypointlayout = (LinearLayout) findViewById(R.id.relativeLayout_sensor);
+				waypointlayout = (LinearLayout) findViewById(R.id.relativeLayout_paths);
 				waypointregion = inflater.inflate(R.layout.waypoint_layout, waypointlayout);
 				createWaypointStatusButton = (ImageButton) waypointregion.findViewById(R.id.waypointButton);
 				createWaypointStatusButton.setBackgroundResource(R.drawable.draw_icon);
@@ -1912,7 +1912,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		public void onLoadRegionLayout()
 		{
 				LayoutInflater inflater = (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				regionlayout = (LinearLayout) findViewById(R.id.relativeLayout_sensor);
+				regionlayout = (LinearLayout) findViewById(R.id.relativeLayout_paths);
 				waypointregion = inflater.inflate(R.layout.region_layout, regionlayout);
 				startRegion = (Button) regionlayout.findViewById(R.id.region_start); //start button
 				createVertexStatusButton = (ImageButton) regionlayout.findViewById(R.id.region_draw); //toggle adding points to region
