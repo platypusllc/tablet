@@ -12,7 +12,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -61,7 +60,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
@@ -99,7 +97,6 @@ import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -254,7 +251,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				boat_markers_map.put(boat_name, new MarkerViewOptions()
 								.position(pHollowStartingPoint)
 								.title(boat_name)
-								.icon(mIconFactory.fromResource(R.drawable.pointarrow)).rotation(0));
+								//.icon(mIconFactory.fromResource(R.drawable.pointarrow)).rotation(0));
+								.icon(mIconFactory.fromResource(R.drawable.arrow_magenta)).rotation(0));
 				boat_markers_map.get(boat_name).getMarker().setAnchor(0.5f, 0.5f);
 
 				// try to add the marker until mMapboxMap exists and it is added
