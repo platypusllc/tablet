@@ -116,10 +116,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		TextView ipAddressBox = null;
 		RelativeLayout linlay = null;
 
-		Button deleteWaypoint = null;
-		Button connectButton = null;
-		Button advancedOptions = null;
-		Button centerToBoat = null;
+		Button connect_button = null;
+		Button advanced_options_button = null;
+		Button center_view_button = null;
+		Button start_wp_button = null;
+		Button pause_wp_button = null;
+		Button stop_wp_button = null;
+		Button undo_last_wp_button = null;
+		Button remove_all_wp_button = null;
+		Button drop_wp_button = null;
+		Button normal_path_button = null;
+		Button spiral_button = null;
+		Button lawnmower_button = null;
 
 		TextView sensorData1 = null;
 		TextView sensorData2 = null;
@@ -166,18 +174,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		public static double RUDDER_MAX = 1.0;
 
 		public EditText ipAddress = null;
-		public EditText color = null;
-		public EditText transectDistance;
+		public EditText transect_distance;
 		public Button startWaypoints = null;
 
 		public static String textIpAddress;
 		public static String boatPort = "11411";
 		public static Boat currentBoat;
 		public static InetSocketAddress address;
-		private final Object _waypointLock = new Object();
-
-		private boolean startDrawRegions = false;
-		private boolean startDrawWaypoints = false;
 
 		double[] tPID = {.2, .0, .0};
 		double[] rPID = {1, 0, .2};
@@ -185,18 +188,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		double battery_voltage = 0.0;
 
 		Path boatPath = null;
-		ArrayList<LatLng> touchpointList = new ArrayList<LatLng>();
-		ArrayList<LatLng> waypointList = new ArrayList<LatLng>();
-		ArrayList<LatLng> savePointList = new ArrayList<LatLng>();
-		ArrayList<Marker> markerList = new ArrayList();
+		ArrayList<LatLng> waypoint_list = new ArrayList<LatLng>();
+		ArrayList<Marker> marker_list = new ArrayList<>();
 
 		String waypointFileName = "waypoints.txt";
 
-		ArrayList<UtmPose> allWaypointsSent = new ArrayList<UtmPose>();
-
 		ArrayList<Polyline> waypath_outline = new ArrayList<>();
 		ArrayList<Polyline> waypath_top = new ArrayList<>();
-		Polyline boat_to_waypoint_line;
+		//Polyline boat_to_waypoint_line; // TODO: add this
 		int current_waypoint_index = -1;
 		int last_waypoint_index = -2;
 		final Object _wpGraphicsLock = new Object();
@@ -229,6 +228,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						boat_markerview.setRotation(degree);
 
 						// boat to current waypoint line
+						/* TODO: add this
 						if (System.currentTimeMillis() - last_redraw < 200) return; // don't update the line too often
 						if (boat_to_waypoint_line != null)
 						{
@@ -243,6 +243,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						pair.add(point_pairs.get(current_waypoint_index).get(0));
 						boat_to_waypoint_line = mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.MAGENTA).width(1));
 						last_redraw = System.currentTimeMillis();
+						*/
 				}
 		};
 		Runnable sensorDataReceived = new Runnable()
@@ -304,7 +305,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 				linlay = (RelativeLayout) this.findViewById(R.id.linlay);
 				ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
-				connectButton = (Button) this.findViewById(R.id.connectButton);
+				connect_button = (Button) this.findViewById(R.id.connectButton);
+				start_wp_button = (Button) this.findViewById(R.id.start_button);
+				pause_wp_button = (Button) this.findViewById(R.id.pause_button);
+				stop_wp_button = (Button) this.findViewById(R.id.stop_button);
 				sensorData1 = (TextView) this.findViewById(R.id.SValue1);
 				sensorData2 = (TextView) this.findViewById(R.id.SValue2);
 				sensorData3 = (TextView) this.findViewById(R.id.SValue3);
@@ -313,8 +317,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				sensorType3 = (TextView) this.findViewById(R.id.sensortype3);
 				battery = (TextView) this.findViewById(R.id.batteryVoltage);
 				joystick = (JoystickView) findViewById(R.id.joystickView);
-				advancedOptions = (Button) this.findViewById(R.id.advopt);
-				centerToBoat = (Button) this.findViewById(R.id.centermap);
+				advanced_options_button = (Button) this.findViewById(R.id.advopt);
+				center_view_button = (Button) this.findViewById(R.id.centermap);
+				undo_last_wp_button = (Button) this.findViewById(R.id.undo_last_wp_button);
+				remove_all_wp_button = (Button) this.findViewById(R.id.remove_all_wp_button);
+				drop_wp_button = (Button) this.findViewById(R.id.drop_wp_button);
+				normal_path_button = (Button) this.findViewById(R.id.path_button);
+				spiral_button = (Button) this.findViewById(R.id.spiral_button);
+				lawnmower_button = (Button) this.findViewById(R.id.lawnmower_button);
+
 				alarm_ringtone = RingtoneManager.getRingtone(getApplicationContext(), alarmUri);
 				notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -377,7 +388,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										@Override
 										public void onMapLongClick(LatLng point)
 										{
-												touchpointList.add(point);
+												waypoint_list.add(point);
 														/* ASDF
 														if (spirallawn.isChecked())
 														{
@@ -394,11 +405,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														*/
 										}
 								});
-								/*
 								mIconFactory = IconFactory.getInstance(context);
 								boat_markerview = mMapboxMap.addMarker(new MarkerViewOptions().position(pHollowStartingPoint).title("Boat")
 												.icon(mIconFactory.fromResource(R.drawable.pointarrow)).rotation(0));
-								*/
 						}
 				});
 
@@ -424,7 +433,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						}
 				});
 
-				centerToBoat.setOnClickListener(new OnClickListener()
+				center_view_button.setOnClickListener(new OnClickListener()
 				{
 						@Override
 						public void onClick(View view)
@@ -453,12 +462,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						}
 				});
 				//Options menu
-				advancedOptions.setOnClickListener(new OnClickListener()
+				advanced_options_button.setOnClickListener(new OnClickListener()
 				{
 						@Override
 						public void onClick(View v)
 						{
-								PopupMenu popup = new PopupMenu(TeleOpPanel.this, advancedOptions);
+								PopupMenu popup = new PopupMenu(TeleOpPanel.this, advanced_options_button);
 								popup.getMenuInflater().inflate(R.menu.dropdownmenu, popup.getMenu());
 								popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener()
 								{
@@ -835,13 +844,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 								if (ipAddress.getText() == null || ipAddress.getText().equals("") || ipAddress.getText().length() == 0)
 								{
-										ipAddressBox.setText("IP Address: 127.0.0.1 (localhost)");
+										ipAddressBox.setText("localhost");
 								}
 								else
 								{
-										ipAddressBox.setText("IP Address: " + ipAddress.getText());
+										ipAddressBox.setText(ipAddress.getText());
 								}
-								markerList = new ArrayList<Marker>();
 								textIpAddress = ipAddress.getText().toString();
 								if (ipAddress.getText() == null || ipAddress.getText().equals(""))
 								{
@@ -890,7 +898,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				{
 						return;
 				}
-				savePointList = new ArrayList<LatLng>(boatPath.getOriginalPoints());
+				final ArrayList<LatLng> savePointList = new ArrayList<LatLng>(boatPath.getOriginalPoints());
 
 				final BufferedWriter writer;
 				try
@@ -955,7 +963,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				final File waypointFile = new File(Environment.getExternalStorageDirectory() + "/waypoints/" + filename);
 				try
 				{
-						touchpointList.clear();
+						waypoint_list.clear();
 						if (boatPath != null) boatPath.clearPoints();
 						invalidate();
 				}
@@ -1126,18 +1134,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												dialog.dismiss();
 												//write no selected box
 										}
-										waypointList.clear();
-										markerList.clear();
+										waypoint_list.clear();
+										marker_list.clear();
 
 										int num = 1;
 										for (ILatLng i : waypointsaves.get(currentselected)) //tbh not sure why there is a 1 offset but there is
 										{
-												markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude())).title(Integer.toString(num))));
-												waypointList.add(new LatLng(i.getLatitude(), i.getLongitude()));
+												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(new LatLng(i.getLatitude(), i.getLongitude())).title(Integer.toString(num))));
+												waypoint_list.add(new LatLng(i.getLatitude(), i.getLongitude()));
 												num++;
 										}
 
-										boatPath = new Path(waypointList); // also need to put things into boatPath
+										boatPath = new Path(waypoint_list); // also need to put things into boatPath
 										remove_waypaths();
 										add_waypaths();
 
@@ -1537,21 +1545,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						Log.w(logTag, "TeleOpPanel.startWaypoints():  boatPath.getPoints() is null");
 						return;
 				}
-				waypointList = boatPath.getPoints();
-				if (waypointList.size() > 0)
+				waypoint_list = boatPath.getPoints();
+				if (waypoint_list.size() > 0)
 				{
 						//Convert all UTM to latlong
-						UtmPose tempUtm = convertLatLngUtm(waypointList.get(waypointList.size() - 1));
+						UtmPose tempUtm = convertLatLngUtm(waypoint_list.get(waypoint_list.size() - 1));
 						waypointStatus = tempUtm.toString();
-						UtmPose[] wpPose = new UtmPose[waypointList.size()];
-						synchronized (_waypointLock)
-						{
-								for (int i = 0; i < waypointList.size(); i++)
-								{
-										wpPose[i] = convertLatLngUtm(waypointList.get(i));
-										allWaypointsSent.add(wpPose[i]);
-								}
-						}
+						UtmPose[] wpPose = new UtmPose[waypoint_list.size()];
 						currentBoat.startWaypoints(wpPose, "POINT_AND_SHOOT", new ToastFailureCallback("Start Waypoints Msg Timed Out"));
 						current_waypoint_index = 0;
 						invalidate();
@@ -1942,11 +1942,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								mMapboxMap.removeAnnotation(p);
 								p.remove();
 						}
+						/* TODO: add this
 						if (boat_to_waypoint_line != null)
 						{
 								mMapboxMap.removeAnnotation(boat_to_waypoint_line);
 								boat_to_waypoint_line.remove();
 						}
+						*/
 				}
 		}
 
@@ -1984,10 +1986,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				{
 						remove_waypaths();
 				}
-				if (markerList != null)
+				if (marker_list != null)
 				{
-						mMapboxMap.removeAnnotations(markerList);
-						markerList.clear();
+						mMapboxMap.removeAnnotations(marker_list);
+						marker_list.clear();
 				}
 				IconFactory mIconFactory = IconFactory.getInstance(this);
 				Drawable mboundry = ContextCompat.getDrawable(this, R.drawable.boundary);
@@ -2003,7 +2005,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						return;
 				}
 
-				if (touchpointList.size() == 0 && waypath_outline.size() > 0)
+				if (waypoint_list.size() == 0 && waypath_outline.size() > 0)
 				{
 						remove_waypaths();
 				}
@@ -2016,14 +2018,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				{
 						for (LatLng i : boatPath.getQuickHullList())
 						{
-								markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(markerList.size())).icon(Iboundry)));
+								marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(marker_list.size())).icon(Iboundry)));
 						}
 				}
 				else if (boatPath instanceof Path)
 				{
-						for (LatLng i : touchpointList)
+						for (LatLng i : waypoint_list)
 						{
-								markerList.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(markerList.size()))));
+								marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(i).title(Integer.toString(marker_list.size()))));
 						}
 
 				}
