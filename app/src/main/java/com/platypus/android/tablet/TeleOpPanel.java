@@ -117,17 +117,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		TextView mapInfo = null;
 		RelativeLayout linlay = null;
 
-		ToggleButton pauseWPButton = null;
-		ToggleButton spirallawn;
-
 		ImageButton createVertexStatusButton = null;
 		ImageButton createWaypointStatusButton = null;
 
 		Button deleteWaypoint = null;
 		Button connectButton = null;
 		Button advancedOptions = null;
-		Button makeConvex = null; //for testing remove later
-		Button perimeter = null;
 		Button centerToBoat = null;
 		Button startRegion = null;
 		Button clearRegion = null;
@@ -319,13 +314,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		protected void onCreate(final Bundle savedInstanceState)
 		{
 				super.onCreate(savedInstanceState);
-				this.setContentView(R.layout.tabletlayoutswitch);
+				this.setContentView(R.layout.tabletlayoutswitch); // ASDF TODO: why does this fail?
 
-				ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
 				linlay = (RelativeLayout) this.findViewById(R.id.linlay);
-
+				ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
 				connectButton = (Button) this.findViewById(R.id.connectButton);
-				makeConvex = (Button) this.findViewById(R.id.makeconvex);
 				sensorData1 = (TextView) this.findViewById(R.id.SValue1);
 				sensorData2 = (TextView) this.findViewById(R.id.SValue2);
 				sensorData3 = (TextView) this.findViewById(R.id.SValue3);
@@ -334,11 +327,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				sensorType3 = (TextView) this.findViewById(R.id.sensortype3);
 				battery = (TextView) this.findViewById(R.id.batteryVoltage);
 				joystick = (JoystickView) findViewById(R.id.joystickView);
-				Title = (TextView) this.findViewById(R.id.controlScreenEnter);
 				advancedOptions = (Button) this.findViewById(R.id.advopt);
 				centerToBoat = (Button) this.findViewById(R.id.centermap);
-				mapInfo = (TextView) this.findViewById(R.id.mapinfo);
-				final ToggleButton switchView = (ToggleButton) this.findViewById(R.id.switchviewbutton);
 				alarm_ringtone = RingtoneManager.getRingtone(getApplicationContext(), alarmUri);
 				notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -410,6 +400,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												else if (startDrawRegions && !startDrawWaypoints)
 												{
 														touchpointList.add(point);
+														/* ASDF
 														if (spirallawn.isChecked())
 														{
 																ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
@@ -422,6 +413,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
 																touchpointList = boatPath.getQuickHullList();
 														}
+														*/
 												}
 												invalidate();
 										}
@@ -451,74 +443,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										}
 								}
 								uiHandler.postDelayed(this, 1000);
-						}
-				});
-
-				//load inital waypoint menu
-				onLoadWaypointLayout();
-				switchView.setOnClickListener(new OnClickListener()
-				{
-						@Override
-						public void onClick(View view1)
-						{
-								if (switchView.isChecked())
-								{
-										waypointlayout.removeAllViews();
-										onLoadRegionLayout();
-										waypointLayoutEnabled = false;
-										startDrawRegions = startDrawWaypoints;
-										startDrawWaypoints = false;
-
-										if (!startDrawWaypoints)
-										{
-												createWaypointStatusButton.setBackgroundResource(R.drawable.draw_icon2);
-										}
-										else
-										{
-												createWaypointStatusButton.setBackgroundResource(R.drawable.draw_icon);
-										}
-
-										if (boatPath == null)
-										{
-												boatPath = new Path();
-										}
-										ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
-										if (spirallawn.isChecked())
-										{
-												boatPath = new Region(temp, AreaType.LAWNMOWER, currentTransectDist);
-										}
-										else
-										{
-												boatPath = new Region(temp, AreaType.SPIRAL, currentTransectDist);
-										}
-								}
-								else
-								{
-										regionlayout.removeAllViews();
-										onLoadWaypointLayout();
-										waypointLayoutEnabled = true;
-										startDrawWaypoints = startDrawRegions;
-										startDrawRegions = false;
-
-										if (!startDrawRegions)
-										{
-												createVertexStatusButton.setBackgroundResource(R.drawable.draw_icon2);
-										}
-										else
-										{
-												createVertexStatusButton.setBackgroundResource(R.drawable.draw_icon);
-										}
-
-
-										if (boatPath == null)
-										{
-												boatPath = new Path();
-										}
-										ArrayList<LatLng> temp = new ArrayList<LatLng>(touchpointList);
-										boatPath = new Path(temp);
-
-								}
-								invalidate();
 						}
 				});
 
@@ -1692,7 +1616,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				createWaypointStatusButton = (ImageButton) waypointregion.findViewById(R.id.waypointButton);
 				createWaypointStatusButton.setBackgroundResource(R.drawable.draw_icon);
 				deleteWaypoint = (Button) waypointregion.findViewById(R.id.waypointDeleteButton);
-				pauseWPButton = (ToggleButton) waypointregion.findViewById(R.id.pause);
+				//pauseWPButton = (ToggleButton) waypointregion.findViewById(R.id.pause);
 				startWaypoints = (Button) waypointregion.findViewById(R.id.waypointStartButton);
 
 				speed_spinner_erroneous_call = true; // reset the erroneous call boolean
@@ -1790,6 +1714,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						}
 				});
 
+				/*
 				pauseWPButton.setOnClickListener(new OnClickListener()
 				{
 						@Override
@@ -1807,6 +1732,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 						}
 				});
+				*/
 				deleteWaypoint.setOnClickListener(new View.OnClickListener()
 				{
 						public void onClick(View v)
@@ -1816,7 +1742,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										Toast.makeText(getApplicationContext(), "Please Delete Region in Region Menu", Toast.LENGTH_LONG).show();
 										return;
 								}
-								pauseWPButton.setChecked(false);
+								// pauseWPButton.setChecked(false);
 								if (currentBoat != null)
 								{
 										currentBoat.stopWaypoints(new ToastFailureCallback("Stop Waypoints Msg Timed Out"));
@@ -1832,6 +1758,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View view)
 						{
+								/*
 								if (pauseWPButton.isChecked())
 								{
 										AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -1859,6 +1786,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										startWaypoints();
 								}
+								*/
 						}
 				});
 
@@ -1917,13 +1845,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				startRegion = (Button) regionlayout.findViewById(R.id.region_start); //start button
 				createVertexStatusButton = (ImageButton) regionlayout.findViewById(R.id.region_draw); //toggle adding points to region
 				createVertexStatusButton.setBackgroundResource(R.drawable.draw_icon);
-				perimeter = (Button) regionlayout.findViewById(R.id.region_perimeter); //perimeter* start perimeter? didnt write this
 				clearRegion = (Button) regionlayout.findViewById(R.id.region_clear); //region, not implemented yet
 				Button stopButton = (Button) regionlayout.findViewById(R.id.stopButton);
 				transectDistance = (EditText) regionlayout.findViewById(R.id.region_transect);
-				spirallawn = (ToggleButton) regionlayout.findViewById(R.id.region_spiralorlawn);
 				updateTransect = (Button) regionlayout.findViewById(R.id.region_transectButton);
 
+				/* ASDF
 				spirallawn.setOnClickListener(new OnClickListener()
 				{
 						@Override
@@ -1942,6 +1869,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								invalidate();
 						}
 				});
+				*/
 
 				updateTransect.setOnClickListener(new OnClickListener()
 				{
@@ -1955,15 +1883,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						}
 				});
 
+				/*
 				perimeter.setOnClickListener(new OnClickListener()
 				{
 						@Override
 						public void onClick(View v)
 						{
-								/*ASDF*/ // TODO: fix this
+								// ASDF // TODO: fix this
 								//addPointToRegion(currentBoat.getLocation());
 						}
 				});
+				*/
 
 
 				stopButton.setOnClickListener(new OnClickListener()
