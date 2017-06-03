@@ -32,6 +32,7 @@ import javax.measure.unit.SI;
 public class Boat
 {
 		UdpVehicleServer server = null;
+		String name;
 		private PoseListener pl;
 		private SensorListener sl;
 		private WaypointListener wl;
@@ -112,8 +113,9 @@ public class Boat
 				}
 		};
 
-		public Boat()
+		public Boat(String boat_name)
 		{
+				name = boat_name;
 				server = new UdpVehicleServer();
 		}
 
@@ -274,6 +276,8 @@ public class Boat
 		{
 				return server;
 		}
+
+		public String getName() { return name; }
 
 		public void setConnected(boolean b)
 		{

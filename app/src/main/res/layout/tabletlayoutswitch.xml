@@ -248,6 +248,7 @@
         </RelativeLayout>
     </LinearLayout>
 
+
     <RelativeLayout
         android:id="@+id/relativeLayout_map"
         android:layout_height="wrap_content"
@@ -256,8 +257,7 @@
         android:layout_toRightOf="@+id/relativeLayout_boat"
         >
 
-        <RelativeLayout android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+
 
             <com.mapbox.mapboxsdk.maps.MapView
                 android:id="@+id/mapview"
@@ -267,7 +267,6 @@
                 android:layout_alignParentTop="true"
                 mapbox:access_token="pk.eyJ1IjoicGxhdHlwdXNsbGMiLCJhIjoiY2lsM3p5bjJyM3U0N3Z5bTNxbmFpZXNwaSJ9.YWzXSt3aXtpoBrdMPmLE3Q"
                 mapbox:style_url="@string/style_mapbox_streets"/>
-
 
             <Button
                 style="?android:attr/buttonStyleSmall"
@@ -389,7 +388,5 @@
             </RelativeLayout>
 
         </RelativeLayout>
-    </RelativeLayout>
-
 
 </RelativeLayout>
