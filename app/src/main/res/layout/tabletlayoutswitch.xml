@@ -7,198 +7,256 @@
     android:orientation="vertical">
 
     <RelativeLayout
-        android:id="@+id/relativeLayout_topbar"
+        android:id="@+id/relativeLayout_boat"
+        android:layout_width="170dp"
+        android:layout_height="250dp"
+        android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:background="@drawable/border"
         >
 
         <Button
             android:id="@+id/connectButton"
             style="?android:attr/buttonStyleSmall"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_toLeftOf="@+id/advopt"
-            android:text="Connect"
+            android:layout_alignParentTop="true"
+            android:text="Connect to boat"
             />
-
-        <Button
-            android:id="@+id/advopt"
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:text="Advanced Options"
-            />
-
-        <ToggleButton
-
-            android:id="@+id/switchviewbutton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Waypoints"
-            android:textOff="Waypoints"
-            android:textOn="Region"/>
 
         <TextView
             android:id="@+id/printIpAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_toLeftOf="@id/connectButton"
-            android:layout_toRightOf="@id/switchviewbutton"
-            android:gravity="center"
+            android:layout_below="@id/connectButton"
+            android:layout_gravity="center"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
             android:background="@color/cyan"
-            android:text="IP Address:"
+            android:gravity="center_horizontal|center_vertical"
             android:textColor="@color/green"/>
+
+        <TextView
+            android:id="@+id/waypoints_waypointstatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/printIpAddress"
+            android:layout_gravity="center"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dp"
+            android:text="Waypoint Status"
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+        <Spinner
+            android:id="@+id/speed_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/relativeLayout_battery"
+            android:entries="@array/spinner_speed_entries"
+            android:gravity="center"
+            android:prompt="@string/speed_prompt">
+        </Spinner>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_boat_buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/speed_spinner">
+
+            <Button
+                android:id="@+id/start_button"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="12dp"
+                android:background="@drawable/play_button"/>
+
+            <Button
+                android:id="@+id/pause_button"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/start_button"
+                android:background="@drawable/pause_button"
+                />
+
+            <Button
+                android:id="@+id/stop_button"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_toRightOf="@id/pause_button"
+                android:background="@drawable/stop_button"
+                />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_battery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/waypoints_waypointstatus"
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dp"
+            >
+
+            <TextView
+                android:id="@+id/batteryTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:text="Battery"/>
+
+            <TextView
+                android:id="@+id/batteryVoltage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:text="0.0"/>
+        </RelativeLayout>
     </RelativeLayout>
 
     <LinearLayout
-        android:id="@+id/relativeLayout_waypoint"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:layout_width="180dp"
-        android:layout_height="310dp"
-        android:paddingTop="15dp"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/relativeLayout_topbar"
+        android:id="@+id/relativeLayout_paths"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignRight="@id/relativeLayout_boat"
+        android:layout_below="@id/relativeLayout_boat"
+        android:layout_toEndOf="@id/relativeLayout_boat"
         android:background="@drawable/border"
         android:orientation="vertical"
-        android:layout_above="@+id/relativeLayout_control">
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="15dp">
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_path_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/undo_last_wp_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/undo"/>
+
+
+            <Button
+                android:id="@+id/remove_all_wp_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/undo_last_wp_button"
+                android:background="@drawable/delete"/>
+
+            <Button
+                android:id="@+id/drop_wp_button"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/remove_all_wp_button"
+                android:background="@drawable/drop_wp"/>
+
+            <Button
+                android:id="@+id/path_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentLeft="true"
+                android:layout_below="@id/undo_last_wp_button"
+                android:background="@drawable/polyline"/>
+
+            <Button
+                android:id="@+id/spiral_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_below="@id/undo_last_wp_button"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/path_button"
+                android:background="@drawable/spiral"/>
+
+            <Button
+                android:id="@+id/lawnmower_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_below="@id/undo_last_wp_button"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/spiral_button"
+                android:background="@drawable/lawnmower"/>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_transect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:id="@+id/transect_distance_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:text="Transect dist.:"/>
+
+            <EditText
+                android:id="@+id/transect_distance_input"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:gravity="center"
+                android:inputType="number"
+                android:text="10"
+                />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_path_length"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:id="@+id/path_length_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:text="Path length:"/>
+
+            <TextView
+                android:id="@+id/path_length_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:text="0"/>
+        </RelativeLayout>
     </LinearLayout>
 
-    <RelativeLayout
-        android:id="@+id/relativeLayout_sensor"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_alignEnd="@+id/relativeLayout_map"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="5dp"
-        android:layout_marginLeft="1dp"
-        android:layout_toEndOf="@+id/relativeLayout_control"
-        android:background="@drawable/border"
-        android:paddingLeft="15dp"
-        android:paddingRight="10dp"
-        android:paddingTop="10dp"
-        >
-
-        <Spinner
-            android:id="@+id/boat_name_spinner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
-            android:background="@color/background_holo_light"/>
-
-        <TextView
-            android:id="@+id/textView6"
-            android:layout_width="wrap_content"
-
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="26dp"
-            android:layout_marginLeft="3dp"
-            android:layout_marginStart="191dp"
-            android:layout_toEndOf="@+id/boat_name_spinner"
-            android:layout_toRightOf="@id/boat_name_spinner"
-            android:text="Sensor Data"
-            android:textSize="16dp"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:id="@+id/batteryTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/textView6"
-            android:layout_marginLeft="20dp"
-            android:layout_marginStart="17dp"
-            android:layout_toEndOf="@+id/textView6"
-            android:text="Battery"/>
-
-        <TextView
-            android:id="@+id/batteryVoltage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignTop="@+id/batteryTextView"
-            android:layout_marginLeft="20dp"
-            android:layout_marginStart="20dp"
-            android:layout_toEndOf="@+id/batteryTextView"
-            android:text="0.0"/>
-
-        <TextView
-            android:id="@+id/sensortype1"
-            style="?android:attr/textAppearanceSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignTop="@+id/batteryVoltage"
-            android:layout_marginLeft="30dp"
-            android:layout_marginRight="15dp"
-            android:layout_toEndOf="@+id/batteryVoltage"
-            android:text="Null"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:id="@+id/SValue1"
-            style="?android:attr/textAppearanceSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/sensortype1"
-            android:layout_marginRight="15dp"
-            android:layout_toEndOf="@+id/sensortype1"
-            android:text="0.0"/>
-
-        <TextView
-            android:id="@+id/sensortype2"
-            style="?android:attr/textAppearanceSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/SValue1"
-            android:layout_marginRight="15dp"
-            android:layout_toEndOf="@+id/SValue1"
-            android:text="Null"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:id="@+id/SValue2"
-            style="?android:attr/textAppearanceSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignTop="@+id/sensortype2"
-
-            android:layout_marginRight="15dp"
-            android:layout_toEndOf="@+id/sensortype2"
-            android:text="0.0"/>
-
-        <TextView
-            android:id="@+id/sensortype3"
-            style="?android:attr/textAppearanceSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignBottom="@id/SValue2"
-            android:layout_marginRight="15dp"
-            android:layout_toEndOf="@+id/SValue2"
-            android:text="Null"
-            android:textStyle="bold"/>
-
-
-        <TextView
-            android:id="@+id/SValue3"
-            style="?android:attr/textAppearanceSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/sensortype3"
-            android:layout_marginRight="15dp"
-            android:layout_toEndOf="@+id/sensortype3"
-            android:text="0.0"/>
-    </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/relativeLayout_map"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
         android:layout_weight="0.5"
-        android:layout_below="@+id/relativeLayout_topbar"
-        android:layout_toRightOf="@+id/relativeLayout_waypoint"
-        android:layout_above="@id/relativeLayout_sensor">
+        android:layout_toRightOf="@+id/relativeLayout_boat"
+        >
+
 
 
             <com.mapbox.mapboxsdk.maps.MapView
@@ -218,31 +276,117 @@
                 android:text="Center"
                 android:layout_alignTop="@id/mapview"
                 android:layout_alignLeft="@id/mapview"/>
-    </RelativeLayout>
 
-    <RelativeLayout
-        android:id="@+id/relativeLayout_control"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:paddingTop="10dp"
-        android:paddingLeft="15dp"
-        android:paddingRight="00dp"
-        android:layout_marginBottom="3dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:focusableInTouchMode="false"
-        android:background="@drawable/border"
-        android:focusable="true"
-        android:layout_toStartOf="@+id/relativeLayout_map">
+            <Button
+                android:id="@+id/advopt"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:text="Advanced Options"
+                />
+
+            <com.platypus.android.tablet.Joystick.JoystickView
+                android:id="@+id/joystickView"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                />
+
+            <RelativeLayout
+                android:id="@+id/relativeLayout_sensors"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:layout_toLeftOf="@id/joystickView"
+                android:background="@drawable/border"
+                >
+
+                <TextView
+                    android:id="@+id/sensorDataLabel"
+                    android:layout_width="wrap_content"
+
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="10dp"
+                    android:text="Sensor Data"
+                    android:textSize="16dp"
+                    android:textStyle="bold"/>
 
 
-        <com.platypus.android.tablet.Joystick.JoystickView
-            android:layout_width="165dp"
-            android:layout_height="140dp"
-            android:id="@+id/joystickView"
-            android:layout_alignParentStart="true" />
+                <TextView
+                    android:id="@+id/sensortype1"
+                    style="?android:attr/textAppearanceSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignTop="@+id/sensorDataLabel"
+                    android:layout_marginLeft="30dp"
+                    android:layout_marginRight="15dp"
+                    android:layout_toEndOf="@+id/sensorDataLabel"
+                    android:text="Null"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/SValue1"
+                    style="?android:attr/textAppearanceSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/sensortype1"
+                    android:layout_marginRight="15dp"
+                    android:layout_toEndOf="@+id/sensortype1"
+                    android:text="0.0"/>
+
+                <TextView
+                    android:id="@+id/sensortype2"
+                    style="?android:attr/textAppearanceSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/SValue1"
+                    android:layout_marginRight="15dp"
+                    android:layout_toEndOf="@+id/SValue1"
+                    android:text="Null"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/SValue2"
+                    style="?android:attr/textAppearanceSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignTop="@+id/sensortype2"
+
+                    android:layout_marginRight="15dp"
+                    android:layout_toEndOf="@+id/sensortype2"
+                    android:text="0.0"/>
+                <!--android:textSize="18dp"-->
+
+                <TextView
+                    android:id="@+id/sensortype3"
+                    style="?android:attr/textAppearanceSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@id/SValue2"
+                    android:layout_marginRight="15dp"
+                    android:layout_toEndOf="@+id/SValue2"
+                    android:text="Null"
+                    android:textStyle="bold"/>
 
 
-    </RelativeLayout>
+                <TextView
+                    android:id="@+id/SValue3"
+                    style="?android:attr/textAppearanceSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@+id/sensortype3"
+                    android:layout_marginRight="15dp"
+                    android:layout_toEndOf="@+id/sensortype3"
+                    android:text="0.0"/>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
 </RelativeLayout>
