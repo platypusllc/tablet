@@ -124,6 +124,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		Button center_view_button = null;
 		Button start_wp_button = null;
 		Button pause_wp_button = null;
+		boolean paused = false;
 		Button stop_wp_button = null;
 		Button undo_last_wp_button = null;
 		Button remove_all_wp_button = null;
@@ -753,6 +754,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						public void onClick(View v)
 						{
 								Log.i(logTag, "startWaypoints() called...");
+								paused = false;
+								pause_wp_button.setBackground(getDrawable(R.drawable.pause_button));
 								Boat boat = currentBoat();
 								if (boat == null)
 								{
@@ -779,11 +782,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										return;
 								}
 
-								//Convert all LatLng to UTM
+								//Convert all LatLng to UtmPose
 								ArrayList<LatLng> points = (ArrayList<LatLng>)unowned_path.getPoints().clone();
 								path_map.put(boat_name, new Path(points));
-								UtmPose tempUtm = convertLatLngUtm(points.get(points.size() - 1));
-								//waypointStatus = tempUtm.toString();
 								UtmPose[] wpPose = new UtmPose[points.size()];
 								for (int i = 0; i < points.size(); i++)
 								{
@@ -806,7 +807,23 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								Boat boat = currentBoat();
+								if (boat != null)
+								{
+										if (!paused) // pause
+										{
+												boat.setAutonomous(false, new ToastFailureCallback("Pause Msg Timed Out"));
+												pause_wp_button.setBackground(getDrawable(R.drawable.resume_button));
+										}
+										else // unpause
+										{
+												boat.setAutonomous(true, new ToastFailureCallback("Resume Msg Timed Out"));
+												pause_wp_button.setBackground(getDrawable(R.drawable.pause_button));
+										}
+										paused = !paused;
 
+								}
+								// TODO: how can we implement resume with boat state rather than button state?
 						}
 				});
 
@@ -815,7 +832,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
-
+								paused = false;
+								pause_wp_button.setBackground(getDrawable(R.drawable.pause_button));
+								Boat boat = currentBoat();
+								if (boat != null)
+								{
+										String boat_name = boat.getName();
+										boat.stopWaypoints(new ToastFailureCallback("Stop Waypoints Msg Timed Out"));
+										remove_waypaths(boat_name);
+										path_map.get(boat_name).clearPoints();
+										waypath_outline_map.get(boat_name).clear();
+										waypath_top_map.get(boat_name).clear();
+								}
 						}
 				});
 
@@ -1627,54 +1655,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								handler.postDelayed(this, sleep_remaining);
 						}
 				});
-		}
-
-		public void startWaypoints()
-		{
-				Log.i(logTag, "startWaypoints() called...");
-				Boat boat = currentBoat();
-				if (boat == null)
-				{
-						Log.w(logTag, "TeleOpPanel.startWaypoints(): currentBoat is null");
-						return;
-				}
-				/*
-				String boat_name = boat.getName();
-				path_map.put(boat_name, unowned_path);
-				//waypath_outline_map.put(boat_name, outlineList);
-				//waypath_top_map.put(boat_name, toplineList);
-				//Path path = path_map.get(boat_name);
-				// ASDF now a boat owns the path, so delete the unowned paths, markers, and lines
-				if (unowned_path != null) unowned_path.clearPoints();
-				unowned_path = null;
-
-				if (path == null)
-				{
-						Log.w(logTag, "TeleOpPanel.startWaypoints():  boatPath is null");
-						return;
-				}
-				ArrayList<LatLng> waypoints = path.getPoints();
-				if (waypoints == null)
-				{
-						Log.w(logTag, "TeleOpPanel.startWaypoints():  boatPath.getPoints() is null");
-						return;
-				}
-
-				//waypoint_list = boatPath.getPoints();
-				if (waypoint_list.size() > 0)
-				{
-						//Convert all UTM to latlong
-						UtmPose tempUtm = convertLatLngUtm(waypoints.get(waypoint_list.size() - 1));
-						waypointStatus = tempUtm.toString();
-						UtmPose[] wpPose = new UtmPose[waypoint_list.size()];
-						boat.startWaypoints(wpPose, "POINT_AND_SHOOT", new ToastFailureCallback("Start Waypoints Msg Timed Out"));
-						current_wp_index_map.put(boat_name, 0);
-				}
-				else
-				{
-						uiHandler.post(new ToastFailureCallback("Please Select Waypoints"));
-				}
-				*/
 		}
 
 		void set_speed_spinner_from_pref()
