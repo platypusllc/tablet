@@ -114,19 +114,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 {
 		final Context context = this;
 		TextView ipAddressBox = null;
-		TextView mapInfo = null;
 		RelativeLayout linlay = null;
-
-		ImageButton createVertexStatusButton = null;
-		ImageButton createWaypointStatusButton = null;
 
 		Button deleteWaypoint = null;
 		Button connectButton = null;
 		Button advancedOptions = null;
 		Button centerToBoat = null;
-		Button startRegion = null;
-		Button clearRegion = null;
-		Button updateTransect = null;
 
 		TextView sensorData1 = null;
 		TextView sensorData2 = null;
@@ -137,20 +130,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		TextView sensorType3 = null;
 
 		TextView battery = null;
-		TextView Title = null;
 		TextView waypointInfo = null;
-
-		LinearLayout regionlayout = null;
-		LinearLayout waypointlayout = null;
-		View waypointregion = null;
 
 		JoystickView joystick;
 		private boolean speed_spinner_erroneous_call = true;
 		Spinner speed_spinner = null;
 
 		Handler uiHandler = new Handler(Looper.getMainLooper()); // anything post to this is run on the main GUI thread
-		boolean waypointLayoutEnabled = true; //if false we're on region layout
-		boolean containsRegion = false;
 
 		double currentTransectDist = 20;
 
@@ -332,7 +318,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				alarm_ringtone = RingtoneManager.getRingtone(getApplicationContext(), alarmUri);
 				notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-				mapInfo.setText("Map Information \n Nothing Pending");
+				//mapInfo.setText("Map Information \n Nothing Pending");
 
 				SettingsActivity.set_TeleOpPanel(this);
 				loadPreferences();
@@ -391,15 +377,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										@Override
 										public void onMapLongClick(LatLng point)
 										{
-												if (startDrawWaypoints == true && startDrawRegions == false)
-												{
-														touchpointList.add(point);
-														Log.i(logTag, Integer.toString(touchpointList.size()));
-														boatPath = new Path(touchpointList);
-												}
-												else if (startDrawRegions && !startDrawWaypoints)
-												{
-														touchpointList.add(point);
+												touchpointList.add(point);
 														/* ASDF
 														if (spirallawn.isChecked())
 														{
@@ -414,13 +392,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																touchpointList = boatPath.getQuickHullList();
 														}
 														*/
-												}
-												invalidate();
 										}
 								});
+								/*
 								mIconFactory = IconFactory.getInstance(context);
 								boat_markerview = mMapboxMap.addMarker(new MarkerViewOptions().position(pHollowStartingPoint).title("Boat")
 												.icon(mIconFactory.fromResource(R.drawable.pointarrow)).rotation(0));
+								*/
 						}
 				});
 
@@ -600,6 +578,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				Drawable mhome = ContextCompat.getDrawable(this, R.drawable.home1);
 				Ihome = mIconFactory.fromDrawable(mhome);
 
+				/* ASDF
 				connectButton.setOnClickListener(new OnClickListener()
 				{
 						@Override
@@ -632,6 +611,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 						}
 				});
+				*/
 				connectBox(); // start the app with the connect dialog popped up
 		}
 
@@ -1324,7 +1304,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								@Override
 								public void run()
 								{
-										mapInfo.setText("Map Information \n Nothing Pending");
+										//mapInfo.setText("Map Information \n Nothing Pending");
 								}
 						});
 
@@ -1386,7 +1366,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												percentage = Math.round(percentage);
 												if (status.isComplete())
 												{
-														mapInfo.setText("Map Information \n Map Downloaded");
+														//mapInfo.setText("Map Information \n Map Downloaded");
 														System.out.println("download complete");
 														runOnUiThread(new Runnable()
 														{
@@ -1412,7 +1392,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												}
 												else if (status.isRequiredResourceCountPrecise())
 												{
-														mapInfo.setText("Map Information \n " + percentage + "% Downloaded");
+														//mapInfo.setText("Map Information \n " + percentage + "% Downloaded");
 														//setPercentage((int) Math.round(percentage));
 												}
 										}
@@ -1610,24 +1590,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		public void onLoadWaypointLayout()
 		{
-				LayoutInflater inflater = (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				waypointlayout = (LinearLayout) findViewById(R.id.relativeLayout_paths);
-				waypointregion = inflater.inflate(R.layout.waypoint_layout, waypointlayout);
-				createWaypointStatusButton = (ImageButton) waypointregion.findViewById(R.id.waypointButton);
-				createWaypointStatusButton.setBackgroundResource(R.drawable.draw_icon);
-				deleteWaypoint = (Button) waypointregion.findViewById(R.id.waypointDeleteButton);
-				//pauseWPButton = (ToggleButton) waypointregion.findViewById(R.id.pause);
-				startWaypoints = (Button) waypointregion.findViewById(R.id.waypointStartButton);
 
+				/*
 				speed_spinner_erroneous_call = true; // reset the erroneous call boolean
 				speed_spinner = (Spinner) waypointregion.findViewById(R.id.speed_spinner);
 				set_speed_spinner_from_pref();
+				*/
 
-				waypointInfo = (TextView) waypointregion.findViewById(R.id.waypoints_waypointstatus);
-				waypointInfo.setText("-----");
-
-				Button dropWP = (Button) waypointregion.findViewById(R.id.waypointDropWaypointButton);
-
+				/*
 				dropWP.setOnClickListener(new OnClickListener()
 				{
 						@Override
@@ -1664,6 +1634,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 						}
 				});
+
 
 				createWaypointStatusButton.setOnClickListener(new OnClickListener()
 				{
@@ -1713,6 +1684,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								thread.start();
 						}
 				});
+				*/
 
 				/*
 				pauseWPButton.setOnClickListener(new OnClickListener()
@@ -1732,7 +1704,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 						}
 				});
-				*/
+
 				deleteWaypoint.setOnClickListener(new View.OnClickListener()
 				{
 						public void onClick(View v)
@@ -1752,6 +1724,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								invalidate();
 						}
 				});
+				*/
 
 				startWaypoints.setOnClickListener(new OnClickListener()
 				{
@@ -1840,15 +1813,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		public void onLoadRegionLayout()
 		{
 				LayoutInflater inflater = (LayoutInflater) getBaseContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				regionlayout = (LinearLayout) findViewById(R.id.relativeLayout_paths);
-				waypointregion = inflater.inflate(R.layout.region_layout, regionlayout);
-				startRegion = (Button) regionlayout.findViewById(R.id.region_start); //start button
-				createVertexStatusButton = (ImageButton) regionlayout.findViewById(R.id.region_draw); //toggle adding points to region
-				createVertexStatusButton.setBackgroundResource(R.drawable.draw_icon);
-				clearRegion = (Button) regionlayout.findViewById(R.id.region_clear); //region, not implemented yet
-				Button stopButton = (Button) regionlayout.findViewById(R.id.stopButton);
-				transectDistance = (EditText) regionlayout.findViewById(R.id.region_transect);
-				updateTransect = (Button) regionlayout.findViewById(R.id.region_transectButton);
 
 				/* ASDF
 				spirallawn.setOnClickListener(new OnClickListener()
@@ -1871,6 +1835,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				});
 				*/
 
+				/*
 				updateTransect.setOnClickListener(new OnClickListener()
 				{
 						@Override
@@ -1882,6 +1847,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								invalidate();
 						}
 				});
+				*/
 
 				/*
 				perimeter.setOnClickListener(new OnClickListener()
@@ -1896,6 +1862,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				*/
 
 
+				/*
 				stopButton.setOnClickListener(new OnClickListener()
 				{
 						@Override
@@ -1958,6 +1925,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								startDrawRegions = !startDrawRegions;
 						}
 				});
+				*/
 		}
 
 		private void remove_waypaths()
@@ -2147,7 +2115,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				textIpAddress = iP;
 				textIpAddress = textIpAddress.replace("/", ""); //network on main thread error if this doesnt happen
 				boatPort = port;
-				ipAddressBox.setText("IP Address: " + textIpAddress);
+				// ASDF ipAddressBox.setText("IP Address: " + textIpAddress);
 
 				// get vehicle type and speed preferences
 				String vehicle_type = sharedPref.getString(SettingsActivity.KEY_PREF_VEHICLE_TYPE, "PROP");

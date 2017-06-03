@@ -120,10 +120,7 @@
                 android:layout_alignParentRight="true"
                 android:layout_alignParentTop="true"
                 android:text="0.0"/>
-
-
         </RelativeLayout>
-
     </RelativeLayout>
 
     <LinearLayout
@@ -141,7 +138,6 @@
         android:paddingRight="10dp"
         android:paddingTop="15dp">
 
-
         <RelativeLayout
             android:id="@+id/relativeLayout_path_buttons"
             android:layout_width="match_parent"
@@ -154,8 +150,8 @@
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
                 android:layout_marginBottom="20dp"
-                android:background="@drawable/undo"
-                android:backgroundTint="@drawable/border"/>
+                android:background="@drawable/undo"/>
+
 
             <Button
                 android:id="@+id/remove_all_wp_button"
@@ -164,16 +160,15 @@
                 android:layout_alignParentTop="true"
                 android:layout_marginLeft="10dp"
                 android:layout_toRightOf="@id/undo_last_wp_button"
-                android:background="@drawable/delete"
-                android:backgroundTint="@drawable/border"/>
+                android:background="@drawable/delete"/>
 
             <Button
                 android:id="@+id/drop_wp_button"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:layout_alignParentTop="true"
-                android:layout_toRightOf="@id/remove_all_wp_button"
                 android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/remove_all_wp_button"
                 android:background="@drawable/drop_wp"/>
 
             <Button
@@ -182,8 +177,7 @@
                 android:layout_height="40dp"
                 android:layout_alignParentLeft="true"
                 android:layout_below="@id/undo_last_wp_button"
-                android:background="@drawable/polyline"
-                />
+                android:background="@drawable/polyline"/>
 
             <Button
                 android:id="@+id/spiral_button"
@@ -192,8 +186,7 @@
                 android:layout_below="@id/undo_last_wp_button"
                 android:layout_marginLeft="10dp"
                 android:layout_toRightOf="@id/path_button"
-                android:background="@drawable/spiral"
-                android:backgroundTint="@drawable/border"/>
+                android:background="@drawable/spiral"/>
 
             <Button
                 android:id="@+id/lawnmower_button"
@@ -202,8 +195,8 @@
                 android:layout_below="@id/undo_last_wp_button"
                 android:layout_marginLeft="10dp"
                 android:layout_toRightOf="@id/spiral_button"
-                android:background="@drawable/lawnmower"
-                />
+                android:background="@drawable/lawnmower"/>
+
         </RelativeLayout>
 
         <RelativeLayout
