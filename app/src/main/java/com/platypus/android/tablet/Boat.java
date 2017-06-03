@@ -31,9 +31,9 @@ import javax.measure.unit.SI;
 
 public class Boat
 {
-		UdpVehicleServer server = null;
-		InetSocketAddress address;
-		String name;
+		private UdpVehicleServer server = null;
+		private String ipAddressString;
+		private String name;
 		private PoseListener pl;
 		private SensorListener sl;
 		private WaypointListener wl;
@@ -266,12 +266,21 @@ public class Boat
 		{
 				Log.i(logTag, String.format("connection to ip address %s", a.toString()));
 				server.setVehicleService(a);
-				address = a;
+		}
+
+		public void setIpAddressString(String addr)
+		{
+				ipAddressString = addr;
 		}
 
 		public InetSocketAddress getIpAddress()
 		{
 				return (InetSocketAddress) server.getVehicleService();
+		}
+
+		public String getIpAddressString()
+		{
+				return ipAddressString;
 		}
 
 		public UdpVehicleServer returnServer()

@@ -9,7 +9,7 @@
     <RelativeLayout
         android:id="@+id/relativeLayout_boat"
         android:layout_width="180dp"
-        android:layout_height="275dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:background="@drawable/border"
@@ -142,15 +142,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/relativeLayout_boat_buttons"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp">
 
             <TextView
                 android:id="@+id/selected_boat_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
-                android:layout_marginLeft="10dp"
                 android:layout_centerInParent="true"
+                android:layout_marginLeft="10dp"
                 android:text="Selected boat:"/>
 
             <Spinner

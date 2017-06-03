@@ -188,9 +188,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		public static double RUDDER_MIN = -1.0;
 		public static double RUDDER_MAX = 1.0;
 
-		public EditText ipAddress = null;
-		public EditText transect_distance;
-		public Button startWaypoints = null;
+		public EditText ipAddressInput = null;
 
 		public static String textIpAddress;
 		public static String boatPort = "11411";
@@ -436,6 +434,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																available_boats_spinner.getSelectedItem().toString()),
 												Toast.LENGTH_SHORT
 								).show();
+								Boat boat = currentBoat();
+								if (boat != null)
+								{
+										ipAddressBox.setText(boat.getIpAddressString());
+								}
 						}
 
 						@Override
@@ -504,8 +507,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										@Override
 										public void onMapLongClick(LatLng point)
 										{
-												waypoint_list.add(point);
-														/* ASDF */
+												waypoint_list.add(point); // ASDF
 										}
 								});
 								mIconFactory = IconFactory.getInstance(context);
@@ -629,7 +631,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														{
 																try
 																{
-																		//LoadWaypointsFromFile(waypointFileName);
+																		//LoadWaypointsFromFile(waypointFileName);  // TODO: reimplement this
 																}
 																catch (Exception e)
 																{
@@ -671,15 +673,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						}
 				});
 
-
-				// *****************//
-				//      Joystick   //
-				// ****************//
-
+				// Joystick
 				joystick.setYAxisInverted(false);
 				joystick.setOnJostickMovedListener(joystick_moved_listener);
 				joystick.setOnJostickClickedListener(null);
-
 
 				senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 				senAccelerometer = senSensorManager
@@ -691,43 +688,96 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				Drawable mhome = ContextCompat.getDrawable(this, R.drawable.home1);
 				Ihome = mIconFactory.fromDrawable(mhome);
 
-				/* ASDF
-				connectButton.setOnClickListener(new OnClickListener()
+				connect_button.setOnClickListener(new OnClickListener()
 				{
 						@Override
-						public void onClick(View view)
+						public void onClick(View v)
 						{
-								// ask the currentBoat server if it is connected
-								/*ASDF
-								if (currentBoat.isConnected())
-								{
-										new AlertDialog.Builder(context)
-														.setTitle("Connect")
-														.setMessage("You are already connected,\n do you want to reconnect?")
-														.setPositiveButton("Yes", new DialogInterface.OnClickListener()
-														{
-																public void onClick(DialogInterface dialog, int which)
-																{
-																		startNewBoat();
-																		Log.i(logTag, "Reconnect");
-																}
-														})
-														.setNegativeButton("No", new DialogInterface.OnClickListener()
-														{
-																public void onClick(DialogInterface dialog, int which) { }
-														})
-														.show();
-								}
-								else
-								{
-										connectBox();
-										Log.i(logTag, "Initial connection");
-								}
-								connectBox();
+								connectBox(); // ASDF
 						}
 				});
-				*/
 				connectBox(); // start the app with the connect dialog popped up
+
+				start_wp_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+
+						}
+				});
+
+				pause_wp_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+
+						}
+				});
+
+				stop_wp_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+
+						}
+				});
+
+				undo_last_wp_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+
+						}
+				});
+
+				remove_all_wp_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+
+						}
+				});
+
+				drop_wp_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+
+						}
+				});
+
+				normal_path_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+
+						}
+				});
+
+				spiral_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+
+						}
+				});
+
+				lawnmower_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+
+						}
+				});
 		}
 
 		@Override
@@ -943,12 +993,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				final Dialog dialog = new Dialog(context);
 				dialog.setContentView(R.layout.connectdialog);
 				dialog.setTitle("Connect To A Boat");
-				ipAddress = (EditText) dialog.findViewById(R.id.ipAddress1);
-
+				ipAddressInput = (EditText) dialog.findViewById(R.id.ip_address_input);
 				Button submitButton = (Button) dialog.findViewById(R.id.submit);
 
 				loadPreferences();
-				ipAddress.setText(textIpAddress);
+				ipAddressInput.setText(textIpAddress);
 
 				submitButton.setOnClickListener(new OnClickListener()
 				{
@@ -956,17 +1005,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						public void onClick(View v)
 						{
 
-								if (ipAddress.getText() == null || ipAddress.getText().equals("") || ipAddress.getText().length() == 0)
+								if (ipAddressInput.getText() == null || ipAddressInput.getText().equals("") || ipAddressInput.getText().length() == 0)
 								{
 										ipAddressBox.setText("localhost");
 								}
 								else
 								{
-										ipAddressBox.setText(ipAddress.getText());
+										ipAddressBox.setText(ipAddressInput.getText());
 								}
-								textIpAddress = ipAddress.getText().toString();
+								textIpAddress = ipAddressInput.getText().toString();
 								InetSocketAddress address;
-								if (ipAddress.getText() == null || ipAddress.getText().equals(""))
+								if (ipAddressInput.getText() == null || ipAddressInput.getText().equals(""))
 								{
 										address = CrwNetworkUtils.toInetSocketAddress("127.0.0.1:" + boatPort);
 								}
@@ -980,6 +1029,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								// TODO: let the user choose the boat name
 								startNewBoat(boat_name); // initialize the Boat
 								boats_map.get(boat_name).setAddress(address);
+								boats_map.get(boat_name).setIpAddressString(textIpAddress);
+								available_boats_spinner.setSelection(boat_count); // automatically watch the new boat
 								try
 								{
 										saveSession(); //save ip address
