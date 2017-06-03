@@ -390,7 +390,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		protected void onCreate(final Bundle savedInstanceState)
 		{
 				super.onCreate(savedInstanceState);
-				this.setContentView(R.layout.tabletlayoutswitch); // ASDF TODO: why does this fail?
+				this.setContentView(R.layout.tabletlayoutswitch);
 
 				linlay = (RelativeLayout) this.findViewById(R.id.linlay);
 				ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
@@ -478,7 +478,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				mv.getMapAsync(new OnMapReadyCallback()
 				{
 						@Override
-						public void onMapReady(@NonNull MapboxMap mapboxMap)
+						public void onMapReady(@NonNull final MapboxMap mapboxMap)
 						{
 								Log.i(logTag, "mapboxmap ready");
 								mMapboxMap = mapboxMap;
@@ -508,6 +508,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										public void onMapLongClick(LatLng point)
 										{
 												waypoint_list.add(point); // ASDF
+												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(Integer.toString(marker_list.size()))));
 										}
 								});
 								mIconFactory = IconFactory.getInstance(context);
@@ -730,7 +731,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
-
+								if (marker_list.size() > 0)
+								{
+										Log.e(logTag, "Removing last wp");
+										mMapboxMap.removeAnnotation(marker_list.get(marker_list.size()-1));
+										waypoint_list.remove(waypoint_list.size() - 1);
+										marker_list.remove(marker_list.size() - 1);
+								}
+								else
+								{
+										Log.e(logTag, "No waypoints to remove");
+								}
 						}
 				});
 
