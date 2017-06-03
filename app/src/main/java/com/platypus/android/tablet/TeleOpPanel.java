@@ -1,12 +1,7 @@
 package com.platypus.android.tablet;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -14,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
@@ -64,14 +58,12 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 
 import com.mapbox.mapboxsdk.offline.OfflineRegionError;
 import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
 import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
-import com.mapbox.services.commons.utils.PolylineUtils;
 import com.mapzen.android.lost.api.LocationServices;
 
 import com.platypus.android.tablet.Path.AreaType;
@@ -96,15 +88,13 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
+
 import com.platypus.crw.data.Utm;
 import com.platypus.crw.data.UtmPose;
 
@@ -252,7 +242,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				});
 
 				// Path
-				path_map.put(boat_name, null);
+				path_map.put(boat_name, new Path());
+				waypath_outline_map.put(boat_name, new ArrayList<Polyline>());
+				waypath_top_map.put(boat_name, new ArrayList<Polyline>());
 
 				// waypoint indices
 				current_wp_index_map.put(boat_name, -1);
@@ -363,10 +355,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 				public void run()
 				{
+						/*ASDF*/
 						String waypointState = boat.getWaypointState();
-						/* TODO: only update waypoint info if the current boat is selected by a pulldown
-						waypointInfo.setText(waypointState);
-						*/
+						Object result = available_boats_spinner.getSelectedItem();
+						String current_boat_name = result.toString();
+						if (name.equals(current_boat_name))
+						{
+								waypointInfo.setText(waypointState);
+						}
 				}
 		}
 
@@ -407,6 +403,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				battery = (TextView) this.findViewById(R.id.batteryVoltage);
 				joystick = (JoystickView) findViewById(R.id.joystickView);
 				transect_distance_input = (EditText) this.findViewById(R.id.transect_distance_input);
+				waypointInfo = (TextView) this.findViewById(R.id.waypoint_status);
 
 				advanced_options_button = (Button) this.findViewById(R.id.advopt);
 				center_view_button = (Button) this.findViewById(R.id.centermap);
@@ -513,7 +510,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										{
 												waypoint_list.add(point); // ASDF
 												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(Integer.toString(marker_list.size()))));
-												Log.e(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
+												Log.d(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
 										}
 								});
 								mIconFactory = IconFactory.getInstance(context);
@@ -755,7 +752,52 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								Log.i(logTag, "startWaypoints() called...");
+								Boat boat = currentBoat();
+								if (boat == null)
+								{
+										Toast.makeText(context, "Connect to a boat first", Toast.LENGTH_SHORT).show();
+										Log.w(logTag, "TeleOpPanel.startWaypoints(): currentBoat is null");
+										return;
+								}
+								String boat_name = boat.getName();
+								// if there are no waypoints, the user has to create waypoints, then a path
+								if (waypoint_list.size() < 1)
+								{
+										Toast.makeText(context, "Create waypoints and a path first", Toast.LENGTH_SHORT).show();
+										return;
+								}
+								// if there is exactly one waypoint, create a "path" for the user
+								if (waypoint_list.size() == 1)
+								{
+										unowned_path = new Path((ArrayList<LatLng>) waypoint_list.clone());
+								}
+								// if there are no points in unowned_path, the user has to create a path
+								if (unowned_path.getPoints().size() < 1)
+								{
+										Toast.makeText(context, "Create a path first", Toast.LENGTH_SHORT).show();
+										return;
+								}
 
+								//Convert all LatLng to UTM
+								ArrayList<LatLng> points = (ArrayList<LatLng>)unowned_path.getPoints().clone();
+								path_map.put(boat_name, new Path(points));
+								UtmPose tempUtm = convertLatLngUtm(points.get(points.size() - 1));
+								//waypointStatus = tempUtm.toString();
+								UtmPose[] wpPose = new UtmPose[points.size()];
+								for (int i = 0; i < points.size(); i++)
+								{
+										wpPose[i] = convertLatLngUtm(points.get(i));
+								}
+								boat.startWaypoints(wpPose, "POINT_AND_SHOOT", new ToastFailureCallback("Start Waypoints Msg Timed Out"));
+								current_wp_index_map.put(boat_name, 0);
+
+								// draw the boat's lines, independent from the ones used to generate paths
+								remove_waypaths(boat_name);
+								add_waypaths(boat_name);
+
+								// Here is where you'd clear the waypoints_list, marker_list, and clear the unowned path
+								// But you might want to give the exact same path to another boat, so I'll leave it to the user to clear
 						}
 				});
 
@@ -849,7 +891,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								// calculate the path length and show it in the text
 								unowned_path.clearPoints();
 								remove_waypaths("");
-								Log.e(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));								remove_waypaths("");
+								Log.d(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));								remove_waypaths("");
 								if (waypoint_list.size() > 0)
 								{
 										unowned_path = new Path((ArrayList<LatLng>)waypoint_list.clone());
@@ -1670,26 +1712,34 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						ArrayList<Polyline> top;
 						if (!boat_name.isEmpty())
 						{
+								Log.d(logTag, String.format("remove_waypaths() for %s", boat_name));
 								outline = waypath_outline_map.get(boat_name);
 								top = waypath_top_map.get(boat_name);
 						}
 						else
 						{
+								Log.d(logTag, "remove_waypaths() for unowned path");
 								outline = outline_list;
 								top = topline_list;
 						}
 
-						for (Polyline p : outline)
+						if (outline != null && outline.size() > 0)
 						{
-								mMapboxMap.removeAnnotation(p);
-								p.remove();
+								Log.d(logTag, String.format("outline.size() = %d", outline.size()));
+								for (Polyline p : outline)
+								{
+										mMapboxMap.removeAnnotation(p);
+										p.remove();
+								}
 						}
-
-						for (Polyline p : top)
+						if (top != null && top.size() > 0)
 						{
-								mMapboxMap.removeAnnotation(p);
-								p.remove();
-						}						
+								for (Polyline p : top)
+								{
+										mMapboxMap.removeAnnotation(p);
+										p.remove();
+								}
+						}
 				}
 				/*ASDF
 				if (boat_to_waypoint_line != null)
@@ -1711,6 +1761,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						int wp_index;
 						if (!boat_name.isEmpty())
 						{
+								Log.d(logTag, String.format("add_waypaths() for %s", boat_name));
 								outline = waypath_outline_map.get(boat_name);
 								top = waypath_top_map.get(boat_name);
 								path = path_map.get(boat_name);
@@ -1718,6 +1769,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						}
 						else
 						{
+								Log.d(logTag, "add_waypaths() for unowned path");
 								outline = outline_list;
 								top = topline_list;
 								path = unowned_path;
