@@ -4,9 +4,6 @@
     android:layout_width="fill_parent">
 
     <item
-        android:id="@+id/one"
-        android:title="Save Map"/>
-    <item
         android:id="@+id/sat"
         android:title="Satellite Map" />
     <item
