@@ -32,9 +32,8 @@
             android:layout_gravity="center"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
-            android:background="@color/cyan"
             android:gravity="center_horizontal|center_vertical"
-            android:textColor="@color/green"/>
+            android:textColor="@color/black"/>
 
         <RelativeLayout
             android:id="@+id/relativeLayout_waypoint_status"
@@ -175,7 +174,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@id/selected_boat_label"
-                android:background="@color/background_holo_light">
+                android:background="@color/background_holo_light"
+                >
             </Spinner>
 
 

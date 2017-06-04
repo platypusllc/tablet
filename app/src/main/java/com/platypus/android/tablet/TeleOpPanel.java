@@ -43,7 +43,11 @@ import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.media.Ringtone;
@@ -55,9 +59,11 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -84,8 +90,10 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -148,7 +156,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		private boolean speed_spinner_erroneous_call = true;
 		Spinner speed_spinner = null;
 		Spinner available_boats_spinner = null;
-		ArrayAdapter<String> available_boats_spinner_adapter = null;
+		ColorfulSpinnerAdapter available_boats_spinner_adapter = null;
 
 		Handler uiHandler = new Handler(Looper.getMainLooper()); // anything post to this is run on the main GUI thread
 
@@ -209,6 +217,73 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		Ringtone alarm_ringtone;
 		Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
 
+		int boat_color_count = 0;
+		int get_boat_color(int i)
+		{
+				int iColor = ContextCompat.getColor(context, R.color.white);
+				switch (i)
+				{
+						case 0:
+								iColor = ContextCompat.getColor(context, R.color.white);
+								break;
+						case 1:
+								iColor = ContextCompat.getColor(context, R.color.magenta);
+								break;
+						case 2:
+								iColor = ContextCompat.getColor(context, R.color.orange);
+								break;
+						case 3:
+								iColor = ContextCompat.getColor(context, R.color.red);
+								break;
+						case 4:
+								iColor = ContextCompat.getColor(context, R.color.cyan);
+								break;
+						case 5:
+								iColor = ContextCompat.getColor(context, R.color.green);
+								break;
+						case 6:
+								iColor = ContextCompat.getColor(context, R.color.purple);
+								break;
+						default:
+								break;
+				}
+				return iColor;
+		}
+		int next_boat_color()
+		{
+				int iColor = get_boat_color(boat_color_count);
+				if (boat_color_count == 6)
+				{
+						boat_color_count = 0;
+				}
+				else
+				{
+						boat_color_count++;
+				}
+				return iColor;
+		}
+
+		class ColorfulSpinnerAdapter extends ArrayAdapter<String>
+		{
+				public ColorfulSpinnerAdapter(@NonNull Context context, @LayoutRes int resource)
+				{
+						super(context, resource);
+				}
+				@Override
+				public View getDropDownView(int position, View convertView, ViewGroup parent)
+				{
+						View view = super.getDropDownView(position, convertView, parent);
+						applyColor(view, position);
+						return view;
+				}
+
+				private void applyColor(View view, int position)
+				{
+						view.setBackgroundColor(get_boat_color(position));
+				}
+				// TODO: don't rely on a hardcoded color circuit
+		}
+
 		void startNewBoat(final String boat_name) /*ASDF*/
 		{
 				// look at boat_map, first make sure boat_name isn't already used
@@ -217,11 +292,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				available_boats_spinner_adapter.add(boat_name);
 				available_boats_spinner_adapter.notifyDataSetChanged();
 
-				// marker view
+				// marker view - automatically generate colored arrow
+				Drawable arrow = getResources().getDrawable(R.drawable.arrow_white, null);
+				PorterDuff.Mode mMode = PorterDuff.Mode.MULTIPLY;
+				int color = next_boat_color();
+				arrow.setColorFilter(color, mMode);
+				newBoat.setColor(color);
+
 				boat_markers_map.put(boat_name, new MarkerViewOptions()
 								.position(pHollowStartingPoint)
 								.title(boat_name)
-								.icon(mIconFactory.fromResource(R.drawable.arrow_magenta)).rotation(0));
+								.icon(mIconFactory.fromDrawable(arrow)).rotation(0));
+
 				boat_markers_map.get(boat_name).getMarker().setAnchor(0.5f, 0.5f);
 
 				// try to add the marker until mMapboxMap exists and it is added
@@ -423,7 +505,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				set_speed_spinner_from_pref();
 
 				available_boats_spinner = (Spinner) this.findViewById(R.id.boat_name_spinner);
-				available_boats_spinner_adapter = new ArrayAdapter<>(this, R.layout.boat_name);
+				//available_boats_spinner_adapter = new ArrayAdapter<>(this, R.layout.boat_name);
+				available_boats_spinner_adapter = new ColorfulSpinnerAdapter(this, R.layout.boat_name);
 				available_boats_spinner_adapter.setDropDownViewResource(R.layout.boat_name);
 				available_boats_spinner.setAdapter(available_boats_spinner_adapter);
 				available_boats_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
@@ -1103,20 +1186,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		};
 		private JoystickMovedListener joystick_moved_listener = new JoystickMovedListener()
 		{
+				Boat boat;
 				@Override
 				public void OnMoved(int x, int y)
 				{
 						Log.d(logTag, String.format("joystick (x, y) = %d, %d", x, y));
-						/*ASDF
-						if (currentBoat != null)
+						boat = currentBoat();
+						if (boat != null)
 						{
-								currentBoat.updateControlSignals(
+								boat.updateControlSignals(
 												fromProgressToRange(y, THRUST_MIN, THRUST_MAX),
 												fromProgressToRange(x, RUDDER_MIN, RUDDER_MAX),
 												joystickTimeoutCallback
 								);
 						}
-						*/
+						/*ASDF*/
 				}
 
 				@Override
@@ -1125,12 +1209,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				@Override
 				public void OnReturnedToCenter()
 				{
-						/*ASDF
-						if (currentBoat != null)
+						boat = currentBoat();
+						if (boat != null)
 						{
-								currentBoat.updateControlSignals(0.0, 0.0, joystickTimeoutCallback);
+								boat.updateControlSignals(0.0, 0.0, joystickTimeoutCallback);
 						}
-						*/
+						/*ASDF*/
 				}
 		};
 
@@ -1203,6 +1287,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		public void connectBox()
 		{
+				// TODO: check if the IP address is already being used. If so, prompt to reconnect or just switch to the existing boat
 				final Dialog dialog = new Dialog(context);
 				dialog.setContentView(R.layout.connectdialog);
 				dialog.setTitle("Connect To A Boat");
@@ -1737,6 +1822,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 						ArrayList<Polyline> outline;
 						ArrayList<Polyline> top;
+						int color;
 						Path path;
 						int wp_index;
 						if (!boat_name.isEmpty())
@@ -1746,6 +1832,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								top = waypath_top_map.get(boat_name);
 								path = path_map.get(boat_name);
 								wp_index = current_wp_index_map.get(boat_name);
+								color = boats_map.get(boat_name).getColor();
 						}
 						else
 						{
@@ -1754,6 +1841,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								top = topline_list;
 								path = unowned_path;
 								wp_index = -1;
+								color = Color.WHITE;
 						}
 
 						ArrayList<ArrayList<LatLng>> point_pairs;
@@ -1769,13 +1857,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								// ...
 								if (wp_index > i + 1)
 								{
-										top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.GRAY).width(5)));
-										Log.d(logTag, String.format("line i = %d, current_waypoint = %d, color = GRAY", i, wp_index));
+										top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.GRAY).width(4)));
+										Log.d(logTag, String.format("line i = %d, current_waypoint = %d, GRAY", i, wp_index));
 								}
 								else
 								{
-										top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.WHITE).width(5)));
-										Log.d(logTag, String.format("line i = %d, current_waypoint = %d, color = WHITE", i, wp_index));
+										top.add(mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(color).width(4)));
+										Log.d(logTag, String.format("line i = %d, current_waypoint = %d, COLORED", i, wp_index));
 								}
 						}
 				}
