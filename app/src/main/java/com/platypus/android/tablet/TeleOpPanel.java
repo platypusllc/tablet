@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -163,6 +164,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   Button clearRegion = null;
   Button updateTransect = null;
 
+  Button sampler_1 = null;
+  Button sampler_2 = null;
+  Button sampler_3 = null;
+  Button sampler_4 = null;
+  Button sampler_reset = null;
+
+
   TextView sensorData1 = null;
   TextView sensorData2 = null;
   TextView sensorData3 = null;
@@ -303,6 +311,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   String sensorLogTag = "Sensor";
   String waypointLogTag = "Sensor";
 
+  /* If sampler state is true it can be used */
+  boolean samplerStates[] = {true,true,true,true};
+
   protected void onCreate(final Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.setContentView(R.layout.tabletlayoutswitch);
@@ -323,6 +334,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     sensorvalueButton = (ToggleButton) this.findViewById(R.id.SensorStart);
     sensorvalueButton.setClickable(sensorReady);
     sensorvalueButton.setTextColor(Color.GRAY);
+
+    sampler_1 = (Button) this.findViewById(R.id.sampler_1);
+    sampler_2 = (Button) this.findViewById(R.id.sampler_2);
+    sampler_3 = (Button) this.findViewById(R.id.sampler_3);
+    sampler_4 = (Button) this.findViewById(R.id.sampler_4);
+    sampler_reset= (Button) this.findViewById(R.id.sampler_reset);
+
     battery = (TextView) this.findViewById(R.id.batteryVoltage);
     joystick = (JoystickView) findViewById(R.id.joystickView);
     Title = (TextView) this.findViewById(R.id.controlScreenEnter);
@@ -411,6 +429,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     }
     mlogger = new TabletLogger();
 
+    initializeGrabSampler();
 
     centerToBoat.setOnClickListener(new OnClickListener() {
         @Override
@@ -2891,4 +2910,170 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
         editor.commit();
         editor.apply();
     }
+
+  public void initializeGrabSampler()
+  {
+    final int axis = 7; //gs axis
+    sampler_1.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Thread thread = new Thread()
+        {
+          @Override
+          public void run()
+          {
+            if (samplerStates[0] == true)
+            {
+              double args[] = {1};
+              currentBoat.returnServer().setGains(axis, args, new FunctionObserver<Void>() {
+                @Override
+                public void completed(Void aVoid) {
+                  Log.i(logTag, "Setting GrabSampler 1 completed.");
+                }
+
+                @Override
+                public void failed(FunctionError functionError) {
+                  Log.i(logTag, "Setting GrabSampler 1 failed.");
+                }
+              });
+            }
+            else
+            {
+              Toast.makeText(getApplicationContext(), "Sample needs to be emptied and reset", Toast.LENGTH_LONG).show();
+            }
+          }
+        };
+        thread.start();
+      }
+    });
+
+    sampler_2.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Thread thread = new Thread()
+        {
+          @Override
+          public void run()
+          {
+            if (samplerStates[1] == true)
+            {
+              double args[] = {2};
+              currentBoat.returnServer().setGains(axis, args, new FunctionObserver<Void>() {
+                @Override
+                public void completed(Void aVoid) {
+                  Log.i(logTag, "Setting GrabSampler 2 completed.");
+                }
+
+                @Override
+                public void failed(FunctionError functionError) {
+                  Log.i(logTag, "Setting GrabSampler 2 failed.");
+                }
+              });
+            }
+            else
+            {
+              Toast.makeText(getApplicationContext(), "Sample needs to be emptied and reset", Toast.LENGTH_LONG).show();
+            }
+          }
+        };
+        thread.start();
+      }
+    });
+
+    sampler_3.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Thread thread = new Thread()
+        {
+          @Override
+          public void run()
+          {
+            if (samplerStates[2] == true)
+            {
+              double args[] = {3};
+              currentBoat.returnServer().setGains(axis, args, new FunctionObserver<Void>() {
+                @Override
+                public void completed(Void aVoid) {
+                  Log.i(logTag, "Setting GrabSampler 3 completed.");
+                }
+
+                @Override
+                public void failed(FunctionError functionError) {
+                  Log.i(logTag, "Setting GrabSampler 3 failed.");
+                }
+              });
+            }
+            else
+            {
+              Toast.makeText(getApplicationContext(), "Sample needs to be emptied and reset", Toast.LENGTH_LONG).show();
+            }
+          }
+        };
+        thread.start();
+      }
+    });
+
+    sampler_4.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Thread thread = new Thread()
+        {
+          @Override
+          public void run()
+          {
+            if (samplerStates[3] == true)
+            {
+              double args[] = {4};
+              currentBoat.returnServer().setGains(axis, args, new FunctionObserver<Void>() {
+                @Override
+                public void completed(Void aVoid) {
+                  Log.i(logTag, "Setting GrabSampler 4 completed.");
+                }
+
+                @Override
+                public void failed(FunctionError functionError) {
+                  Log.i(logTag, "Setting GrabSampler 4 failed.");
+                }
+              });
+            }
+            else
+            {
+              Toast.makeText(getApplicationContext(), "Sample needs to be emptied and reset", Toast.LENGTH_LONG).show();
+            }
+          }
+        };
+        thread.start();
+      }
+    });
+
+    sampler_reset.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Thread thread = new Thread()
+        {
+          @Override
+          public void run()
+          {
+            double args[] = {-1};
+              currentBoat.returnServer().setGains(axis, args, new FunctionObserver<Void>() {
+                @Override
+                public void completed(Void aVoid) {
+                  Log.i(logTag, "Reset Grab Sampler");
+                  samplerStates[0] = true;
+                  samplerStates[1] = true;
+                  samplerStates[2] = true;
+                  samplerStates[3] = true;
+                }
+
+                @Override
+                public void failed(FunctionError functionError) {
+                  Log.i(logTag, "Failed to reset grab sampler.");
+                }
+              });
+            }
+        };
+        thread.start();
+      }
+    });
+  }
 }
