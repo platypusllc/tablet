@@ -60,7 +60,8 @@ public class Boat
 		private Object sensor_lock = new Object();
 		private String waypointState;
 		private Object waypoint_state_lock = new Object();
-		int color;
+		int boat_color;
+		int line_color;
 
 		private Runnable isConnectedPoll = new Runnable()
 		{
@@ -263,8 +264,10 @@ public class Boat
 				}
 		}
 
-		public void setColor(int _color) { color = _color; }
-		public int getColor() { return color; }
+		public void setBoatColor(int _color) { boat_color = _color; }
+		public int getBoatColor() { return boat_color; }
+		public void setLineColor(int _color) { line_color = _color; }
+		public int getLineColor() { return line_color; }
 
 		public void setAddress(InetSocketAddress a)
 		{

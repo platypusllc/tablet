@@ -208,50 +208,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
 
 		int boat_color_count = 0;
-		int get_boat_color(int i)
-		{
-				int iColor = ContextCompat.getColor(context, R.color.white);
-				switch (i)
-				{
-						case 0:
-								iColor = ContextCompat.getColor(context, R.color.white);
-								break;
-						case 1:
-								iColor = ContextCompat.getColor(context, R.color.magenta);
-								break;
-						case 2:
-								iColor = ContextCompat.getColor(context, R.color.orange);
-								break;
-						case 3:
-								iColor = ContextCompat.getColor(context, R.color.red);
-								break;
-						case 4:
-								iColor = ContextCompat.getColor(context, R.color.cyan);
-								break;
-						case 5:
-								iColor = ContextCompat.getColor(context, R.color.green);
-								break;
-						case 6:
-								iColor = ContextCompat.getColor(context, R.color.purple);
-								break;
-						default:
-								break;
-				}
-				return iColor;
-		}
-		int next_boat_color()
-		{
-				int iColor = get_boat_color(boat_color_count);
-				if (boat_color_count == 6)
-				{
-						boat_color_count = 0;
-				}
-				else
-				{
-						boat_color_count++;
-				}
-				return iColor;
-		}
+		Map<Integer, Map<String, Integer>> color_map = new HashMap<>();
 
 		class ColorfulSpinnerAdapter extends ArrayAdapter<String>
 		{
@@ -269,7 +226,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 				private void applyColor(View view, int position)
 				{
-						view.setBackgroundColor(get_boat_color(position));
+						while (position > 5) // need to be within the limited set of 6 colors
+						{
+								position -= 6;
+						}
+						view.setBackgroundColor(color_map.get(position).get("boat"));
 				}
 				// TODO: don't rely on a hardcoded color circuit
 		}
@@ -284,9 +245,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				// marker view - automatically generate colored arrow
 				Drawable arrow = getResources().getDrawable(R.drawable.arrow_white, null);
 				PorterDuff.Mode mMode = PorterDuff.Mode.MULTIPLY;
-				int color = next_boat_color();
-				arrow.setColorFilter(color, mMode);
-				newBoat.setColor(color);
+				int boat_color = color_map.get(boat_color_count).get("boat");
+				int line_color = color_map.get(boat_color_count).get("line");
+				arrow.setColorFilter(boat_color, mMode);
+				newBoat.setBoatColor(boat_color);
+				newBoat.setLineColor(line_color);
+				boat_color_count++; // use the next set of colors
+				if (boat_color_count > 5) boat_color_count = 0; // have a finite set of defined colors
 
 				boat_markers_map.put(boat_name, new MarkerViewOptions()
 								.position(pHollowStartingPoint)
@@ -333,14 +298,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				Boat boat;
 				String name;
 				MarkerView marker_view;
-				Path path;
 				long last_redraw = 0;
 				public BoatMarkerUpdateRunnable(Boat _boat)
 				{
 						boat = _boat;
 						name = boat.getName();
 						marker_view = boat_markers_map.get(name).getMarker();
-						path = path_map.get(name);
 				}
 				public void run()
 				{
@@ -349,27 +312,30 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						float degree = (float) (boat.getYaw() * 180 / Math.PI);  // degree is -90 to 270
 						degree = (degree < 0 ? 360 + degree : degree); // degree is 0 to 360
 						marker_view.setVisible(true);
-						Log.d(logTag, "BoatMarkerUpdateRunnable: \n" +
-										String.format("%s, yaw = %f, isVisible = %s", name, degree, Boolean.toString(marker_view.isVisible())));
+						//Log.d(logTag, "BoatMarkerUpdateRunnable: \n" +
+						//				String.format("%s, yaw = %f, isVisible = %s", name, degree, Boolean.toString(marker_view.isVisible())));
 						marker_view.setRotation(degree);
 
 						// boat to current waypoint line
-						/* TODO: multiboat update for the boat-to-wp lines
-						if (System.currentTimeMillis() - last_redraw < 200) return; // don't update the line too often
-						if (boat_to_waypoint_line != null)
+						//Log.d(logTag, String.format("boat-to-wp last redraw is %d ms ago", System.currentTimeMillis() - last_redraw));
+						if (System.currentTimeMillis() - last_redraw < 500) return; // don't update the line too often
+						Polyline line = boat_to_wp_line_map.get(name);
+						Path path = path_map.get(name);
+						if (line != null)
 						{
-								mMapboxMap.removeAnnotation(boat_to_waypoint_line);
-								boat_to_waypoint_line.remove();
+								mMapboxMap.removeAnnotation(line);
+								line.remove();
 						}
 						if (path == null) return;
 						ArrayList<ArrayList<LatLng>> point_pairs = path.getPointPairs();
-						if (current_waypoint_index < 0 || point_pairs.size() < 1) return;
+						//Log.d(logTag, String.format("current index = %d,  point_pairs.size() = %d", current_wp_index_map.get(name), point_pairs.size()));
+						if (current_wp_index_map.get(name) < 0 || point_pairs.size() < 1) return;
+						//Log.d(logTag, String.format("redrawing boat-to-wp line for %s", name));
 						ArrayList<LatLng> pair = new ArrayList<>();
 						pair.add(boat.getLocation());
-						pair.add(point_pairs.get(current_waypoint_index).get(0));
-						boat_to_waypoint_line = mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(Color.MAGENTA).width(1));
+						pair.add(point_pairs.get(current_wp_index_map.get(name)).get(0));
+						boat_to_wp_line_map.put(name, mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(boat.getBoatColor()).width(1)));
 						last_redraw = System.currentTimeMillis();
-						*/
 				}
 		}
 		class SensorDataReceivedRunnable implements Runnable
@@ -464,6 +430,26 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		{
 				super.onCreate(savedInstanceState);
 				this.setContentView(R.layout.tabletlayoutswitch);
+
+				// establish color_map
+				color_map.put(0, new HashMap<String, Integer>());
+				color_map.put(1, new HashMap<String, Integer>());
+				color_map.put(2, new HashMap<String, Integer>());
+				color_map.put(3, new HashMap<String, Integer>());
+				color_map.put(4, new HashMap<String, Integer>());
+				color_map.put(5, new HashMap<String, Integer>());
+				color_map.get(0).put("boat", ContextCompat.getColor(context, R.color.magenta_light));
+				color_map.get(0).put("line", ContextCompat.getColor(context, R.color.magenta_dark));
+				color_map.get(1).put("boat", ContextCompat.getColor(context, R.color.cyan_light));
+				color_map.get(1).put("line", ContextCompat.getColor(context, R.color.cyan_dark));
+				color_map.get(2).put("boat", ContextCompat.getColor(context, R.color.orange_light));
+				color_map.get(2).put("line", ContextCompat.getColor(context, R.color.orange_dark));
+				color_map.get(3).put("boat", ContextCompat.getColor(context, R.color.green_light));
+				color_map.get(3).put("line", ContextCompat.getColor(context, R.color.green_dark));
+				color_map.get(4).put("boat", ContextCompat.getColor(context, R.color.red_light));
+				color_map.get(4).put("line", ContextCompat.getColor(context, R.color.red_dark));
+				color_map.get(5).put("boat", ContextCompat.getColor(context, R.color.yellow_light));
+				color_map.get(5).put("line", ContextCompat.getColor(context, R.color.yellow_dark));
 
 				linlay = (RelativeLayout) this.findViewById(R.id.linlay);
 				ipAddressBox = (TextView) this.findViewById(R.id.printIpAddress);
@@ -993,7 +979,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								// calculate the path length and show it in the text
 								unowned_path.clearPoints();
 								remove_waypaths("");
-								Log.d(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));								remove_waypaths("");
+								Log.d(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
+								remove_waypaths("");
 								if (waypoint_list.size() > 0)
 								{
 										unowned_path = new Path((ArrayList<LatLng>)waypoint_list.clone());
@@ -1611,7 +1598,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 		}
 
-
 		private void remove_waypaths(String boat_name)
 		{
 				synchronized (_wpGraphicsLock)
@@ -1649,13 +1635,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 						}
 				}
-				/* TODO: add boat to waypoint lines
-				if (boat_to_waypoint_line != null)
-				{
-						mMapboxMap.removeAnnotation(boat_to_waypoint_line);
-						boat_to_waypoint_line.remove();
-				}
-				*/
 		}
 
 		private void add_waypaths(String boat_name)
@@ -1675,7 +1654,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								top = waypath_top_map.get(boat_name);
 								path = path_map.get(boat_name);
 								wp_index = current_wp_index_map.get(boat_name);
-								color = boats_map.get(boat_name).getColor();
+								color = boats_map.get(boat_name).getLineColor();
 						}
 						else
 						{
@@ -2117,7 +2096,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						return;
 				}
 				Boat boat = currentBoat();
-				if (boat != null) points.add(0, boat.getLocation());
+				if (boat != null && boat.getLocation() != null) points.add(0, boat.getLocation());
 				double total_distance = 0;
 				for (int i = 1; i < points.size(); i++)
 				{
