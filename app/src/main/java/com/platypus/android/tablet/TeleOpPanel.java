@@ -21,8 +21,6 @@ import javax.measure.unit.SI;
 import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
-import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.MarkerView;
@@ -38,21 +36,15 @@ import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
-import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
-import com.mapbox.mapboxsdk.offline.OfflineManager;
-import com.mapbox.mapboxsdk.offline.OfflineRegion;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.ColorMatrixColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -69,13 +61,9 @@ import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.mapbox.mapboxsdk.offline.OfflineRegionError;
-import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
-import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
 import com.mapzen.android.lost.api.LocationServices;
 
 import com.platypus.android.tablet.Path.AreaType;
@@ -99,7 +87,6 @@ import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -1197,7 +1184,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				@Override
 				public void OnMoved(int x, int y)
 				{
-						// Log.d(logTag, String.format("joystick (x, y) = %d, %d", x, y));
+						Log.d(logTag, String.format("joystick (x, y) = %d, %d", x, y));
 						boat = currentBoat();
 						if (boat != null)
 						{
