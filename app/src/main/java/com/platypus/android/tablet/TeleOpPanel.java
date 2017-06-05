@@ -155,7 +155,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		TextView sensorType2 = null;
 		TextView sensorType3 = null;
 
-		TextView battery = null;
+		TextView battery_value = null;
 		TextView waypointInfo = null;
 		TextView path_length_value = null;
 
@@ -401,31 +401,36 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						lastReceived = boat.getLastSensorDataReceived();
 						String label = unit(lastReceived.type);
 						String data = Arrays.toString(lastReceived.data);
-						/* TODO: only update the text fields if the current boat is selected by a pulldown
-						switch (lastReceived.channel)
+
+						// is the boat with this listener the selected boat?
+						String selected_boat_name = available_boats_spinner.getSelectedItem().toString();
+						if (name.equals(selected_boat_name))
 						{
-								case 1:
-										sensorType1.setText(label);
-										sensorData1.setText(data);
-										break;
-								case 2:
-										sensorType2.setText(label);
-										sensorData2.setText(data);
-										break;
-								case 3:
-										sensorType3.setText(label);
-										sensorData3.setText(data);
-										break;
-								case 4:
-										String[] data_split = data.split(",");
-										battery.setText(data_split[0].substring(1) + " V");
-										synchronized (_batteryVoltageLock)
-										{
-												battery_voltage = Double.parseDouble(data_split[0].substring(1));
-										}
-										break;
+								// TODO: only update the text fields if the current boat is selected
+								switch (lastReceived.channel)
+								{
+										case 1:
+												sensorType1.setText(label);
+												sensorData1.setText(data);
+												break;
+										case 2:
+												sensorType2.setText(label);
+												sensorData2.setText(data);
+												break;
+										case 3:
+												sensorType3.setText(label);
+												sensorData3.setText(data);
+												break;
+										case 4:
+												String[] data_split = data.split(",");
+												battery_value.setText(data_split[0].substring(1) + " V");
+												synchronized (_batteryVoltageLock)
+												{
+														battery_voltage = Double.parseDouble(data_split[0].substring(1));
+												}
+												break;
+								}
 						}
-						*/
 				}
 		}
 
@@ -485,7 +490,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				sensorType1 = (TextView) this.findViewById(R.id.sensortype1);
 				sensorType2 = (TextView) this.findViewById(R.id.sensortype2);
 				sensorType3 = (TextView) this.findViewById(R.id.sensortype3);
-				battery = (TextView) this.findViewById(R.id.batteryVoltage);
+				battery_value = (TextView) this.findViewById(R.id.batteryVoltage);
 				joystick = (JoystickView) findViewById(R.id.joystickView);
 				transect_distance_input = (EditText) this.findViewById(R.id.transect_distance_input);
 				waypointInfo = (TextView) this.findViewById(R.id.waypoint_status);
@@ -526,6 +531,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								if (boat != null)
 								{
 										ipAddressBox.setText(boat.getIpAddressString());
+										// reset the other status elements, let the listeners update them
+										sensorType1.setText("");
+										sensorData1.setText("");
+										sensorType2.setText("");
+										sensorData2.setText("");
+										sensorType3.setText("");
+										sensorData3.setText("");
+										waypointInfo.setText("");
+										battery_value.setText("");
 								}
 						}
 
@@ -548,6 +562,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				sensorData1.setText("");
 				sensorData2.setText("");
 				sensorData3.setText("");
+				battery_value.setText("");
 
 				//Create folder for the first time if it does not exist
 				final File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
@@ -1349,8 +1364,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		public void SaveWaypointsToFile() throws IOException
 		{
 				// ASDF TODO: add this back in
+				Toast.makeText(context, "Save Waypoints is under construction", Toast.LENGTH_SHORT).show();
 		}
-
 
 		public void setHome()
 		{

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:mapbox="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/linlay"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/linlay"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -347,22 +348,24 @@
                 android:text="Advanced Options"
                 />
 
-            <com.platypus.android.tablet.Joystick.JoystickView
-                android:id="@+id/joystickView"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentRight="true"
-                />
+        <com.platypus.android.tablet.Joystick.JoystickView
+            android:id="@+id/joystickView"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            />
 
         <RelativeLayout
             android:id="@+id/relativeLayout_sensors"
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
+            android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
+            android:layout_marginLeft="150dp"
+            android:layout_marginRight="100dp"
             android:layout_toLeftOf="@id/joystickView"
-            android:background="@drawable/border"
+            android:background="?android:attr/windowBackground"
             >
 
             <TextView
@@ -371,6 +374,7 @@
 
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="10dp"
                 android:text="Sensor Data"
@@ -384,6 +388,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignTop="@+id/sensorDataLabel"
+                android:layout_centerInParent="true"
                 android:layout_marginLeft="30dp"
                 android:layout_marginRight="15dp"
                 android:layout_toEndOf="@+id/sensorDataLabel"
@@ -396,6 +401,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignBottom="@+id/sensortype1"
+                android:layout_centerInParent="true"
                 android:layout_marginRight="15dp"
                 android:layout_toEndOf="@+id/sensortype1"
                 android:text="0.0"/>
@@ -406,6 +412,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignBottom="@+id/SValue1"
+                android:layout_centerInParent="true"
                 android:layout_marginRight="15dp"
                 android:layout_toEndOf="@+id/SValue1"
                 android:text="Null"
@@ -417,7 +424,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignTop="@+id/sensortype2"
-
+                android:layout_centerInParent="true"
                 android:layout_marginRight="15dp"
                 android:layout_toEndOf="@+id/sensortype2"
                 android:text="0.0"/>
@@ -429,6 +436,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignBottom="@id/SValue2"
+                android:layout_centerInParent="true"
                 android:layout_marginRight="15dp"
                 android:layout_toEndOf="@+id/SValue2"
                 android:text="Null"
@@ -441,6 +449,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignBottom="@+id/sensortype3"
+                android:layout_centerInParent="true"
                 android:layout_marginRight="15dp"
                 android:layout_toEndOf="@+id/sensortype3"
                 android:text="0.0"/>
