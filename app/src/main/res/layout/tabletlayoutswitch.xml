@@ -395,9 +395,11 @@ android:layout_marginLeft="1dp"
         android:id="@+id/sampler_reset"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/sampler_3"
-        android:layout_toStartOf="@+id/connectButton"
-        android:text="Reset Sampler" />
+        android:text="Reset Sampler"
+        android:layout_alignBaseline="@+id/sampler_3"
+        android:layout_alignBottom="@+id/sampler_3"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="29dp" />
     <!--     <Button
         android:id="@+id/mapButton"
         android:layout_width="match_parent"

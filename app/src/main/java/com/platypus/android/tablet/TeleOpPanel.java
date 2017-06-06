@@ -2924,7 +2924,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           {
             if (samplerStates[0] == true)
             {
-              double args[] = {1};
+              double args[] = {0};
               currentBoat.returnServer().setGains(axis, args, new FunctionObserver<Void>() {
                 @Override
                 public void completed(Void aVoid) {
@@ -2957,7 +2957,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           {
             if (samplerStates[1] == true)
             {
-              double args[] = {2};
+              double args[] = {1};
               currentBoat.returnServer().setGains(axis, args, new FunctionObserver<Void>() {
                 @Override
                 public void completed(Void aVoid) {
@@ -2990,7 +2990,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           {
             if (samplerStates[2] == true)
             {
-              double args[] = {3};
+              double args[] = {2};
               currentBoat.returnServer().setGains(axis, args, new FunctionObserver<Void>() {
                 @Override
                 public void completed(Void aVoid) {
@@ -3023,7 +3023,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
           {
             if (samplerStates[3] == true)
             {
-              double args[] = {4};
+              double args[] = {3};
               currentBoat.returnServer().setGains(axis, args, new FunctionObserver<Void>() {
                 @Override
                 public void completed(Void aVoid) {
