@@ -7,7 +7,7 @@
     android:focusableInTouchMode="true">
 
     <TextView
-        android:id="@+id/ipaddress"
+        android:id="@+id/ipaddresslabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal|center_vertical"
@@ -17,11 +17,11 @@
         />
 
     <EditText
-        android:id="@+id/ipAddress1"
+        android:id="@+id/ip_address_input"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:hint="XXX.XXX.XXX.XXX"
-        android:inputType="" />
+        android:inputType=""/>
 
 
     <!--<TextView-->

@@ -31,7 +31,9 @@ import javax.measure.unit.SI;
 
 public class Boat
 {
-		UdpVehicleServer server = null;
+		private UdpVehicleServer server = null;
+		private String ipAddressString;
+		private String name;
 		private PoseListener pl;
 		private SensorListener sl;
 		private WaypointListener wl;
@@ -58,6 +60,8 @@ public class Boat
 		private Object sensor_lock = new Object();
 		private String waypointState;
 		private Object waypoint_state_lock = new Object();
+		int boat_color;
+		int line_color;
 
 		private Runnable isConnectedPoll = new Runnable()
 		{
@@ -112,8 +116,9 @@ public class Boat
 				}
 		};
 
-		public Boat()
+		public Boat(String boat_name)
 		{
+				name = boat_name;
 				server = new UdpVehicleServer();
 		}
 
@@ -259,10 +264,20 @@ public class Boat
 				}
 		}
 
+		public void setBoatColor(int _color) { boat_color = _color; }
+		public int getBoatColor() { return boat_color; }
+		public void setLineColor(int _color) { line_color = _color; }
+		public int getLineColor() { return line_color; }
+
 		public void setAddress(InetSocketAddress a)
 		{
 				Log.i(logTag, String.format("connection to ip address %s", a.toString()));
 				server.setVehicleService(a);
+		}
+
+		public void setIpAddressString(String addr)
+		{
+				ipAddressString = addr;
 		}
 
 		public InetSocketAddress getIpAddress()
@@ -270,10 +285,17 @@ public class Boat
 				return (InetSocketAddress) server.getVehicleService();
 		}
 
+		public String getIpAddressString()
+		{
+				return ipAddressString;
+		}
+
 		public UdpVehicleServer returnServer()
 		{
 				return server;
 		}
+
+		public String getName() { return name; }
 
 		public void setConnected(boolean b)
 		{

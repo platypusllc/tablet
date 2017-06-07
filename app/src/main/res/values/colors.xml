@@ -1,8 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="red">#FF0000</color>
-    <color name="green">#080000</color>
+    <!--> UNUSED COLORS
+    <color name="pink">#ffa0c9</color>
+    <color name="purple">#9500ff</color>
+    <color name="blue">#001eff</color>
+    <!-->
+
+    <color name="red_light">#ff0000</color>
+    <color name="red_dark">#800000</color>
+
+    <color name="magenta_light">#f133ff</color>
+    <color name="magenta_dark">#792080</color>
+
+    <color name="cyan_light">#00ffff</color>
+    <color name="cyan_dark">#30bfbf</color>
+
+    <color name="orange_light">#ffa200</color>
+    <color name="orange_dark">#bf8f30</color>
+
+    <color name="yellow_light">#fffa66</color>
+    <color name="yellow_dark">#807c20</color>
+
+    <color name="green_light">#33ff36</color>
+    <color name="green_dark">#1f9925</color>
+
     <color name="black">#000000</color>
-    <color name="asdf">#339900</color>
-    <color name="cyan">#0080FF</color>
+    <color name="white">#ffffff</color>
+    <color name="background_holo_dark">#ff000000</color>
+    <color name="background_holo_light">#fff3f3f3</color>
 </resources>

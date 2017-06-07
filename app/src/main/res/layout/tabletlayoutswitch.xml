@@ -1,76 +1,333 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:mapbox="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/linlay"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/linlay"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
     android:orientation="vertical">
 
-
-    <TextView
-        android:id="@+id/controlScreenEnter"
-        android:layout_width="match_parent"
+    <RelativeLayout
+        android:id="@+id/relativeLayout_boat"
+        android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center_horizontal|center_vertical"
-        android:text="TeleOp Panel"
-        android:textSize="25dp"
-        android:layout_weight = "5"
-        android:layout_alignParentTop="true" />
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/border"
+        >
 
-    <TextView
-        android:id="@+id/printIpAddress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center_horizontal|center_vertical"
-        android:text="IP Address:"
-        android:layout_below="@+id/controlScreenEnter"
-        android:textColor="@color/green"
-        android:background="@color/cyan"/>
+        <Button
+            android:id="@+id/connectButton"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:text="Connect to boat"
+            />
+
+        <TextView
+            android:id="@+id/printIpAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/connectButton"
+            android:layout_gravity="center"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:gravity="center_horizontal|center_vertical"
+            android:textColor="@color/black"/>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_waypoint_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/printIpAddress"
+            android:layout_marginTop="10dp"
+            >
+
+            <TextView
+                android:id="@+id/waypoint_status_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:text="WP status:"/>
+
+            <TextView
+                android:id="@+id/waypoint_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="10dp"
+                android:gravity="center"
+                />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_battery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/relativeLayout_waypoint_status"
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dp"
+            >
+
+            <TextView
+                android:id="@+id/batteryTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:text="Battery"/>
+
+            <TextView
+                android:id="@+id/batteryVoltage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:text="0.0"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_speed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/relativeLayout_battery"
+            android:layout_marginLeft="10dp">
+
+            <TextView
+                android:id="@+id/boat_speed_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerInParent="true"
+                android:text="Boat speed:"/>
+
+            <Spinner
+                android:id="@+id/speed_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/boat_speed_label"
+                android:entries="@array/spinner_speed_entries"
+                android:prompt="@string/speed_prompt">
+            </Spinner>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_boat_buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/relativeLayout_speed"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="10dp"
+            >
+
+            <Button
+                android:id="@+id/start_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="12dp"
+                android:background="@drawable/play_button"/>
+
+            <Button
+                android:id="@+id/pause_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/start_button"
+                android:background="@drawable/pause_button"
+                />
+
+            <Button
+                android:id="@+id/stop_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_toRightOf="@id/pause_button"
+                android:background="@drawable/stop_button"
+                />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_boat_select"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/relativeLayout_boat_buttons"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:id="@+id/selected_boat_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerInParent="true"
+                android:layout_marginLeft="10dp"
+                android:text="Selected boat:"/>
+
+            <Spinner
+                android:id="@+id/boat_name_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/selected_boat_label"
+                android:background="@color/background_holo_light"
+                >
+            </Spinner>
 
 
+        </RelativeLayout>
+
+    </RelativeLayout>
 
     <LinearLayout
-
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:layout_width="180dp"
-        android:layout_height="310dp"
-        android:paddingTop="15dp"
-        android:id="@+id/relativeLayout_sensor"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/switchviewbutton"
+        android:id="@+id/relativeLayout_paths"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignRight="@id/relativeLayout_boat"
+        android:layout_below="@id/relativeLayout_boat"
+        android:layout_toEndOf="@id/relativeLayout_boat"
         android:background="@drawable/border"
         android:orientation="vertical"
-        android:layout_above="@+id/mapinfo">
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="15dp">
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_path_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/undo_last_wp_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/undo"/>
 
 
+            <Button
+                android:id="@+id/remove_all_wp_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/undo_last_wp_button"
+                android:background="@drawable/delete"/>
 
+            <Button
+                android:id="@+id/drop_wp_button"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/remove_all_wp_button"
+                android:background="@drawable/drop_wp"/>
+
+            <Button
+                android:id="@+id/path_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentLeft="true"
+                android:layout_below="@id/undo_last_wp_button"
+                android:background="@drawable/polyline"/>
+
+            <Button
+                android:id="@+id/spiral_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_below="@id/undo_last_wp_button"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/path_button"
+                android:background="@drawable/spiral"/>
+
+            <Button
+                android:id="@+id/lawnmower_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_below="@id/undo_last_wp_button"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/spiral_button"
+                android:background="@drawable/lawnmower"/>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_transect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:id="@+id/transect_distance_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:text="Transect dist.:"/>
+
+            <EditText
+                android:id="@+id/transect_distance_input"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:gravity="center"
+                android:inputType="number"
+                android:text="10"
+                />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_path_length"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:id="@+id/path_length_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:text="Path length:"/>
+
+            <TextView
+                android:id="@+id/path_length_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:text="0"/>
+        </RelativeLayout>
     </LinearLayout>
+
 
     <RelativeLayout
         android:id="@+id/relativeLayout_map"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
         android:layout_weight="0.5"
-        android:layout_below="@+id/printIpAddress"
-        android:layout_toRightOf="@+id/relativeLayout_sensor"
-        android:layout_toEndOf="@+id/relativeLayout_sensor">
+        android:layout_toRightOf="@+id/relativeLayout_boat"
+        >
 
-        <RelativeLayout android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+
 
             <com.mapbox.mapboxsdk.maps.MapView
                 android:id="@+id/mapview"
                 android:layout_width="fill_parent"
-                android:layout_height="600dp"
-                android:layout_alignParentTop="true"
+                android:layout_height="match_parent"
                 android:layout_alignParentStart="true"
-                mapbox:style_url="@string/style_mapbox_streets"
-                mapbox:access_token="pk.eyJ1IjoicGxhdHlwdXNsbGMiLCJhIjoiY2lsM3p5bjJyM3U0N3Z5bTNxbmFpZXNwaSJ9.YWzXSt3aXtpoBrdMPmLE3Q"/>
-
+                android:layout_alignParentTop="true"
+                mapbox:access_token="pk.eyJ1IjoicGxhdHlwdXNsbGMiLCJhIjoiY2lsM3p5bjJyM3U0N3Z5bTNxbmFpZXNwaSJ9.YWzXSt3aXtpoBrdMPmLE3Q"
+                mapbox:style_url="@string/style_mapbox_streets"/>
 
             <Button
                 style="?android:attr/buttonStyleSmall"
@@ -81,260 +338,124 @@
                 android:layout_alignTop="@id/mapview"
                 android:layout_alignLeft="@id/mapview"/>
 
-        </RelativeLayout>
-    </RelativeLayout>
-
-
-
-
-    <!--
-           <CheckBox
-            android:id="@+id/Autonomous"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="autoBox" />
-    -->
-
-    <RelativeLayout
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:paddingTop="10dp"
-        android:paddingLeft="15dp"
-        android:paddingRight="00dp"
-        android:id="@+id/relativeLayout_control"
-        android:layout_marginBottom="3dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:focusableInTouchMode="false"
-        android:background="@drawable/border"
-        android:focusable="true"
-        android:layout_toStartOf="@+id/relativeLayout_map">
-
+            <Button
+                android:id="@+id/advopt"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:text="Advanced Options"
+                />
 
         <com.platypus.android.tablet.Joystick.JoystickView
-            android:layout_width="165dp"
-            android:layout_height="140dp"
             android:id="@+id/joystickView"
-            android:layout_alignParentStart="true" />
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            />
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_sensors"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="150dp"
+            android:layout_marginRight="100dp"
+            android:layout_toLeftOf="@id/joystickView"
+            android:background="?android:attr/windowBackground"
+            >
+
+            <TextView
+                android:id="@+id/sensorDataLabel"
+                android:layout_width="wrap_content"
+
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dp"
+                android:text="Sensor Data"
+                android:textSize="16dp"
+                android:textStyle="bold"/>
 
 
-    </RelativeLayout>
+            <TextView
+                android:id="@+id/sensortype1"
+                style="?android:attr/textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@+id/sensorDataLabel"
+                android:layout_centerInParent="true"
+                android:layout_marginLeft="30dp"
+                android:layout_marginRight="15dp"
+                android:layout_toEndOf="@+id/sensorDataLabel"
+                android:text="Null"
+                android:textStyle="bold"/>
 
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/relativeLayout_map"
-        android:layout_toLeftOf="@+id/relativeLayout_map"
-        android:id="@+id/relativeLayout_battery"
-        android:layout_alignLeft="@+id/relativeLayout_sensor">
+            <TextView
+                android:id="@+id/SValue1"
+                style="?android:attr/textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/sensortype1"
+                android:layout_centerInParent="true"
+                android:layout_marginRight="15dp"
+                android:layout_toEndOf="@+id/sensortype1"
+                android:text="0.0"/>
 
-    </RelativeLayout>
+            <TextView
+                android:id="@+id/sensortype2"
+                style="?android:attr/textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/SValue1"
+                android:layout_centerInParent="true"
+                android:layout_marginRight="15dp"
+                android:layout_toEndOf="@+id/SValue1"
+                android:text="Null"
+                android:textStyle="bold"/>
 
+            <TextView
+                android:id="@+id/SValue2"
+                style="?android:attr/textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@+id/sensortype2"
+                android:layout_centerInParent="true"
+                android:layout_marginRight="15dp"
+                android:layout_toEndOf="@+id/sensortype2"
+                android:text="0.0"/>
+            <!--android:textSize="18dp"-->
 
-<Button
-style="?android:attr/buttonStyleSmall"
-android:layout_width="wrap_content"
-android:layout_height="wrap_content"
-android:text="Advanced Options"
-android:id="@+id/advopt"
-android:layout_alignParentTop="true"
-android:layout_above="@+id/printIpAddress"
-android:layout_alignEnd="@+id/relativeLayout_map"
-    />
-<Button
-style="?android:attr/buttonStyleSmall"
-android:id="@+id/connectButton"
-android:layout_height="wrap_content"
-android:layout_width="wrap_content"
-
-android:text="Connect"
-android:layout_above="@+id/printIpAddress"
-android:layout_toLeftOf="@+id/advopt"
-    />
-
-
-
-
-<RelativeLayout
-android:layout_width="wrap_content"
-android:layout_height="wrap_content"
-android:id="@+id/relativeLayout_waypoint"
-android:paddingTop="10dp"
-android:paddingLeft="15dp"
-android:paddingRight="10dp"
-android:background="@drawable/border"
-android:layout_marginLeft="1dp"
-    android:layout_alignEnd="@+id/relativeLayout_map"
-    android:layout_below="@+id/relativeLayout_map"
-    android:layout_toEndOf="@+id/relativeLayout_sensor"
-    android:layout_alignParentBottom="true"
-    android:layout_marginBottom="5dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-
-        android:text="Sensor Data"
-        android:id="@+id/textView6"
-        android:layout_marginLeft="3dp"
-        android:textStyle="bold"
-        android:textSize="16dp"
-        android:layout_centerVertical="true"
-        android:layout_alignParentStart="true" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Battery"
-        android:id="@+id/batteryTextView"
-        android:layout_marginLeft="20dp"
-        android:layout_alignBottom="@+id/textView6"
-        android:layout_toEndOf="@+id/textView6"
-        android:layout_marginStart="17dp" />
-
-    <TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="0.0"
-    android:id="@+id/batteryVoltage"
-    android:layout_marginLeft="20dp"
-        android:layout_alignTop="@+id/batteryTextView"
-        android:layout_toEndOf="@+id/batteryTextView"
-        android:layout_marginStart="20dp" />
-
-    <!--<TextView-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--style="?android:attr/textAppearanceSmall"-->
-        <!--android:text="Sensor 1"-->
-        <!--android:id="@+id/sensor1"-->
+            <TextView
+                android:id="@+id/sensortype3"
+                style="?android:attr/textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@id/SValue2"
+                android:layout_centerInParent="true"
+                android:layout_marginRight="15dp"
+                android:layout_toEndOf="@+id/SValue2"
+                android:text="Null"
+                android:textStyle="bold"/>
 
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="?android:attr/textAppearanceSmall"
-        android:layout_marginRight="15dp"
-        android:id="@+id/sensortype1"
-        android:textStyle="bold"
-        android:text="Null"
-        android:layout_marginLeft="30dp"
-        android:layout_alignTop="@+id/batteryVoltage"
-        android:layout_toEndOf="@+id/batteryVoltage" />
+            <TextView
+                android:id="@+id/SValue3"
+                style="?android:attr/textAppearanceSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/sensortype3"
+                android:layout_centerInParent="true"
+                android:layout_marginRight="15dp"
+                android:layout_toEndOf="@+id/sensortype3"
+                android:text="0.0"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="15dp"
-        android:text="0.0"
-        android:id="@+id/SValue1"
-        style="?android:attr/textAppearanceSmall"
-        android:layout_alignBottom="@+id/sensortype1"
-        android:layout_toEndOf="@+id/sensortype1" />
+        </RelativeLayout>
 
-    <!--<TextView-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="Sensor 2"-->
-        <!--style="?android:attr/textAppearanceSmall"-->
-        <!--android:id="@+id/sensor2"-->
-        <!--android:layout_marginLeft="15dp"-->
-        <!--android:layout_marginRight="15dp"-->
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="15dp"
-        android:id="@+id/sensortype2"
-        style="?android:attr/textAppearanceSmall"
-        android:textStyle="bold"
-        android:text="Null"
-        android:layout_alignBottom="@+id/SValue1"
-        android:layout_toEndOf="@+id/SValue1" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="15dp"
-        android:text="0.0"
-        android:id="@+id/SValue2"
-
-        style="?android:attr/textAppearanceSmall"
-        android:layout_alignTop="@+id/sensortype2"
-        android:layout_toEndOf="@+id/sensortype2" />
-    <!--android:textSize="18dp"-->
-
-    <!--<TextView-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="Sensor 3"-->
-        <!--android:id="@+id/sensor3"-->
-        <!--android:layout_marginLeft="15dp"-->
-        <!--android:layout_marginRight="15dp"-->
-        <!--android:layout_alignTop="@+id/sensortype2"-->
-        <!--style="?android:attr/textAppearanceSmall"-->
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="15dp"
-        android:id="@+id/sensortype3"
-        style="?android:attr/textAppearanceSmall"
-        android:textStyle="bold"
-        android:text="Null"
-        android:layout_toEndOf="@+id/SValue2"
-        android:layout_alignBottom="@id/SValue2"/>
-
-
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="15dp"
-        android:text="0.0"
-        style="?android:attr/textAppearanceSmall"
-        android:id="@+id/SValue3"
-        android:layout_alignBottom="@+id/sensortype3"
-        android:layout_toEndOf="@+id/sensortype3" />
-
-
-    <!--android:textSize="18dp"-->
+        </RelativeLayout>
 
 </RelativeLayout>
-
-    <ToggleButton
-
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Waypoints"
-    android:textOff="Waypoints"
-    android:textOn="Region"
-    android:id="@+id/switchviewbutton"
-        android:layout_below="@+id/relativeLayout_battery"
-        android:layout_alignParentStart="true"
-        android:layout_toStartOf="@+id/relativeLayout_map" />
-
-    <TextView
-        android:background="@drawable/border"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:id="@+id/mapinfo"
-        style="?android:attr/textAppearanceSmall"
-        android:gravity="center_horizontal"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:layout_above="@+id/relativeLayout_control"
-        android:layout_alignParentStart="true"
-        android:layout_toStartOf="@+id/relativeLayout_map"
-        android:text="Map Information" />
-    <!--     <Button
-        android:id="@+id/mapButton"
-        android:layout_width="match_parent"
-        android:layout_height="24dp"
-        android:text="Open in Map" />
-    -->
-    </RelativeLayout>
