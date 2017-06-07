@@ -298,15 +298,6 @@ android:layout_marginLeft="1dp"
         android:layout_alignBottom="@+id/sensortype3"
         android:layout_toEndOf="@+id/sensortype3" />
 
-    <ToggleButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/SensorStart"
-        android:textOff="Show Sensorvalue"
-        android:textOn="Show Sensorvalue"
-        android:layout_toEndOf="@id/SValue3"
-        android:layout_alignBottom="@id/SValue3"/>
-
 
     <!--android:textSize="18dp"-->
 
