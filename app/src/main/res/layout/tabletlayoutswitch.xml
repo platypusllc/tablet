@@ -329,7 +329,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_marginLeft="20dp"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="20dp">
 
             <Button
                 android:id="@+id/jar1_button"
@@ -338,13 +338,13 @@
                 android:background="@drawable/jar_1"
                 />
 
-            <Chronometer
-                android:id="@+id/jar1_chrono"
+            <TextView
+                android:id="@+id/jar1_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/jar1_button"
                 android:layout_centerHorizontal="true"
-                android:countDown="true"/>
+                />
 
         </RelativeLayout>
 
@@ -354,7 +354,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_marginLeft="10dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="20dp"
             android:layout_marginRight="10dp"
             android:layout_toRightOf="@id/relativeLayout_sampler_jar1">
 
@@ -363,14 +363,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/jar_2"/>
-
-            <Chronometer
-                android:id="@+id/jar2_chrono"
+            <TextView
+                android:id="@+id/jar2_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/jar2_button"
                 android:layout_centerHorizontal="true"
-                android:countDown="true"/>
+                />
 
         </RelativeLayout>
 
@@ -389,14 +388,14 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/jar_3"
                 />
-
-            <Chronometer
-                android:id="@+id/jar3_chrono"
+            <TextView
+                android:id="@+id/jar3_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/jar3_button"
                 android:layout_centerHorizontal="true"
-                android:countDown="true"/>
+                />
+
         </RelativeLayout>
 
         <RelativeLayout
@@ -414,13 +413,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/jar_4"/>
-            <Chronometer
-                android:id="@+id/jar4_chrono"
+            <TextView
+                android:id="@+id/jar4_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/jar4_button"
                 android:layout_centerHorizontal="true"
-                android:countDown="true"/>
+                />
         </RelativeLayout>
 
         <Button
