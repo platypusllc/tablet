@@ -21,7 +21,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:hint="XXX.XXX.XXX.XXX"
-        android:inputType=""/>
+        android:inputType="number|numberDecimal"
+        android:digits="0123456789."
+        />
 
 
     <!--<TextView-->
