@@ -112,7 +112,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		HashMap<String, Path> path_map = new HashMap<>();
 		HashMap<String, ArrayList<Polyline>> waypath_outline_map = new HashMap<>();
 		HashMap<String, ArrayList<Polyline>> waypath_top_map = new HashMap<>();
-		HashMap<String, Polyline> boat_to_wp_line_map = new HashMap<>();
+		//HashMap<String, Polyline> boat_to_wp_line_map = new HashMap<>();
 		HashMap<String, Integer> current_wp_index_map = new HashMap<>();
 		HashMap<String, Integer> old_wp_index_map = new HashMap<>();
 
@@ -318,6 +318,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 						// boat to current waypoint line
 						//Log.d(logTag, String.format("boat-to-wp last redraw is %d ms ago", System.currentTimeMillis() - last_redraw));
+						/*
 						if (System.currentTimeMillis() - last_redraw < 500) return; // don't update the line too often
 						Polyline line = boat_to_wp_line_map.get(name);
 						Path path = path_map.get(name);
@@ -336,6 +337,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						pair.add(point_pairs.get(current_wp_index_map.get(name)).get(0));
 						boat_to_wp_line_map.put(name, mMapboxMap.addPolyline(new PolylineOptions().addAll(pair).color(boat.getBoatColor()).width(1)));
 						last_redraw = System.currentTimeMillis();
+						*/
 				}
 		}
 		class SensorDataReceivedRunnable implements Runnable
