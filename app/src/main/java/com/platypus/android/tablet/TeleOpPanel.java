@@ -1127,6 +1127,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				{
 						TextView clock_text;
 						Button button;
+						CountDownTimer timer;
 						public JarCountdownRunnable(TextView jar_textview, Button jar_button)
 						{
 								clock_text = jar_textview;
@@ -1135,15 +1136,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void run()
 						{
-								new JarCountdownTimer(1000*60*4, 1000, clock_text).start();
+								timer = new JarCountdownTimer(1000*60*4, 1000, clock_text).start();
 								button.setClickable(false);
 						}
+
+						public void cancel() { timer.cancel(); }
 				}
 				class JarOnClickListener implements OnClickListener
 				{
 						TextView clock_text;
 						Button button;
 						int number;
+						JarCountdownRunnable runnable;
 						public JarOnClickListener(int jar_number, TextView jar_textview, Button jar_button)
 						{
 								clock_text = jar_textview;
@@ -1161,21 +1165,67 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												Toast.makeText(context, "Connect to a boat first", Toast.LENGTH_SHORT).show();
 												return;
 										}
-										boat.startSample(number-1, new JarCountdownRunnable(clock_text, button),
+										runnable = new JarCountdownRunnable(clock_text, button);
+										boat.startSample(number-1, runnable,
 														new ToastFailureCallback("Sampler Start Msg timed out"));
 								}
 								else
 								{
+										// TODO: why does this not run?
 										Toast.makeText(context, String.format("Jar %d is not available until reset", number), Toast.LENGTH_SHORT).show();
-										Log.e(logTag, "HEY HEY HEY HEY");
 								}
+						}
+						public void cancel()
+						{
+								// cancel the timer inside the countdown runnable
+								if (runnable != null) runnable.cancel();
 						}
 				}
 
-				jar1_button.setOnClickListener(new JarOnClickListener(1, jar1_text, jar1_button));
-				jar2_button.setOnClickListener(new JarOnClickListener(1, jar2_text, jar2_button));
-				jar3_button.setOnClickListener(new JarOnClickListener(1, jar3_text, jar3_button));
-				jar4_button.setOnClickListener(new JarOnClickListener(1, jar4_text, jar4_button));
+				final JarOnClickListener jar1_listener = new JarOnClickListener(1, jar1_text, jar1_button);
+				final JarOnClickListener jar2_listener = new JarOnClickListener(2, jar2_text, jar2_button);
+				final JarOnClickListener jar3_listener = new JarOnClickListener(3, jar3_text, jar3_button);
+				final JarOnClickListener jar4_listener = new JarOnClickListener(4, jar4_text, jar4_button);
+				jar1_button.setOnClickListener(jar1_listener);
+				jar2_button.setOnClickListener(jar2_listener);
+				jar3_button.setOnClickListener(jar3_listener);
+				jar4_button.setOnClickListener(jar4_listener);
+
+				class ResetSamplerSuccessRunnable implements Runnable
+				{
+						@Override
+						public void run()
+						{
+								jar1_button.setClickable(true);
+								jar2_button.setClickable(true);
+								jar3_button.setClickable(true);
+								jar4_button.setClickable(true);
+								jar1_listener.cancel();
+								jar2_listener.cancel();
+								jar3_listener.cancel();
+								jar4_listener.cancel();
+								jar1_text.setText("");
+								jar2_text.setText("");
+								jar3_text.setText("");
+								jar4_text.setText("");
+
+								Toast.makeText(context, "Sampler reset successfully", Toast.LENGTH_SHORT).show();
+						}
+				}
+				sampler_reset_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+								Boat boat = currentBoat();
+								if (boat == null)
+								{
+										Toast.makeText(context, "Connect to a boat first", Toast.LENGTH_SHORT).show();
+								}
+								boat.resetSampler(new ResetSamplerSuccessRunnable(),
+												new ToastFailureCallback("Sampler Reset Msg timed out"));
+						}
+				});
 		}
 
 		@Override

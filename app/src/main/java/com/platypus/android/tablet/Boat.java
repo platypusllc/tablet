@@ -541,7 +541,7 @@ public class Boat
 										@Override
 										public void failed(FunctionError functionError)
 										{
-												Log.w(logTag, String.format("Could not start jar %d", jar_number));
+												Log.e(logTag, String.format("Could not start jar %d", jar_number));
 												uiHandler.post(failureCallback);
 										}
 								});
@@ -549,6 +549,37 @@ public class Boat
 						}
 				}
 				new StartSampleAsyncTask().execute();
+		}
+
+		public void resetSampler(final Runnable successCallback, final Runnable failureCallback)
+		{
+				class ResetSamplerAsyncTask extends AsyncTask<Void, Void, Void>
+				{
+
+						@Override
+						protected Void doInBackground(Void... params)
+						{
+								double[] jar = {-1};
+								server.setGains(SAMPLER_GAIN_AXIS, jar, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												Log.i(logTag, "Reset sampler");
+												uiHandler.post(successCallback);
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.e(logTag, "Could not reset sample");
+												uiHandler.post(failureCallback);
+										}
+								});
+								return null;
+						}
+				}
+				new ResetSamplerAsyncTask().execute();
 		}
 
 
