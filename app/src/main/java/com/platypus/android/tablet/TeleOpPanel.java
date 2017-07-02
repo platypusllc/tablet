@@ -539,9 +539,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             rot = Math.PI / 2 - _pose.pose.getRotation().toYaw();
 
             zone = String.valueOf(_pose.origin.zone);
-
+            char latZone = _pose.origin.isNorth ? 'T' : 'L';
             latlongloc = UTM.utmToLatLong(UTM.valueOf(
-                                                      _pose.origin.zone, 'T', _pose.pose.getX(),
+                                                      _pose.origin.zone, latZone, _pose.pose.getX(),
                                                       _pose.pose.getY(), SI.METER),
                                           ReferenceEllipsoid.WGS84);
             // Log.i(logTag, "Pose listener called");
@@ -989,6 +989,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     @Override
       protected String doInBackground(String... arg0) {
 
+      currentBoat.isConnected();
       networkRun = new Runnable() {
           @Override
           public void run() {
