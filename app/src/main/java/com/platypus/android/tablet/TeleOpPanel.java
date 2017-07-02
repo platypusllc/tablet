@@ -1,104 +1,35 @@
 package com.platypus.android.tablet;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Scanner;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
-import javax.measure.unit.NonSI;
-import javax.measure.unit.SI;
-
-import org.jscience.geography.coordinates.LatLong;
-import org.jscience.geography.coordinates.UTM;
-import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-
-
-import com.mapbox.mapboxsdk.MapboxAccountManager;
-import com.mapbox.mapboxsdk.annotations.MarkerView;
-import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
-import com.mapbox.mapboxsdk.annotations.Polyline;
-import com.mapbox.mapboxsdk.annotations.PolylineOptions;
-import com.mapbox.mapboxsdk.camera.CameraPosition;
-import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.mapboxsdk.constants.Style;
-import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.geometry.ILatLng;
-import com.mapbox.mapboxsdk.annotations.Marker;
-import com.mapbox.mapboxsdk.annotations.MarkerOptions;
-import com.mapbox.mapboxsdk.annotations.Icon;
-import com.mapbox.mapboxsdk.annotations.IconFactory;
-import com.mapbox.mapboxsdk.geometry.LatLngBounds;
-import com.mapbox.mapboxsdk.maps.MapView;
-import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
-import com.mapbox.mapboxsdk.offline.OfflineManager;
-import com.mapbox.mapboxsdk.offline.OfflineRegion;
-
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
-
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.graphics.Matrix;
-
-import com.mapbox.mapboxsdk.offline.OfflineRegionError;
-import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
-import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
-import com.mapzen.android.lost.api.LocationServices;
-
-
-import com.platypus.android.tablet.Path.AreaType;
-import com.platypus.android.tablet.Path.Path;
-import com.platypus.android.tablet.Path.Region;
-import com.platypus.crw.CrwNetworkUtils;
-import com.platypus.crw.SensorListener;
-import com.platypus.crw.VehicleServer;
-import com.platypus.crw.data.SensorData;
-import com.platypus.crw.data.Pose3D;
-import android.app.Activity;
-import android.content.Context;
-
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.util.Log;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -110,26 +41,84 @@ import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
-import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import java.util.Map;
-
+import com.mapbox.mapboxsdk.MapboxAccountManager;
+import com.mapbox.mapboxsdk.annotations.Icon;
+import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+import com.mapbox.mapboxsdk.annotations.MarkerView;
+import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
+import com.mapbox.mapboxsdk.annotations.Polyline;
+import com.mapbox.mapboxsdk.annotations.PolylineOptions;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.geometry.ILatLng;
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
+import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.offline.OfflineManager;
+import com.mapbox.mapboxsdk.offline.OfflineRegion;
+import com.mapbox.mapboxsdk.offline.OfflineRegionError;
+import com.mapbox.mapboxsdk.offline.OfflineRegionStatus;
+import com.mapbox.mapboxsdk.offline.OfflineTilePyramidRegionDefinition;
+import com.mapzen.android.lost.api.LocationServices;
+import com.platypus.android.tablet.Joystick.JoystickClickedListener;
+import com.platypus.android.tablet.Joystick.JoystickMovedListener;
+import com.platypus.android.tablet.Joystick.JoystickView;
+import com.platypus.android.tablet.Path.AreaType;
+import com.platypus.android.tablet.Path.Path;
+import com.platypus.android.tablet.Path.Region;
+import com.platypus.crw.CrwNetworkUtils;
 import com.platypus.crw.FunctionObserver;
 import com.platypus.crw.PoseListener;
+import com.platypus.crw.SensorListener;
+import com.platypus.crw.VehicleServer;
 import com.platypus.crw.VehicleServer.WaypointState;
 import com.platypus.crw.WaypointListener;
+import com.platypus.crw.data.Pose3D;
+import com.platypus.crw.data.SensorData;
 import com.platypus.crw.data.Twist;
 import com.platypus.crw.data.Utm;
 import com.platypus.crw.data.UtmPose;
 
-import android.app.Dialog;
+import org.jscience.geography.coordinates.LatLong;
+import org.jscience.geography.coordinates.UTM;
+import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import android.view.View.OnClickListener;
-import com.platypus.android.tablet.Joystick.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
 
 
 /*
@@ -256,7 +245,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   SensorData Data;
   public String sensorV = "Loading...";
   boolean sensorReady = false;
-  public static TextView log;
+  public TextView log;
   public boolean Auto = false;
 
   private PoseListener pl;
@@ -388,7 +377,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             startDrawWaypoints = startDraw;
             startDraw = false;
 
-            if (startDraw == false) {
+            if (!startDraw) {
               drawPoly.setBackgroundResource(R.drawable.draw_icon2);
             } else {
               drawPoly.setBackgroundResource(R.drawable.draw_icon);
@@ -457,13 +446,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                     }
                     case "Satellite Map": {
                         if (mMapboxMap != null) {
-                            mMapboxMap.setStyle(Style.SATELLITE);
+                            mMapboxMap.setStyleUrl("mapbox://styles/mapbox/satellite-v9");
+                            //mMapboxMap.setStyle(Style.SATELLITE);
                         }
                         break;
                     }
                     case "Vector Map": {
                         if (mMapboxMap != null) {
-                            mMapboxMap.setStyle(Style.MAPBOX_STREETS);
+                            mMapboxMap.setStyleUrl("mapbox://styles/mapbox/streets-v9");
+                            //mMapboxMap.setStyle(Style.MAPBOX_STREETS);
                         }
                         break;
                     }
@@ -621,8 +612,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             ));
           }
 
-
-          mMapboxMap.setStyle(Style.MAPBOX_STREETS); //vector map
+          mMapboxMap.setStyleUrl("mapbox://styles/mapbox/streets-v9");
+          //mMapboxMap.setStyle(Style.MAPBOX_STREETS); //vector map
           //mMapboxMap.setStyle(Style.SATELLITE_STREETS); //satalite
           //mMapboxMap.setMyLocationEnabled(true); //show current location
           mMapboxMap.getUiSettings().setRotateGesturesEnabled(false); //broken on mapbox side, currently fixing issue 4635 https://github.com/mapbox/mapbox-gl-native/issues/4635
@@ -979,12 +970,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     boolean firstTime = true;
     boolean isconvex = true;
     Context context;
-    // IconFactory mIconFactory = IconFactory.getInstance(context);
 
-    int tempnum = 100;
-    int icon_Index;
-    int icon_Index_old = -1;
-    IconFactory mIconFactory = IconFactory.getInstance(getApplicationContext());
     BitmapFactory.Options options = new BitmapFactory.Options();
 
     public void setOptions(BitmapFactory.Options options) {
@@ -1010,9 +996,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             if (currentBoat != null) {
               connected = currentBoat.getConnected();
 
-              //if (currentBoat.getConnected() == true)
-              {
-                if (old_thrust != thrustTemp || old_rudder!=rudderTemp) {
+                //if (old_thrust != thrustTemp || old_rudder!=rudderTemp) {
                     updateVelocity(currentBoat, new FunctionObserver<Void>() {
                         @Override
                           public void completed(Void aVoid) {
@@ -1022,8 +1006,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 //													System.out.println("ending update velocity function observer: " + System.currentTimeMillis());
                         }
                       });
-                }
-              }
               if (stopWaypoints == true) {
                 currentBoat.returnServer().stopWaypoints(new FunctionObserver<Void>() {
                     @Override
@@ -1092,10 +1074,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
       }
 
-      if (connected == true) {
-        ipAddressBox.setBackgroundColor(Color.GREEN);
+      if (connected) {
+          ipAddressBox.setBackgroundColor(Color.GREEN);
       }
-      if (connected == false) {
+      else if (!connected) {
         ipAddressBox.setBackgroundColor(Color.RED);
       }
 
@@ -1484,11 +1466,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             //                if (!(saveName.contains(" ") || saveName.matches("^.*[^a-zA-Z0-9._-].*$"))) {
 
             try {
-              writer.append("\n\" " + input.getText() + " \"");
+              writer.append("\n").append(input.getText()).append(" \"");
               writer.flush();
               //writer.append(input.getText());
               for (ILatLng i : savePointList) {
-                writer.append(" " + i.getLatitude() + " " + i.getLongitude());
+                writer.append(" ").append(Double.toString(i.getLatitude()));
+                writer.append(" ").append(Double.toString(i.getLongitude()));
                 writer.flush();
               }
               //writer.write("\n");
@@ -1642,7 +1625,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
 
                     while ((currentLine = reader.readLine()) != null) {
                       int index = currentLine.indexOf(' ');
-                      String tempasdf = currentLine;
 
                       String trimmedLine = currentLine.trim();
                       if (trimmedLine.contains(lineToRemove)) {
@@ -2294,11 +2276,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
   public boolean reachedWaypoint(LatLng boatLocation,LatLng point)
   {
     //Marker i = markerList.get(0);
-    if (isWaypointWithinDistance(boatLocation,point,GPSDIST))
-      {
-        return true;
-      }
-    return false;
+    return isWaypointWithinDistance(boatLocation,point,GPSDIST);
   }
   public boolean isWaypointWithinDistance(LatLng a, LatLng b, double dist)
   {
@@ -2307,9 +2285,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     //        double distanceBetweenPoints = Math.sqrt(x+y);
     //        //if (distanceBetweenPoints < dist)//0.0000449)
     if (a.distanceTo(b) <= dist)
-      {
+    {
         return true;
-      }
+    }
+
     return false;
   }
 
@@ -2346,17 +2325,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                 if (currentBoat == null)
                 {
                   Toast.makeText(getApplicationContext(), "No Boat Connected", Toast.LENGTH_LONG).show();
-                  return;
                 }
-                if (currentBoat.getLocation() == null)
+                else if (currentBoat.getLocation() == null)
                 {
                     Toast.makeText(getApplicationContext(), "Waiting on boat GPS", Toast.LENGTH_LONG).show();
-                    return;
                 }
-                if (mMapboxMap == null)
+                else if (mMapboxMap == null)
                 {
                     Toast.makeText(getApplicationContext(), "Map still loading", Toast.LENGTH_LONG).show();
-                    return;
                 }
               }
           });
@@ -2393,12 +2369,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
                       }
                     });
                   startDraw = false;
-                  if (waypointLayoutEnabled == false) {
+                  if (!waypointLayoutEnabled) {
                     drawPoly.setClickable(false);
                   }
 
                 } else {
-                  if (waypointLayoutEnabled == false) {
+                  if (!waypointLayoutEnabled) {
                     drawPoly.setClickable(true);
                   }
                 }
@@ -2451,7 +2427,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
       });
     deleteWaypoint.setOnClickListener(new View.OnClickListener() {
         public void onClick(View v) {
-          if (containsRegion == true)
+          if (containsRegion)
             {
               Toast.makeText(getApplicationContext(), "Please Delete Region in Region Menu", Toast.LENGTH_LONG).show();
               return;
@@ -2518,7 +2494,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
             AlertDialog alert = builder.create();
             alert.show();
           }
-          if (pauseWP.isChecked() == false) {
+          if (!pauseWP.isChecked()) {
             startWaypoints();
           }
 
@@ -2673,7 +2649,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener {
     drawPoly.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View v) {
-          if (startDraw == false) {
+          if (!startDraw) {
             drawPoly.setBackgroundResource(R.drawable.draw_icon2);
           } else {
             drawPoly.setBackgroundResource(R.drawable.draw_icon);

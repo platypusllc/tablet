@@ -14,7 +14,6 @@ import com.platypus.crw.CrwNetworkUtils;
 
 import java.net.InetSocketAddress;
 
-//import com.google.android.gms.maps.MapFragment;
 
 public class ConnectScreen extends Activity implements OnClickListener {
 

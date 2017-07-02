@@ -125,12 +125,11 @@ public class Boat
 
 	}
 
-
+	// Removed null from here but this method needs fixing/implementation -ckt
 	public double getRotation()
 	{
-		return (Double) null;
+		return 0.0;
 	}
-
 	public double getThrust()
 	{
 		return tw.dx() / .010;

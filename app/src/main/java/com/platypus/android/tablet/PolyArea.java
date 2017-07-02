@@ -257,7 +257,6 @@ public class PolyArea {
 
         ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
         spirals.add(vertices);
-        int i = 0;
 
         //ArrayList<LatLng> pointToCenter = new ArrayList<LatLng>();
         //normalized vectors from vertex to center

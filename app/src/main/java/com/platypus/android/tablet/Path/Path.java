@@ -53,7 +53,6 @@ public class Path
 
   public void outputPointsToOctave()
   {
-    String output = "";
     System.out.print("x=[");
     for (LatLng a : points)
     {
