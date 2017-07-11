@@ -46,6 +46,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.media.Ringtone;
@@ -70,6 +71,7 @@ import com.platypus.android.tablet.Path.AreaType;
 import com.platypus.android.tablet.Path.Path;
 import com.platypus.android.tablet.Path.Region;
 import com.platypus.crw.CrwNetworkUtils;
+import com.platypus.crw.FunctionObserver;
 import com.platypus.crw.VehicleServer;
 import com.platypus.crw.data.SensorData;
 import com.platypus.crw.data.Pose3D;
@@ -85,6 +87,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -133,6 +136,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		Button normal_path_button = null;
 		Button spiral_button = null;
 		Button lawnmower_button = null;
+	  Button joystick_button = null;
 
 		TextView sensorData1 = null;
 		TextView sensorData2 = null;
@@ -147,7 +151,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		TextView path_length_value = null;
 
 		JoystickView joystick;
-		private boolean speed_spinner_erroneous_call = true;
+   	JoystickView joystickBig;
+
+
+	  private boolean speed_spinner_erroneous_call = true;
 		Spinner speed_spinner = null;
 		Spinner available_boats_spinner = null;
 		ColorfulSpinnerAdapter available_boats_spinner_adapter = null;
@@ -470,6 +477,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				transect_distance_input = (EditText) this.findViewById(R.id.transect_distance_input);
 				waypointInfo = (TextView) this.findViewById(R.id.waypoint_status);
 				path_length_value = (TextView) this.findViewById(R.id.path_length_value);
+			  joystick_button = (Button) this.findViewById(R.id.joystick_button);
 
 				advanced_options_button = (Button) this.findViewById(R.id.advopt);
 				center_view_button = (Button) this.findViewById(R.id.centermap);
@@ -1057,6 +1065,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 						}
 				});
+			joystick_button.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					enlargeJoystick();
+				}
+			});
 		}
 
 		@Override
@@ -2108,5 +2122,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						total_distance += points.get(i).distanceTo(points.get(i-1));
 				}
 				path_length_value.setText(Long.toString(Math.round(total_distance)));
+		}
+		public void enlargeJoystick() {
+			Dialog dialog = null;
+
+			if (dialog == null) {
+				dialog = new Dialog(context);
+				dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+				dialog.setContentView(R.layout.joystick_dialog);
+				dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+
+				dialog.create();
+
+				// Setup the listener
+				joystickBig = (JoystickView) dialog.findViewById(R.id.joystickViewBig);
+				joystickBig.setYAxisInverted(false);
+				//joystickBig.setMovementRange(100.0f);
+				//joystickBig.setOnJostickMovedListener(new JoystickMovedHandler(100.0f));
+			}
+				dialog.show();
 		}
 }
