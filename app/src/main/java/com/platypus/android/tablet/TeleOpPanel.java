@@ -2137,6 +2137,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				// Setup the listener
 				joystickBig = (JoystickView) dialog.findViewById(R.id.joystickViewBig);
 				joystickBig.setYAxisInverted(false);
+				joystickBig.setOnJostickMovedListener(joystick_moved_listener);
+				joystickBig.setOnClickListener(null);
+
 				//joystickBig.setMovementRange(100.0f);
 				//joystickBig.setOnJostickMovedListener(new JoystickMovedHandler(100.0f));
 			}
