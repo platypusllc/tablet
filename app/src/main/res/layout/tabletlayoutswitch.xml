@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:mapbox="http://schemas.android.com/apk/res-auto"
+                xmlns:mapbox="http://schemas.android.com/apk/res-auto"
                 xmlns:tools="http://schemas.android.com/tools"
                 android:id="@+id/linlay"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
     <RelativeLayout
         android:id="@+id/relativeLayout_boat"
@@ -25,22 +25,12 @@
             android:text="Connect to boat"
             />
 
-        <TextView
-            android:id="@+id/printIpAddress"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/connectButton"
-            android:layout_gravity="center"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:gravity="center_horizontal|center_vertical"
-            android:textColor="@color/black"/>
 
         <RelativeLayout
             android:id="@+id/relativeLayout_waypoint_status"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/printIpAddress"
+            android:layout_below="@+id/connectButton"
             android:layout_marginTop="10dp"
             >
 
@@ -62,38 +52,10 @@
         </RelativeLayout>
 
         <RelativeLayout
-            android:id="@+id/relativeLayout_battery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/relativeLayout_waypoint_status"
-            android:layout_marginBottom="10dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginTop="10dp"
-            >
-
-            <TextView
-                android:id="@+id/batteryTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentTop="true"
-                android:text="Battery"/>
-
-            <TextView
-                android:id="@+id/batteryVoltage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentTop="true"
-                android:text="0.0"/>
-        </RelativeLayout>
-
-        <RelativeLayout
             android:id="@+id/relativeLayout_speed"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/relativeLayout_battery"
+            android:layout_below="@+id/relativeLayout_waypoint_status"
             android:layout_marginLeft="10dp">
 
             <TextView
@@ -183,6 +145,72 @@
         </RelativeLayout>
 
     </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_toRightOf="@id/relativeLayout_boat"
+        android:layout_height="50dp"
+        android:paddingTop="5dp"
+        android:background="@drawable/border">
+
+        <LinearLayout
+
+            android:id="@+id/linearLayout_top"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:visibility="visible"
+            android:paddingLeft="5dp">
+
+
+            <TextView
+                android:id="@+id/printIpAddress"
+                android:layout_width="150dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_alignParentTop="true"
+                android:layout_gravity="center"
+                android:background="@color/cyan"
+                android:gravity="center_horizontal|center_vertical"
+                android:text="No connection"
+                android:textColor="@color/green" />
+
+            <TextView
+                android:id="@+id/mapinfo"
+                style="?android:attr/textAppearanceSmall"
+                android:layout_width="150dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentStart="true"
+                android:gravity="center_horizontal|center_vertical"
+                android:layout_margin="5dp"
+                android:text="Map Information"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            <TextView
+                android:id="@+id/batteryVoltage"
+                android:layout_width="150dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:background="@color/asdf"
+                android:gravity="center_horizontal|center_vertical"
+                android:text="Battery"/>
+
+            <Button
+                android:id="@+id/advopt"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:text="Advanced"
+                />
+
+        </LinearLayout>
+
+
+
+
+    </RelativeLayout>
+
 
     <LinearLayout
         android:id="@+id/relativeLayout_paths"
@@ -310,14 +338,13 @@
 
         </RelativeLayout>
 
-        </LinearLayout>
+    </LinearLayout>
 
     <Button
         android:id="@+id/joystick_button"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:background="@drawable/joystick_icon"
-        android:layout_marginTop="20dp"
         android:layout_below="@+id/relativeLayout_paths"
         android:layout_alignParentStart="true"/>
 
@@ -327,37 +354,28 @@
         android:layout_width="fill_parent"
         android:layout_weight="0.5"
         android:layout_toRightOf="@+id/relativeLayout_boat"
+        android:layout_below="@id/topBar"
         >
 
 
 
-            <com.mapbox.mapboxsdk.maps.MapView
-                android:id="@+id/mapview"
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
-                mapbox:access_token="pk.eyJ1IjoicGxhdHlwdXNsbGMiLCJhIjoiY2lsM3p5bjJyM3U0N3Z5bTNxbmFpZXNwaSJ9.YWzXSt3aXtpoBrdMPmLE3Q"
-                mapbox:style_url="@string/style_mapbox_streets"/>
+        <com.mapbox.mapboxsdk.maps.MapView
+            android:id="@+id/mapview"
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            mapbox:access_token="pk.eyJ1IjoicGxhdHlwdXNsbGMiLCJhIjoiY2lsM3p5bjJyM3U0N3Z5bTNxbmFpZXNwaSJ9.YWzXSt3aXtpoBrdMPmLE3Q"
+            mapbox:style_url="@string/style_mapbox_streets"/>
 
-            <Button
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/centermap"
-                android:text="Center"
-                android:layout_alignTop="@id/mapview"
-                android:layout_alignLeft="@id/mapview"/>
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/centermap"
+            android:text="Center"
+            android:layout_alignTop="@id/mapview"
+            android:layout_alignLeft="@id/mapview"/>
 
-            <Button
-                android:id="@+id/advopt"
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentRight="true"
-                android:text="Advanced Options"
-                />
 
         <com.platypus.android.tablet.Joystick.JoystickView
             android:id="@+id/joystickView"
@@ -467,6 +485,6 @@
 
         </RelativeLayout>
 
-        </RelativeLayout>
+    </RelativeLayout>
 
 </RelativeLayout>

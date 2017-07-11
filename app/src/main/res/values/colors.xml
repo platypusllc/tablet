@@ -28,4 +28,10 @@
     <color name="white">#ffffff</color>
     <color name="background_holo_dark">#ff000000</color>
     <color name="background_holo_light">#fff3f3f3</color>
+
+    <color name="red">#FF0000</color>
+    <color name="green">#080000</color>
+    <color name="asdf">#339900</color> <!--who wrote this, this color is called green-->
+    <color name="cyan">#0080FF</color>
+
 </resources>

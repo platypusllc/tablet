@@ -385,7 +385,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												break;
 										case 4:
 												String[] data_split = data.split(",");
-												battery_value.setText(data_split[0].substring(1) + " V");
+											battery_value.setText("Battery: " + data_split[0].substring(1) + " V");
 												synchronized (_batteryVoltageLock)
 												{
 														battery_voltage = Double.parseDouble(data_split[0].substring(1));
@@ -438,7 +438,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		protected void onCreate(final Bundle savedInstanceState)
 		{
 				super.onCreate(savedInstanceState);
-				this.setContentView(R.layout.tabletlayoutswitch);
+			//this.setContentView(R.layout.tabletlayoutswitch);
+			  this.setContentView(R.layout.tablet_layout_revised);
 
 				// establish color_map
 				color_map.put(0, new HashMap<String, Integer>());
@@ -522,7 +523,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										sensorType3.setText("");
 										sensorData3.setText("");
 										waypointInfo.setText("");
-										battery_value.setText("");
+										battery_value.setText("Battery: ");
 								}
 						}
 
