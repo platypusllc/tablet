@@ -238,7 +238,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		void startNewBoat(final String boat_name)
 		{
 				// generate Boat object and put it into the boat_map
-				Boat newBoat = new Boat(boat_name);
+				//Boat newBoat = new RealBoat(boat_name);
+				UTM initial_utm = UTM.latLongToUtm(LatLong.valueOf(45.404586,
+								10.998773, NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
+				Boat newBoat = new SimulatedBoat(boat_name, initial_utm);
 				available_boats_spinner_adapter.add(boat_name);
 				available_boats_spinner_adapter.notifyDataSetChanged();
 
