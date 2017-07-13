@@ -1,4 +1,6 @@
 package com.platypus.android.tablet;
+import android.util.Log;
+
 import com.platypus.crw.data.UtmPose;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -23,6 +25,7 @@ import javax.measure.unit.SI;
 
 public class SimulatedBoat extends Boat
 {
+		InetSocketAddress addr;
 		Runnable _poseListenerCallback = null;
 		Runnable _sensorListenerCallback = null;
 		Runnable _waypointListenerCallback = null;
@@ -51,6 +54,7 @@ public class SimulatedBoat extends Boat
 				@Override
 				public void computeDerivatives(double t, double[] q, double[] qdot) throws MaxCountExceededException, DimensionMismatchException
 				{
+						//Log.v("ODE", String.format("thrust = %.2f  torque = %.2f", thrustSurge, torque));
 						m = 6; // kg
 						I = 0.6; // kg/m^2
 						u = q[2];
@@ -60,12 +64,16 @@ public class SimulatedBoat extends Boat
 						au = 0.0108589939; // m^2
 						aw = 0.0424551192;
 						ath = 0.0424551192;
-						cu = 0.258717640651218;
-						cw = 1.088145891415693;
-						cth = 0.048292066650533;
+						cu = 0.5;
+						cw = 1.0;
+						cth = 0.5;
 						qdot[0] = u*Math.cos(th) - w*Math.sin(th);
 						qdot[1] = u*Math.sin(th) + w*Math.cos(th);
 						qdot[2] = 1.0/m*(thrustSurge - 0.5*1000.0*au*cu*Math.abs(u)*u);
+						if (u < 0.25)
+						{
+								qdot[2] -= 5.0*u/m - Math.signum(u)*0.001;
+						}
 						qdot[3] = 1.0/m*(thrustSway - 0.5*1000.0*aw*cw*Math.abs(w)*w);
 						qdot[4] = thdot;
 						qdot[5] = 1.0/I*(torque - 0.5*1000.0*ath*cth*Math.abs(thdot)*thdot);
@@ -77,6 +85,7 @@ public class SimulatedBoat extends Boat
 		{
 				name = boat_name;
 				connected.set(true);
+				Log.e("ODE", String.format("Creating simulated boat %s", name));
 				original_utm = initial_utm.copy();
 				original_easting = initial_utm.eastingValue(SI.METER);
 				original_northing = initial_utm.northingValue(SI.METER);
@@ -145,13 +154,13 @@ public class SimulatedBoat extends Boat
 						// update thrust and torque values
 						// run ode integrator
 						t = System.currentTimeMillis();
-						// TODO: calculate the thrust and torque created from the motor signals
+						Log.e("ODE", String.format("ODE: t = %.2f", (t - t0)/1000.));
 						if (autonomous.get())
 						{
 								control();
 						}
 						thrustAndTorque();
-						rk4.integrate(ode, 1000.*(tOld - t0), qOld, 1000.*(t - t0), q);
+						rk4.integrate(ode, (tOld - t0)/1000., qOld, (t - t0)/1000., q);
 						easting = q[0] + original_easting;
 						northing = q[1] + original_northing;
 						// TODO: take the updated easting and northing and update the boat location
@@ -171,6 +180,7 @@ public class SimulatedBoat extends Boat
 										)
 						);
 						tOld = t;
+						qOld = q.clone();
 						if (_poseListenerCallback != null) uiHandler.post(_poseListenerCallback); // update GUI with result
 				}
 		};
@@ -183,9 +193,10 @@ public class SimulatedBoat extends Boat
 				_poseListenerCallback = poseListenerCallback;
 				_sensorListenerCallback = sensorListenerCallback;
 				_waypointListenerCallback = waypointListenerCallback;
-				polling_thread_pool = new ScheduledThreadPoolExecutor(2);
+				polling_thread_pool = new ScheduledThreadPoolExecutor(1);
 				polling_thread_pool.scheduleAtFixedRate(
 								kinematicSimulationLoop, 0, DYNAMICS_POLL_MS, TimeUnit.MILLISECONDS);
+				Log.e("ODE", "Started simulation thread");
 		}
 
 		@Override
@@ -249,11 +260,11 @@ public class SimulatedBoat extends Boat
 		}
 
 		@Override
-		public void setAddress(InetSocketAddress a) { }
+		public void setAddress(InetSocketAddress a) { addr = a; }
 
 		@Override
 		public InetSocketAddress getIpAddress()
 		{
-				return null;
+				return addr;
 		}
 }
