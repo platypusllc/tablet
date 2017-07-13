@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.platypus.crw.data.Pose3D;
 import com.platypus.crw.data.SensorData;
 import com.platypus.crw.data.UtmPose;
 
@@ -150,11 +151,30 @@ public abstract class Boat
 				}
 		}
 
-		public com.mapbox.mapboxsdk.geometry.LatLng jscienceLatLng_to_mapboxLatLng(org.jscience.geography.coordinates.LatLong jlatlng)
+		public static com.mapbox.mapboxsdk.geometry.LatLng jscienceLatLng_to_mapboxLatLng(org.jscience.geography.coordinates.LatLong jlatlng)
 		{
 				LatLng result = new LatLng(
 								jlatlng.latitudeValue(SI.RADIAN)*180./Math.PI,
 								jlatlng.longitudeValue(SI.RADIAN)*180./Math.PI);
 				return result;
+		}
+
+		public static double planarDistanceSq(Pose3D a, Pose3D b) {
+				double dx = a.getX() - b.getX();
+				double dy = a.getY() - b.getY();
+				return dx * dx + dy * dy;
+		}
+
+		public static double angleBetween(Pose3D src, Pose3D dest) {
+				return Math.atan2((dest.getY() - src.getY()),
+								(dest.getX() - src.getX()));
+		}
+
+		public static double normalizeAngle(double angle) {
+				while (angle > Math.PI)
+						angle -= 2 * Math.PI;
+				while (angle < -Math.PI)
+						angle += 2 * Math.PI;
+				return angle;
 		}
 }

@@ -1,6 +1,7 @@
 package com.platypus.android.tablet;
 import android.util.Log;
 
+import com.platypus.crw.data.Pose3D;
 import com.platypus.crw.data.UtmPose;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -99,14 +100,77 @@ public class SimulatedBoat extends Boat
 				long t = System.currentTimeMillis();
 				double easting;
 				double northing;
+				double prev_angle_destination;
 
 				public void control()
 				{
 						// TODO: perform some kind of autonomous control. Return thrust and moment signals
+						double dt = (t - tOld)/1000.;
+						if (_waypoints.length <= 0 || current_waypoint_index.get() < 0)
+						{
+								Log.d("ODE", "Control: no waypoints to perform");
+								synchronized (control_signals_lock)
+								{
+										thrustSignal = 0.;
+										headingSignal = 0.;
+								}
+								return;
+						}
+						Pose3D waypoint;
+						synchronized (waypoints_lock)
+						{
+								waypoint = _waypoints[current_waypoint_index.get()].pose;
+						}
+						double wX = waypoint.getX() - original_easting;
+						double wY = waypoint.getY() - original_northing;
+						double distanceSq = Math.pow(wX - q[0], 2.0) + Math.pow(wY - q[1], 2.0);
+						if (distanceSq <= 3*3)
+						{
+								Log.i("ODE", String.format("Control: finished waypoint # %d", current_waypoint_index.get()));
+								current_waypoint_index.incrementAndGet();
+								if (current_waypoint_index.get() == _waypoints.length)
+								{
+										current_waypoint_index.set(-1); // finished last waypoint, reset
+										prev_angle_destination = 0.;
+										synchronized (waypoints_lock)
+										{
+												_waypoints = new UtmPose[0]; // empty
+										}
+										synchronized (waypoint_state_lock)
+										{
+												waypointState = "DONE";
+										}
+								}
+						}
+						// find destination angle between boat and waypoint position
+						double angle_destination = Math.atan2(wY - q[1], wX - q[0]);
+
+						// use compass information to get heading of the boat
+						double angle_boat = q[4];
+						double angle_between = normalizeAngle(angle_destination - angle_boat);
+						double drz = q[5];
+						// use previous data to get rate of change of destination angle
+						double angle_destination_change = (angle_destination - prev_angle_destination) / dt;
+
+						double[] thrust_pids = {1.0, 0., 0.};
+						double[] rudder_pids = {1.0, 0., 0.};
+
+						double pos = rudder_pids[0]*(angle_between) + rudder_pids[2]*(angle_destination_change - drz);
+
+						// Ensure values are within bounds
+						if (pos < -1.0)
+								pos = -1.0;
+						else if (pos > 1.0)
+								pos = 1.0;
+
+						pos *= -1;
+
+						double thrust = 1.0 * thrust_pids[0]; // Use a normalized thrust value of 1.0.
+
 						synchronized (control_signals_lock)
 						{
-								thrustSignal = 2.*Math.random()-1.;
-								headingSignal = 2.*Math.random()-1.;
+								thrustSignal = thrust;
+								headingSignal = pos;
 						}
 				}
 
@@ -182,11 +246,12 @@ public class SimulatedBoat extends Boat
 								{
 										waypointState = "GOING";
 								}
+								Log.v("ODE", "Boat is autonomous and has waypoints. Calling control()");
 								control();
 						}
 						uiHandler.post(_waypointListenerCallback); // update GUI with result
 						thrustAndTorque();
-						Log.e("ODE", String.format("thrust = %.2f  torque = %.2f", thrustSurge, torque));
+						Log.v("ODE", String.format("thrust = %.2f  torque = %.2f", thrustSurge, torque));
 						rk4.integrate(ode, (tOld - t0)/1000., qOld, (t - t0)/1000., q);
 						easting = q[0] + original_easting;
 						northing = q[1] + original_northing;
@@ -234,6 +299,7 @@ public class SimulatedBoat extends Boat
 				}
 				current_waypoint_index.set(0);
 				autonomous.set(true);
+				Log.i("ODE", "Starting new waypoints");
 		}
 
 		@Override
