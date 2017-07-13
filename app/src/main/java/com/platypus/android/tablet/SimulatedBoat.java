@@ -54,7 +54,6 @@ public class SimulatedBoat extends Boat
 				@Override
 				public void computeDerivatives(double t, double[] q, double[] qdot) throws MaxCountExceededException, DimensionMismatchException
 				{
-						//Log.v("ODE", String.format("thrust = %.2f  torque = %.2f", thrustSurge, torque));
 						m = 6; // kg
 						I = 0.6; // kg/m^2
 						u = q[2];
@@ -85,7 +84,7 @@ public class SimulatedBoat extends Boat
 		{
 				name = boat_name;
 				connected.set(true);
-				Log.e("ODE", String.format("Creating simulated boat %s", name));
+				Log.i("ODE", String.format("Creating simulated boat %s", name));
 				original_utm = initial_utm.copy();
 				original_easting = initial_utm.eastingValue(SI.METER);
 				original_northing = initial_utm.northingValue(SI.METER);
@@ -101,20 +100,25 @@ public class SimulatedBoat extends Boat
 				double easting;
 				double northing;
 
-				public double[] control()
+				public void control()
 				{
 						// TODO: perform some kind of autonomous control. Return thrust and moment signals
-						thrustSignal = 0.;
-						headingSignal = 0.;
-						return null;
+						synchronized (control_signals_lock)
+						{
+								thrustSignal = 2.*Math.random()-1.;
+								headingSignal = 2.*Math.random()-1.;
+						}
 				}
 
 				public double[] motorSignals()
 				{
 						// calculate motor signals from thrust and moment signals, assuming Lutra tank
 						double[] signals = new double[2];
-						signals[0] = thrustSignal + headingSignal;
-						signals[1] = thrustSignal - headingSignal;
+						synchronized (control_signals_lock)
+						{
+								signals[0] = thrustSignal + headingSignal;
+								signals[1] = thrustSignal - headingSignal;
+						}
 						for (int i = 0; i < 2; i++)
 						{
 								if (Math.abs(signals[i]) > 1.0)
@@ -154,16 +158,38 @@ public class SimulatedBoat extends Boat
 						// update thrust and torque values
 						// run ode integrator
 						t = System.currentTimeMillis();
-						Log.e("ODE", String.format("ODE: t = %.2f", (t - t0)/1000.));
-						if (autonomous.get())
+						Log.v("ODE", String.format("ODE: t = %.2f", (t - t0)/1000.));
+						if (!autonomous.get())
 						{
+								// nothing
+						}
+						else if (_waypoints.length == 0)
+						{
+								current_waypoint_index.set(-1);
+								synchronized (waypoint_state_lock)
+								{
+										waypointState = "DONE";
+								}
+								synchronized (control_signals_lock)
+								{
+										thrustSignal = 0.;
+										headingSignal = 0.;
+								}
+						}
+						else
+						{
+								synchronized (waypoint_state_lock)
+								{
+										waypointState = "GOING";
+								}
 								control();
 						}
+						uiHandler.post(_waypointListenerCallback); // update GUI with result
 						thrustAndTorque();
+						Log.e("ODE", String.format("thrust = %.2f  torque = %.2f", thrustSurge, torque));
 						rk4.integrate(ode, (tOld - t0)/1000., qOld, (t - t0)/1000., q);
 						easting = q[0] + original_easting;
 						northing = q[1] + original_northing;
-						// TODO: take the updated easting and northing and update the boat location
 						setYaw(Math.PI / 2 - q[4]);
 						setLocation(
 										jscienceLatLng_to_mapboxLatLng(
@@ -215,6 +241,15 @@ public class SimulatedBoat extends Boat
 		{
 				current_waypoint_index.set(-1);
 				autonomous.set(false);
+				synchronized (waypoint_state_lock)
+				{
+						waypointState = "CANCELLED";
+				}
+				synchronized (control_signals_lock)
+				{
+						thrustSignal = 0.0;
+						headingSignal = 0.0;
+				}
 		}
 
 		@Override
@@ -226,9 +261,9 @@ public class SimulatedBoat extends Boat
 								(thrust == 0.0 && heading == 0.0))
 				{
 						time_of_last_joystick.set(System.currentTimeMillis());
+						autonomous.set(false); // TODO: is this necessary?
 						synchronized (control_signals_lock)
 						{
-								autonomous.set(false);
 								thrustSignal = thrust;
 								headingSignal = heading;
 						}
@@ -240,6 +275,28 @@ public class SimulatedBoat extends Boat
 		public void setAutonomous(boolean b, Runnable failureCallback)
 		{
 				autonomous.set(b);
+				if (b)
+				{
+						if (_waypoints.length > 0)
+						{
+								synchronized (waypoint_state_lock)
+								{
+										waypointState = "GOING";
+								}
+						}
+				}
+				else
+				{
+						synchronized (waypoint_state_lock)
+						{
+								waypointState = "PAUSED";
+						}
+						synchronized (control_signals_lock)
+						{
+								thrustSignal = 0.;
+								headingSignal = 0.;
+						}
+				}
 		}
 
 		@Override
