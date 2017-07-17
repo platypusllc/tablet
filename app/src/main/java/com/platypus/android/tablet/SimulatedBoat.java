@@ -100,11 +100,23 @@ public class SimulatedBoat extends Boat
 				long t = System.currentTimeMillis();
 				double easting;
 				double northing;
-				double prev_angle_destination;
+				double[] heading_pid = {1.0, 0., 0.};
+				double[] thrust_pid = {0.5, 0., 0.};
+				double SUFFICIENT_PROXIMITY = 3.0;
+				double LOOKAHEAD = 5.0;
+
+				int last_wp_index = -2;
+				Pose3D destination_pose;
+				double x_dest, x_source, x_current, y_dest, y_source, y_current, th_full, th_current;
+				double x_projected, y_projected, x_lookahead, y_lookahead;
+				double dx_current, dx_full, dy_current, dy_full, L_current, L_full, dth;
+				double L_projected, distance_from_ideal_line;
+				double heading_desired, heading_current, heading_error, heading_error_old, heading_error_deriv;
+				double heading_signal, base_thrust, thrust_coefficient;
+				double angle_from_projected_to_boat, cross_product, thrust_signal;
 
 				public void control()
 				{
-						// TODO: perform some kind of autonomous control. Return thrust and moment signals
 						double dt = (t - tOld)/1000.;
 						if (_waypoints.length <= 0 || current_waypoint_index.get() < 0)
 						{
@@ -116,22 +128,44 @@ public class SimulatedBoat extends Boat
 								}
 								return;
 						}
-						Pose3D waypoint;
-						synchronized (waypoints_lock)
+						if (current_waypoint_index.get() != last_wp_index)
 						{
-								waypoint = _waypoints[current_waypoint_index.get()].pose;
+								if (current_waypoint_index.get() == 0)
+								{
+										x_source = q[0];
+										y_source = q[1];
+								}
+								else
+								{
+										x_source = x_dest;
+										y_source = y_dest;
+								}
+								synchronized (waypoints_lock)
+								{
+										destination_pose = _waypoints[current_waypoint_index.get()].pose;
+								}
+								x_dest = destination_pose.getX() - original_easting;
+								y_dest = destination_pose.getY() - original_northing;
+								dx_full = x_dest - x_source;
+								dy_full = y_dest - y_source;
+								th_full = Math.atan2(dy_full, dx_full);
+								L_full = Math.sqrt(Math.pow(dx_full, 2.) + Math.pow(dy_full, 2.));
 						}
-						double wX = waypoint.getX() - original_easting;
-						double wY = waypoint.getY() - original_northing;
-						double distanceSq = Math.pow(wX - q[0], 2.0) + Math.pow(wY - q[1], 2.0);
-						if (distanceSq <= 3*3)
+						x_current = q[0];
+						y_current = q[1];
+						heading_current = q[4];
+
+						double distanceSq = Math.pow(x_dest - x_current, 2.0) + Math.pow(x_dest - y_current, 2.0);
+						if (distanceSq <= SUFFICIENT_PROXIMITY*SUFFICIENT_PROXIMITY)
 						{
 								Log.i("ODE", String.format("Control: finished waypoint # %d", current_waypoint_index.get()));
+								last_wp_index = current_waypoint_index.get();
 								current_waypoint_index.incrementAndGet();
 								if (current_waypoint_index.get() == _waypoints.length)
 								{
 										current_waypoint_index.set(-1); // finished last waypoint, reset
-										prev_angle_destination = 0.;
+										last_wp_index = -2;
+
 										synchronized (waypoints_lock)
 										{
 												_waypoints = new UtmPose[0]; // empty
@@ -142,35 +176,57 @@ public class SimulatedBoat extends Boat
 										}
 								}
 						}
-						// find destination angle between boat and waypoint position
-						double angle_destination = Math.atan2(wY - q[1], wX - q[0]);
 
-						// use compass information to get heading of the boat
-						double angle_boat = q[4];
-						double angle_between = normalizeAngle(angle_destination - angle_boat);
-						double drz = q[5];
-						// use previous data to get rate of change of destination angle
-						double angle_destination_change = (angle_destination - prev_angle_destination) / dt;
+						// Line following geometry
+						dx_current = x_current - x_source;
+						dy_current = y_current - y_source;
+						th_current = Math.atan2(dy_current, dx_current);
+						L_current = Math.sqrt(Math.pow(dx_current, 2.) + Math.pow(dy_current, 2.));
+						dth = normalizeAngle(th_full - th_current);
+						L_projected = L_current*Math.cos(dth);
+						distance_from_ideal_line = L_current*Math.sin(dth);
+						x_projected = x_source + L_projected*Math.cos(th_full);
+						y_projected = y_source + L_projected*Math.sin(th_full);
+						x_lookahead = x_projected + LOOKAHEAD*Math.cos(th_full);
+						y_lookahead = y_projected + LOOKAHEAD*Math.sin(th_full);
+						if (L_projected + LOOKAHEAD > L_full)
+						{
+								x_lookahead = x_dest;
+								y_lookahead = y_dest;
+						}
+						heading_desired = Math.atan2(y_lookahead - y_current, x_lookahead - x_current);
+						heading_error = normalizeAngle(heading_desired - heading_current);
 
-						double[] thrust_pids = {1.0, 0., 0.};
-						double[] rudder_pids = {1.0, 0., 0.};
+						// PID
+						heading_error_deriv = (heading_error - heading_error_old)/dt;
+						heading_error_old = heading_error;
+						heading_signal = heading_pid[0]*heading_error + heading_pid[2]*heading_error_deriv;
+						if (Math.abs(heading_signal) > 1.0)
+						{
+								heading_signal = Math.copySign(1.0, heading_signal);
+						}
 
-						double pos = rudder_pids[0]*(angle_between) + rudder_pids[2]*(angle_destination_change - drz);
-
-						// Ensure values are within bounds
-						if (pos < -1.0)
-								pos = -1.0;
-						else if (pos > 1.0)
-								pos = 1.0;
-
-						pos *= -1;
-
-						double thrust = 1.0 * thrust_pids[0]; // Use a normalized thrust value of 1.0.
+						base_thrust = thrust_pid[0];
+						angle_from_projected_to_boat = Math.atan2(y_lookahead - y_current, x_lookahead - x_current);
+						cross_product = Math.cos(th_full)*Math.sin(angle_from_projected_to_boat)
+													  - Math.cos(angle_from_projected_to_boat)*Math.sin(th_full);
+						if (distance_from_ideal_line > SUFFICIENT_PROXIMITY)
+						{
+								if (cross_product < 0. && normalizeAngle(th_full - heading_current) < 0.)
+								{
+										thrust_coefficient = 0.0;
+								}
+								if (cross_product > 0. && normalizeAngle(th_full - heading_current) > 0.)
+								{
+										thrust_coefficient = 0.0;
+								}
+						}
+						thrust_signal = base_thrust*thrust_coefficient;
 
 						synchronized (control_signals_lock)
 						{
-								thrustSignal = thrust;
-								headingSignal = pos;
+								thrustSignal = thrust_signal;
+								headingSignal = heading_signal;
 						}
 				}
 
