@@ -98,12 +98,15 @@ public class SimulatedBoat extends Boat
 				long t0 = System.currentTimeMillis();
 				long tOld = System.currentTimeMillis();
 				long t = System.currentTimeMillis();
+				long tLastControl = 0;
 				double easting;
 				double northing;
-				double[] heading_pid = {1.0, 0., 0.};
-				double[] thrust_pid = {0.5, 0., 0.};
+				double[] heading_pid = {0.3, 0., 0.3};
+				double[] thrust_pid = {1.0, 0., 0.};
 				double SUFFICIENT_PROXIMITY = 3.0;
-				double LOOKAHEAD = 5.0;
+				double LOOKAHEAD_BASE = 5.0;
+				double lookahead;
+				double distanceSq;
 
 				int last_wp_index = -2;
 				Pose3D destination_pose;
@@ -128,8 +131,11 @@ public class SimulatedBoat extends Boat
 								}
 								return;
 						}
+						Log.v("ODE", String.format("current wp index = %d   last wp index = %d", current_waypoint_index.get(), last_wp_index));
 						if (current_waypoint_index.get() != last_wp_index)
 						{
+								Log.i("ODE", String.format("new waypoint, # = %d", current_waypoint_index.get()));
+								last_wp_index = current_waypoint_index.get();
 								if (current_waypoint_index.get() == 0)
 								{
 										x_source = q[0];
@@ -155,11 +161,13 @@ public class SimulatedBoat extends Boat
 						y_current = q[1];
 						heading_current = q[4];
 
-						double distanceSq = Math.pow(x_dest - x_current, 2.0) + Math.pow(x_dest - y_current, 2.0);
+						distanceSq = Math.pow(x_dest - x_current, 2.0) + Math.pow(y_dest - y_current, 2.0);
+						Log.v("ODE", String.format("source: %.0f, %.0f\ncurrent: %.0f, %.0f\ndest: %.0f, %.0f",
+										x_source, y_source, x_current, y_current, x_dest, y_dest));
+						Log.d("ODE", String.format("DistanceSq = %.1f", distanceSq));
 						if (distanceSq <= SUFFICIENT_PROXIMITY*SUFFICIENT_PROXIMITY)
 						{
 								Log.i("ODE", String.format("Control: finished waypoint # %d", current_waypoint_index.get()));
-								last_wp_index = current_waypoint_index.get();
 								current_waypoint_index.incrementAndGet();
 								if (current_waypoint_index.get() == _waypoints.length)
 								{
@@ -174,6 +182,7 @@ public class SimulatedBoat extends Boat
 										{
 												waypointState = "DONE";
 										}
+										return;
 								}
 						}
 
@@ -184,18 +193,23 @@ public class SimulatedBoat extends Boat
 						L_current = Math.sqrt(Math.pow(dx_current, 2.) + Math.pow(dy_current, 2.));
 						dth = normalizeAngle(th_full - th_current);
 						L_projected = L_current*Math.cos(dth);
-						distance_from_ideal_line = L_current*Math.sin(dth);
+						distance_from_ideal_line = L_current*Math.sin(dth); //////////////////////
 						x_projected = x_source + L_projected*Math.cos(th_full);
 						y_projected = y_source + L_projected*Math.sin(th_full);
-						x_lookahead = x_projected + LOOKAHEAD*Math.cos(th_full);
-						y_lookahead = y_projected + LOOKAHEAD*Math.sin(th_full);
-						if (L_projected + LOOKAHEAD > L_full)
+						lookahead = LOOKAHEAD_BASE*(1. - Math.tanh(0.2*Math.abs(distance_from_ideal_line)));
+						x_lookahead = x_projected + lookahead*Math.cos(th_full);
+						y_lookahead = y_projected + lookahead*Math.sin(th_full);
+						if (L_projected + lookahead > L_full)
 						{
 								x_lookahead = x_dest;
 								y_lookahead = y_dest;
 						}
+						Log.v("ODE", String.format("dth = %.2f", dth*180./Math.PI));
+						Log.d("ODE", String.format("Distance from ideal line = %.1f", distance_from_ideal_line));
+						Log.d("ODE", String.format("Lookahead = %.1f", lookahead));
+
 						heading_desired = Math.atan2(y_lookahead - y_current, x_lookahead - x_current);
-						heading_error = normalizeAngle(heading_desired - heading_current);
+						heading_error = normalizeAngle(heading_current - heading_desired);
 
 						// PID
 						heading_error_deriv = (heading_error - heading_error_old)/dt;
@@ -205,21 +219,32 @@ public class SimulatedBoat extends Boat
 						{
 								heading_signal = Math.copySign(1.0, heading_signal);
 						}
+						Log.d("ODE", String.format("Heading signal = %.1f", heading_signal));
 
 						base_thrust = thrust_pid[0];
 						angle_from_projected_to_boat = Math.atan2(y_lookahead - y_current, x_lookahead - x_current);
 						cross_product = Math.cos(th_full)*Math.sin(angle_from_projected_to_boat)
 													  - Math.cos(angle_from_projected_to_boat)*Math.sin(th_full);
+						thrust_coefficient = 1.0;
+						/*
 						if (distance_from_ideal_line > SUFFICIENT_PROXIMITY)
 						{
 								if (cross_product < 0. && normalizeAngle(th_full - heading_current) < 0.)
 								{
+										Log.d("ODE", "Negative cross product, zero thrust until parallel");
 										thrust_coefficient = 0.0;
 								}
 								if (cross_product > 0. && normalizeAngle(th_full - heading_current) > 0.)
 								{
+										Log.d("ODE","Positive cross product, zero thrust until parallel");
 										thrust_coefficient = 0.0;
 								}
+						}
+						*/
+						if (Math.abs(heading_error)*180./Math.PI > 45.0)
+						{
+								Log.d("ODE", "Heading error > 45 deg, cutting thrust");
+							thrust_coefficient = 0.0;
 						}
 						thrust_signal = base_thrust*thrust_coefficient;
 
@@ -303,7 +328,11 @@ public class SimulatedBoat extends Boat
 										waypointState = "GOING";
 								}
 								Log.v("ODE", "Boat is autonomous and has waypoints. Calling control()");
-								control();
+								if (t - tLastControl > 200) // 5 Hz control
+								{
+										control();
+										tLastControl = t;
+								}
 						}
 						uiHandler.post(_waypointListenerCallback); // update GUI with result
 						thrustAndTorque();
@@ -343,7 +372,7 @@ public class SimulatedBoat extends Boat
 				polling_thread_pool = new ScheduledThreadPoolExecutor(1);
 				polling_thread_pool.scheduleAtFixedRate(
 								kinematicSimulationLoop, 0, DYNAMICS_POLL_MS, TimeUnit.MILLISECONDS);
-				Log.e("ODE", "Started simulation thread");
+				Log.i("ODE", "Started simulation thread");
 		}
 
 		@Override
