@@ -193,7 +193,7 @@ public class SimulatedBoat extends Boat
 						L_current = Math.sqrt(Math.pow(dx_current, 2.) + Math.pow(dy_current, 2.));
 						dth = normalizeAngle(th_full - th_current);
 						L_projected = L_current*Math.cos(dth);
-						distance_from_ideal_line = L_current*Math.sin(dth); //////////////////////
+						distance_from_ideal_line = L_current*Math.sin(dth);
 						x_projected = x_source + L_projected*Math.cos(th_full);
 						y_projected = y_source + L_projected*Math.sin(th_full);
 						lookahead = LOOKAHEAD_BASE*(1. - Math.tanh(0.2*Math.abs(distance_from_ideal_line)));
@@ -244,7 +244,7 @@ public class SimulatedBoat extends Boat
 						if (Math.abs(heading_error)*180./Math.PI > 45.0)
 						{
 								Log.d("ODE", "Heading error > 45 deg, cutting thrust");
-							thrust_coefficient = 0.0;
+								thrust_coefficient = 0.0;
 						}
 						thrust_signal = base_thrust*thrust_coefficient;
 
