@@ -30,6 +30,7 @@ public class SimulatedBoat extends Boat
 		Runnable _poseListenerCallback = null;
 		Runnable _sensorListenerCallback = null;
 		Runnable _waypointListenerCallback = null;
+		Runnable _crumbListenerCallback = null;
 		UtmPose[] _waypoints = new UtmPose[0];
 		Object waypoints_lock = new Object();
 		double thrustSignal, headingSignal;
@@ -364,11 +365,13 @@ public class SimulatedBoat extends Boat
 		@Override
 		public void createListeners(final Runnable poseListenerCallback,
 		                            final Runnable sensorListenerCallback,
-		                            final Runnable waypointListenerCallback)
+		                            final Runnable waypointListenerCallback,
+		                            final Runnable crumbListenerCallback)
 		{
 				_poseListenerCallback = poseListenerCallback;
 				_sensorListenerCallback = sensorListenerCallback;
 				_waypointListenerCallback = waypointListenerCallback;
+				_crumbListenerCallback = crumbListenerCallback;
 				polling_thread_pool = new ScheduledThreadPoolExecutor(1);
 				polling_thread_pool.scheduleAtFixedRate(
 								kinematicSimulationLoop, 0, DYNAMICS_POLL_MS, TimeUnit.MILLISECONDS);

@@ -3,11 +3,13 @@ package com.platypus.android.tablet;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.FunctionObserver;
 import com.platypus.crw.PoseListener;
 import com.platypus.crw.SensorListener;
 import com.platypus.crw.VehicleServer;
 import com.platypus.crw.WaypointListener;
+import com.platypus.crw.CrumbListener;
 import com.platypus.crw.data.SensorData;
 import com.platypus.crw.data.Twist;
 import com.platypus.crw.data.UtmPose;
@@ -32,6 +34,7 @@ public class RealBoat extends Boat
 		private PoseListener pl;
 		private SensorListener sl;
 		private WaypointListener wl;
+		private CrumbListener cl;
 		private final int CONNECTION_POLL_S = 3;
 		private final int WAYPOINTS_INDEX_POLL_S = 1;
 
@@ -99,7 +102,8 @@ public class RealBoat extends Boat
 		@Override
 		public void createListeners(final Runnable poseListenerCallback,
 		                            final Runnable sensorListenerCallback,
-		                            final Runnable waypointListenerCallback)
+		                            final Runnable waypointListenerCallback,
+		                            final Runnable crumbListenerCallback)
 		{
 				{
 						pl = new PoseListener()
@@ -153,6 +157,27 @@ public class RealBoat extends Boat
 										uiHandler.post(waypointListenerCallback); // update GUI with result
 								}
 						};
+						cl = new CrumbListener()
+						{
+								@Override
+								public void receivedCrumb(UtmPose utmPose, long index)
+								{
+										setConnected(true);
+
+										// check if the index has been seen before
+										if (!crumb_map.containsKey(index))
+										{
+												// add the index to the known ones
+												crumb_map.put(index, null);
+												// create a LatLng from it // TODO
+												synchronized (crumb_lock)
+												{
+														new_crumb = UtmPose_to_LatLng(utmPose);
+												}
+												uiHandler.post(crumbListenerCallback); // update GUI with result
+										}
+								}
+						};
 						try
 						{
 								if (pl != null)
@@ -189,6 +214,17 @@ public class RealBoat extends Boat
 										{
 												@Override
 												public void completed(Void aVoid) { Log.i(logTag, "add waypoint listener"); }
+
+												@Override
+												public void failed(FunctionError functionError) { }
+										});
+								}
+								if (cl != null)
+								{
+										server.addCrumbListener(cl, new FunctionObserver<Void>()
+										{
+												@Override
+												public void completed(Void aVoid) { Log.i(logTag, "add crumb listener"); }
 
 												@Override
 												public void failed(FunctionError functionError) { }

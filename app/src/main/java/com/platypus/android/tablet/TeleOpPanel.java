@@ -115,6 +115,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		//HashMap<String, Polyline> boat_to_wp_line_map = new HashMap<>();
 		HashMap<String, Integer> current_wp_index_map = new HashMap<>();
 		HashMap<String, Integer> old_wp_index_map = new HashMap<>();
+		HashMap<String, ArrayList<Marker>> crumb_markers_map = new HashMap<>();
 
 		final Context context = this;
 		TextView ipAddressBox = null;
@@ -293,7 +294,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				newBoat.createListeners(
 								new BoatMarkerUpdateRunnable(newBoat),
 								new SensorDataReceivedRunnable(newBoat),
-								new WaypointStateReceivedRunnable(newBoat));
+								new WaypointStateReceivedRunnable(newBoat),
+								new CrumbReceivedRunnable(newBoat));
 				boats_map.put(boat_name, newBoat);
 		}
 		class BoatMarkerUpdateRunnable implements Runnable
@@ -343,6 +345,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						*/
 				}
 		}
+
 		class SensorDataReceivedRunnable implements Runnable
 		{
 				Boat boat;
@@ -411,6 +414,23 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						{
 								waypointInfo.setText(waypointState);
 						}
+				}
+		}
+
+		class CrumbReceivedRunnable implements Runnable
+		{
+				Boat boat;
+				String name;
+				LatLng crumb;
+				public CrumbReceivedRunnable(Boat _boat)
+				{
+						boat = _boat;
+						name = boat.getName();
+				}
+				public void run()
+				{
+						crumb = boat.getNewCrumb();
+						// TODO: create a new marker with the new crumb's LatLng
 				}
 		}
 

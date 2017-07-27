@@ -8,7 +8,12 @@ import com.platypus.crw.data.Pose3D;
 import com.platypus.crw.data.SensorData;
 import com.platypus.crw.data.UtmPose;
 
+import org.jscience.geography.coordinates.LatLong;
+import org.jscience.geography.coordinates.UTM;
+import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
+
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,6 +38,9 @@ public abstract class Boat
 		String logTag = "Boat"; //Boat.class.getName();
 		LatLng currentLocation = null;
 		Object location_lock = new Object();
+		LatLng new_crumb = null;
+		HashMap<Long, Void> crumb_map= new HashMap<Long, Void>();
+		Object crumb_lock = new Object();
 		double currentYaw = 0.0; // [-pi, pi]
 		Object yaw_lock = new Object();
 		double[][] PID_gains = {{0., 0., 0.}, {0., 0., 0.}}; // thrust, heading
@@ -51,7 +59,8 @@ public abstract class Boat
 		abstract public void createListeners(
 						final Runnable poseListenerCallback,
 						final Runnable sensorListenerCallback,
-						final Runnable waypointListenerCallback);
+						final Runnable waypointListenerCallback,
+						final Runnable crumbListenerCallback);
 		abstract public void startWaypoints(final UtmPose[] waypoints, final String controller_name, final Runnable failureCallback);
 		abstract public void stopWaypoints(final Runnable failureCallback);
 		abstract public void updateControlSignals(final double thrust, final double heading, final Runnable failureCallback);
@@ -151,12 +160,35 @@ public abstract class Boat
 				}
 		}
 
+		public LatLng getNewCrumb()
+		{
+				synchronized (crumb_lock)
+				{
+						return new_crumb;
+				}
+		}
+
 		public static com.mapbox.mapboxsdk.geometry.LatLng jscienceLatLng_to_mapboxLatLng(org.jscience.geography.coordinates.LatLong jlatlng)
 		{
 				LatLng result = new LatLng(
 								jlatlng.latitudeValue(SI.RADIAN)*180./Math.PI,
 								jlatlng.longitudeValue(SI.RADIAN)*180./Math.PI);
 				return result;
+		}
+
+		public static UTM UtmPose_to_UTM(UtmPose utmPose)
+		{
+				return UTM.valueOf (
+								utmPose.origin.zone,
+								utmPose.origin.isNorth ? 'T' : 'L',
+								utmPose.pose.getX(),
+								utmPose.pose.getY(),
+								SI.METER
+				);
+		}
+		public static com.mapbox.mapboxsdk.geometry.LatLng UtmPose_to_LatLng(UtmPose utmPose)
+		{
+				return jscienceLatLng_to_mapboxLatLng(UTM.utmToLatLong(UtmPose_to_UTM(utmPose), ReferenceEllipsoid.WGS84));
 		}
 
 		public static double planarDistanceSq(Pose3D a, Pose3D b) {
