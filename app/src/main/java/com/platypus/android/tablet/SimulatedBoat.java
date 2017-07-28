@@ -31,6 +31,7 @@ public class SimulatedBoat extends Boat
 		Runnable _sensorListenerCallback = null;
 		Runnable _waypointListenerCallback = null;
 		Runnable _crumbListenerCallback = null;
+		final double NEW_CRUMB_DISTANCE = 5; // meters
 		UtmPose[] _waypoints = new UtmPose[0];
 		Object waypoints_lock = new Object();
 		double thrustSignal, headingSignal;
@@ -119,7 +120,7 @@ public class SimulatedBoat extends Boat
 				double heading_signal, base_thrust, thrust_coefficient;
 				double angle_from_projected_to_boat, cross_product, thrust_signal;
 
-				public void control()
+				private void control()
 				{
 						double dt = (t - tOld)/1000.;
 						if (_waypoints.length <= 0 || current_waypoint_index.get() < 0)
@@ -227,21 +228,7 @@ public class SimulatedBoat extends Boat
 						cross_product = Math.cos(th_full)*Math.sin(angle_from_projected_to_boat)
 													  - Math.cos(angle_from_projected_to_boat)*Math.sin(th_full);
 						thrust_coefficient = 1.0;
-						/*
-						if (distance_from_ideal_line > SUFFICIENT_PROXIMITY)
-						{
-								if (cross_product < 0. && normalizeAngle(th_full - heading_current) < 0.)
-								{
-										Log.d("ODE", "Negative cross product, zero thrust until parallel");
-										thrust_coefficient = 0.0;
-								}
-								if (cross_product > 0. && normalizeAngle(th_full - heading_current) > 0.)
-								{
-										Log.d("ODE","Positive cross product, zero thrust until parallel");
-										thrust_coefficient = 0.0;
-								}
-						}
-						*/
+
 						if (Math.abs(heading_error)*180./Math.PI > 45.0)
 						{
 								Log.d("ODE", "Heading error > 45 deg, cutting thrust");
@@ -256,7 +243,7 @@ public class SimulatedBoat extends Boat
 						}
 				}
 
-				public double[] motorSignals()
+				private double[] motorSignals()
 				{
 						// calculate motor signals from thrust and moment signals, assuming Lutra tank
 						double[] signals = new double[2];
@@ -275,7 +262,7 @@ public class SimulatedBoat extends Boat
 						return signals;
 				}
 
-				public void thrustAndTorque()
+				private void thrustAndTorque()
 				{
 						// calculate thrust and torque from motor signals, assuming Lutra tank
 						double[] motor_signals = motorSignals();
@@ -294,6 +281,21 @@ public class SimulatedBoat extends Boat
 						thrustSurge = motor_thrusts[0] + motor_thrusts[1];
 						thrustSway = 0.0;
 						torque = (motor_thrusts[1] - motor_thrusts[0])/2.0*moment_arm;
+				}
+
+				private void updateCrumb()
+				{
+						// create new crumb
+						new_crumb_UTM = UTM.valueOf(
+										original_utm.longitudeZone(),
+										original_utm.latitudeZone(),
+										easting,
+										northing,
+										SI.METER
+						);
+						new_crumb_LatLng = jscienceLatLng_to_mapboxLatLng(
+										UTM.utmToLatLong(new_crumb_UTM, ReferenceEllipsoid.WGS84));
+						uiHandler.post(_crumbListenerCallback);
 				}
 
 				@Override
@@ -359,6 +361,19 @@ public class SimulatedBoat extends Boat
 						tOld = t;
 						qOld = q.clone();
 						if (_poseListenerCallback != null) uiHandler.post(_poseListenerCallback); // update GUI with result
+						if (new_crumb_UTM == null)
+						{
+								updateCrumb();
+						}
+						else
+						{
+								double dx_to_last_crumb = q[0] - (new_crumb_UTM.eastingValue(SI.METER) - original_easting);
+								double dy_to_last_crumb = q[1] - (new_crumb_UTM.northingValue(SI.METER) - original_northing);
+								if (Math.pow(dx_to_last_crumb, 2.) + Math.pow(dy_to_last_crumb, 2.) >= Math.pow(NEW_CRUMB_DISTANCE, 2.))
+								{
+										updateCrumb();
+								}
+						}
 				}
 		};
 

@@ -240,6 +240,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		{
 				// generate Boat object and put it into the boat_map
 				//Boat newBoat = new RealBoat(boat_name);
+				// TODO: give user option between real boat and simulated boat
 				UTM initial_utm = UTM.latLongToUtm(LatLong.valueOf(45.404586,
 								10.998773, NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
 				Boat newBoat = new SimulatedBoat(boat_name, initial_utm);
@@ -422,15 +423,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				Boat boat;
 				String name;
 				LatLng crumb;
+				Icon icon;
 				public CrumbReceivedRunnable(Boat _boat)
 				{
+						Log.i("ODE", "CrumbReceivedRunnable constructor");
 						boat = _boat;
 						name = boat.getName();
+						crumb_markers_map.put(name, new ArrayList<Marker>());
+						icon = mIconFactory.fromResource(R.drawable.empty_circle);
 				}
 				public void run()
 				{
 						crumb = boat.getNewCrumb();
-						// TODO: create a new marker with the new crumb's LatLng
+						int size = crumb_markers_map.get(name).size();
+						crumb_markers_map.get(name).add(mMapboxMap.addMarker(new MarkerOptions().position(crumb).icon(icon).title(Integer.toString(size))));
 				}
 		}
 

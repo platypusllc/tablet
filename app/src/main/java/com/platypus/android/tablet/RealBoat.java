@@ -168,11 +168,12 @@ public class RealBoat extends Boat
 										if (!crumb_map.containsKey(index))
 										{
 												// add the index to the known ones
-												crumb_map.put(index, null);
-												// create a LatLng from it // TODO
+												crumb_map.put(index, utmPose);
+												// create a LatLng from it
 												synchronized (crumb_lock)
 												{
-														new_crumb = UtmPose_to_LatLng(utmPose);
+														new_crumb_LatLng = UtmPose_to_LatLng(utmPose);
+														new_crumb_UTM = UtmPose_to_UTM(utmPose);
 												}
 												uiHandler.post(crumbListenerCallback); // update GUI with result
 										}

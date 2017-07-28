@@ -38,8 +38,9 @@ public abstract class Boat
 		String logTag = "Boat"; //Boat.class.getName();
 		LatLng currentLocation = null;
 		Object location_lock = new Object();
-		LatLng new_crumb = null;
-		HashMap<Long, Void> crumb_map= new HashMap<Long, Void>();
+		LatLng new_crumb_LatLng = null;
+		UTM new_crumb_UTM = null;
+		HashMap<Long, UtmPose> crumb_map= new HashMap<Long, UtmPose>();
 		Object crumb_lock = new Object();
 		double currentYaw = 0.0; // [-pi, pi]
 		Object yaw_lock = new Object();
@@ -164,7 +165,7 @@ public abstract class Boat
 		{
 				synchronized (crumb_lock)
 				{
-						return new_crumb;
+						return new_crumb_LatLng;
 				}
 		}
 
