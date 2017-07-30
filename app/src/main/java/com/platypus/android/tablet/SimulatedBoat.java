@@ -4,6 +4,10 @@ import android.util.Log;
 import com.platypus.crw.data.Pose3D;
 import com.platypus.crw.data.UtmPose;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -286,6 +290,8 @@ public class SimulatedBoat extends Boat
 				private void updateCrumb()
 				{
 						// create new crumb
+						// 1) assign to latest crumb variables so GUI can be updated
+						// 2) add the crumb to the overall list
 						new_crumb_UTM = UTM.valueOf(
 										original_utm.longitudeZone(),
 										original_utm.latitudeZone(),
@@ -295,6 +301,7 @@ public class SimulatedBoat extends Boat
 						);
 						new_crumb_LatLng = jscienceLatLng_to_mapboxLatLng(
 										UTM.utmToLatLong(new_crumb_UTM, ReferenceEllipsoid.WGS84));
+						newCrumb(new_crumb_UTM);
 						uiHandler.post(_crumbListenerCallback);
 				}
 
@@ -492,5 +499,170 @@ public class SimulatedBoat extends Boat
 		public InetSocketAddress getIpAddress()
 		{
 				return addr;
+		}
+
+		///////////////////////////////////////////////////////////////////////////
+		// BREADCRUMBS STUFF
+		///////////////////////////////////////////////////////////////////////////
+
+		final double MAX_NEIGHBOR_DISTANCE = 10;
+		Map<Long, Crumb> crumbs_by_index = new HashMap<>();
+		Map<Long, Map<Long, Double>> pairwise_distances = new HashMap<>();
+		Map<Long, List<Long>> neighbors = new HashMap<>();
+		public double distanceBetweenUTM(UTM location_i, UTM location_j)
+		{
+				double dx = location_i.eastingValue(SI.METER) - original_easting;
+				double dy = location_i.northingValue(SI.METER) - original_northing;
+				return Math.sqrt(dx*dx + dy*dy);
+		}
+		public double distanceBetweenCrumbs(long index_i, long index_j)
+		{
+				UTM location_i = crumbs_by_index.get(index_i).getLocation();
+				UTM location_j = crumbs_by_index.get(index_j).getLocation();
+				return distanceBetweenUTM(location_i, location_j);
+		}
+		public long newCrumb(UTM _location)
+		{
+				// initialize objects
+				long new_index = crumbs_by_index.size();
+				Crumb new_crumb = new Crumb(new_index, _location);
+				crumbs_by_index.put(new_index, new_crumb);
+				pairwise_distances.put(new_index, new HashMap<Long, Double>());
+				neighbors.put(new_index, new ArrayList<Long>());
+
+				// calculate pairwise distances and neighbors
+				for (Map.Entry<Long, Crumb> entry_i : crumbs_by_index.entrySet())
+				{
+						for (Map.Entry<Long, Crumb> entry_j : crumbs_by_index.entrySet())
+						{
+								long index_i = entry_i.getKey();
+								long index_j = entry_j.getKey();
+
+								// if a Crumb is being compared to itself
+								// OR
+								// if a calculation was previously performed for pair (i,j)
+								if (index_i == index_j || pairwise_distances.get(index_i).containsKey(index_j))
+								{
+										continue; // don't perform the calculations
+								}
+
+								double pairwise_distance = distanceBetweenCrumbs(index_i, index_j);
+								pairwise_distances.get(index_i).put(index_j, pairwise_distance);
+								if (pairwise_distance <= MAX_NEIGHBOR_DISTANCE)
+								{
+										neighbors.get(index_i).add(index_j);
+								}
+						}
+				}
+				return new_index;
+		}
+
+		public List<Long> straightHome(UTM start, UTM goal)
+		{
+				// Simple: go straight home from the start
+				List<Long> path_sequence = new ArrayList<>();
+				long start_index = newCrumb(start);
+				long goal_index = newCrumb(goal);
+				path_sequence.add(start_index);
+				path_sequence.add(goal_index);
+				return path_sequence;
+		}
+
+		public List<Long> aStar(UTM start, UTM goal)
+		{
+				Log.i("A*", "Starting A* calculation...");
+				long start_index = newCrumb(start);
+				long goal_index = newCrumb(goal);
+
+				// fill in distance to goal values
+				for (Map.Entry<Long, Crumb> entry : crumbs_by_index.entrySet())
+				{
+						entry.getValue().setH(distanceBetweenCrumbs(entry.getKey(), goal_index));
+				}
+
+				// make sure start is reachable (i.e. it has at least one neighbor)
+				// TODO: force the start to be reachable
+
+				// make sure goal is reachable (i.e. it has at least one neighbor)
+				// TODO: force the goal to be reachable
+
+				// TODO: FILL IN A* CODE
+				HashMap<Long, Void> open_crumbs = new HashMap<>();
+				HashMap<Long, Double> open_costs = new HashMap<>();
+				HashMap<Long, Void> closed_crumbs = new HashMap<>();
+				List<Long> path_sequence = new ArrayList<>();
+				long current_crumb = 0;
+				long iterations = 0;
+				open_crumbs.put(start_index, null);
+
+				while (open_crumbs.size() > 0)
+				{
+						iterations++;
+						Log.d("A*", String.format("A* iter %d:  %d open, %d closed"));
+
+						// recreate open costs map
+						open_costs.clear();
+						double lowest_cost = 99999999;
+						for (Map.Entry<Long, Void> entry : open_crumbs.entrySet())
+						{
+								double cost = crumbs_by_index.get(entry.getKey()).getCost();
+								open_costs.put(entry.getKey(), cost);
+								if (cost < lowest_cost)
+								{
+										lowest_cost = cost;
+										current_crumb = entry.getKey();
+								}
+						}
+						if (current_crumb == goal_index)
+						{
+								// reached goal node
+								break;
+						}
+						for (long s : neighbors.get(current_crumb))
+						{
+								double potential_g = crumbs_by_index.get(current_crumb).getG() + pairwise_distances.get(current_crumb).get(s);
+								if (open_crumbs.containsKey(s))
+								{
+										if (crumbs_by_index.get(s).getG() <= potential_g) continue;
+								}
+								else if (closed_crumbs.containsKey(s))
+								{
+										if (crumbs_by_index.get(s).getG() > potential_g)
+										{
+												open_crumbs.put(s, null);
+												closed_crumbs.remove(s);
+										}
+										else
+										{
+												continue;
+										}
+								}
+								else
+								{
+										open_crumbs.put(s, null);
+								}
+								crumbs_by_index.get(s).setG(potential_g);
+								crumbs_by_index.get(s).setParent(current_crumb);
+						}
+						open_crumbs.remove(current_crumb);
+						closed_crumbs.put(current_crumb, null);
+				}
+				path_sequence.add(current_crumb);
+				while (path_sequence.get(0) != start_index)
+				{
+						path_sequence.add(0, crumbs_by_index.get(path_sequence.get(0)).getParent());
+				}
+				return path_sequence;
+		}
+
+		public void startPathSequence(List<Long> path_sequence)
+		{
+				// TODO: convert list of crumb indices to setting _waypoints
+				List<UtmPose> waypoints = new ArrayList<>();
+				for (long c : path_sequence)
+				{
+						waypoints.add(UTM_to_UtmPose(crumbs_by_index.get(c).getLocation()));
+				}
+				startWaypoints((UtmPose[])waypoints.toArray().clone(), "POINT_AND_SHOOT", null);
 		}
 }

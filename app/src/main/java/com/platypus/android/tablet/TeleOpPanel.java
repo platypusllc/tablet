@@ -241,6 +241,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				// generate Boat object and put it into the boat_map
 				//Boat newBoat = new RealBoat(boat_name);
 				// TODO: give user option between real boat and simulated boat
+				// TODO: set the initial UTM to be the center of the current map view
 				UTM initial_utm = UTM.latLongToUtm(LatLong.valueOf(45.404586,
 								10.998773, NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
 				Boat newBoat = new SimulatedBoat(boat_name, initial_utm);

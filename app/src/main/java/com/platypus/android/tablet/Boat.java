@@ -5,7 +5,9 @@ import android.os.Looper;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.data.Pose3D;
+import com.platypus.crw.data.Quaternion;
 import com.platypus.crw.data.SensorData;
+import com.platypus.crw.data.Utm;
 import com.platypus.crw.data.UtmPose;
 
 import org.jscience.geography.coordinates.LatLong;
@@ -186,6 +188,17 @@ public abstract class Boat
 								utmPose.pose.getY(),
 								SI.METER
 				);
+		}
+		public static UtmPose UTM_to_UtmPose(UTM utm)
+		{
+				if (utm == null) return null;
+				Pose3D pose = new Pose3D(utm.eastingValue(SI.METER),
+								utm.northingValue(SI.METER),
+								0.0,
+								Quaternion.fromEulerAngles(0, 0, 0));
+				Utm origin = new Utm(utm.longitudeZone(),
+								utm.latitudeZone() > 'O');
+				return new UtmPose(pose, origin);
 		}
 		public static com.mapbox.mapboxsdk.geometry.LatLng UtmPose_to_LatLng(UtmPose utmPose)
 		{
