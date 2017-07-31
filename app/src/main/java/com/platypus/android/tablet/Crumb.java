@@ -1,12 +1,6 @@
 package com.platypus.android.tablet;
 
 import org.jscience.geography.coordinates.UTM;
-import javax.measure.unit.SI;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 /**

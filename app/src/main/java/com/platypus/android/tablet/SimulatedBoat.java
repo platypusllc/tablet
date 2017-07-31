@@ -36,6 +36,7 @@ public class SimulatedBoat extends Boat
 		Runnable _waypointListenerCallback = null;
 		Runnable _crumbListenerCallback = null;
 		final double NEW_CRUMB_DISTANCE = 5; // meters
+		boolean executing_failsafe = false;
 		UtmPose[] _waypoints = new UtmPose[0];
 		Object waypoints_lock = new Object();
 		double thrustSignal, headingSignal;
@@ -370,16 +371,34 @@ public class SimulatedBoat extends Boat
 						if (_poseListenerCallback != null) uiHandler.post(_poseListenerCallback); // update GUI with result
 						if (new_crumb_UTM == null)
 						{
+								Log.i("aStar", "First crumb");
 								updateCrumb();
 						}
-						else
+						else if (!executing_failsafe)
 						{
 								double dx_to_last_crumb = q[0] - (new_crumb_UTM.eastingValue(SI.METER) - original_easting);
 								double dy_to_last_crumb = q[1] - (new_crumb_UTM.northingValue(SI.METER) - original_northing);
 								if (Math.pow(dx_to_last_crumb, 2.) + Math.pow(dy_to_last_crumb, 2.) >= Math.pow(NEW_CRUMB_DISTANCE, 2.))
 								{
+										// TODO: test A* by forcing it to activate
 										updateCrumb();
+										if (crumbs_by_index.size() > 30)
+										{
+												executing_failsafe = true;
+												new Thread()
+												{
+														@Override
+														public void run()
+														{
+																startPathSequence(aStar(new_crumb_UTM, original_utm));
+														}
+												}.start();
+										}
 								}
+						}
+						else
+						{
+								//Log.d("aStar", "Executing failsafe...");
 						}
 				}
 		};
@@ -511,12 +530,13 @@ public class SimulatedBoat extends Boat
 		Map<Long, List<Long>> neighbors = new HashMap<>();
 		public double distanceBetweenUTM(UTM location_i, UTM location_j)
 		{
-				double dx = location_i.eastingValue(SI.METER) - original_easting;
-				double dy = location_i.northingValue(SI.METER) - original_northing;
+				double dx = (location_i.eastingValue(SI.METER) - location_j.eastingValue(SI.METER));
+				double dy = (location_i.northingValue(SI.METER) - location_j.northingValue(SI.METER));
 				return Math.sqrt(dx*dx + dy*dy);
 		}
 		public double distanceBetweenCrumbs(long index_i, long index_j)
 		{
+				//Log.v("aStar", String.format("distanceBetweenCrumbs(%d, %d)", index_i, index_j));
 				UTM location_i = crumbs_by_index.get(index_i).getLocation();
 				UTM location_j = crumbs_by_index.get(index_j).getLocation();
 				return distanceBetweenUTM(location_i, location_j);
@@ -533,9 +553,9 @@ public class SimulatedBoat extends Boat
 				// calculate pairwise distances and neighbors
 				for (Map.Entry<Long, Crumb> entry_i : crumbs_by_index.entrySet())
 				{
+						long index_i = entry_i.getKey();
 						for (Map.Entry<Long, Crumb> entry_j : crumbs_by_index.entrySet())
 						{
-								long index_i = entry_i.getKey();
 								long index_j = entry_j.getKey();
 
 								// if a Crumb is being compared to itself
@@ -547,10 +567,13 @@ public class SimulatedBoat extends Boat
 								}
 
 								double pairwise_distance = distanceBetweenCrumbs(index_i, index_j);
+								// Log.v("aStar", String.format("%d -- %d pairwise distance = %.2f", index_i, index_j, pairwise_distance));
 								pairwise_distances.get(index_i).put(index_j, pairwise_distance);
+								pairwise_distances.get(index_j).put(index_i, pairwise_distance);
 								if (pairwise_distance <= MAX_NEIGHBOR_DISTANCE)
 								{
 										neighbors.get(index_i).add(index_j);
+										neighbors.get(index_j).add(index_i);
 								}
 						}
 				}
@@ -570,7 +593,7 @@ public class SimulatedBoat extends Boat
 
 		public List<Long> aStar(UTM start, UTM goal)
 		{
-				Log.i("A*", "Starting A* calculation...");
+				Log.i("aStar", "Starting A* calculation...");
 				long start_index = newCrumb(start);
 				long goal_index = newCrumb(goal);
 
@@ -586,7 +609,6 @@ public class SimulatedBoat extends Boat
 				// make sure goal is reachable (i.e. it has at least one neighbor)
 				// TODO: force the goal to be reachable
 
-				// TODO: FILL IN A* CODE
 				HashMap<Long, Void> open_crumbs = new HashMap<>();
 				HashMap<Long, Double> open_costs = new HashMap<>();
 				HashMap<Long, Void> closed_crumbs = new HashMap<>();
@@ -594,11 +616,13 @@ public class SimulatedBoat extends Boat
 				long current_crumb = 0;
 				long iterations = 0;
 				open_crumbs.put(start_index, null);
+				Log.d("aStar", String.format("open_crumbs.size() = %d", open_crumbs.size()));
 
 				while (open_crumbs.size() > 0)
 				{
-						iterations++;
-						Log.d("A*", String.format("A* iter %d:  %d open, %d closed"));
+						iterations += 1;
+						Log.d("aStar", String.format("A* iter %d:  %d open, %d closed",
+										iterations, open_crumbs.size(), closed_crumbs.size()));
 
 						// recreate open costs map
 						open_costs.clear();
@@ -609,15 +633,20 @@ public class SimulatedBoat extends Boat
 								open_costs.put(entry.getKey(), cost);
 								if (cost < lowest_cost)
 								{
+										//Log.v("aStar", String.format("crumb # %d has lowest cost = %.2f", entry.getKey(), cost));
 										lowest_cost = cost;
 										current_crumb = entry.getKey();
 								}
 						}
+						Log.d("aStar", String.format("Current crumb index = %d", current_crumb));
 						if (current_crumb == goal_index)
 						{
-								// reached goal node
-								break;
+								Log.i("aStar", String.format("Reached goal crumb %d, exiting loop", goal_index));
+								break; // reached goal node, exit loop
 						}
+						Log.d("aStar", String.format("Current crumb has %d neighbors: %s",
+										neighbors.get(current_crumb).size(),
+										neighbors.get(current_crumb).toString()));
 						for (long s : neighbors.get(current_crumb))
 						{
 								double potential_g = crumbs_by_index.get(current_crumb).getG() + pairwise_distances.get(current_crumb).get(s);
@@ -652,17 +681,17 @@ public class SimulatedBoat extends Boat
 				{
 						path_sequence.add(0, crumbs_by_index.get(path_sequence.get(0)).getParent());
 				}
+				Log.i("aStar", "Path sequence = " + path_sequence.toString());
 				return path_sequence;
 		}
 
 		public void startPathSequence(List<Long> path_sequence)
 		{
-				// TODO: convert list of crumb indices to setting _waypoints
-				List<UtmPose> waypoints = new ArrayList<>();
-				for (long c : path_sequence)
+				UtmPose[] waypoints = new UtmPose[path_sequence.size()];
+				for (int i = 0; i < path_sequence.size(); i++)
 				{
-						waypoints.add(UTM_to_UtmPose(crumbs_by_index.get(c).getLocation()));
+						waypoints[i] = UTM_to_UtmPose(crumbs_by_index.get(path_sequence.get(i)).getLocation());
 				}
-				startWaypoints((UtmPose[])waypoints.toArray().clone(), "POINT_AND_SHOOT", null);
+				startWaypoints(waypoints, "POINT_AND_SHOOT", null);
 		}
 }
