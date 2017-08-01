@@ -22,7 +22,6 @@ import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
-import com.mapbox.mapboxsdk.MapboxAccountManager;
 import com.mapbox.mapboxsdk.annotations.MarkerView;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.annotations.Polyline;
@@ -44,6 +43,8 @@ import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -61,6 +62,7 @@ import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -211,6 +213,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		int boat_color_count = 0;
 		Map<Integer, Map<String, Integer>> color_map = new HashMap<>();
 
+		// https://github.com/mapbox/mapbox-gl-native/issues/8185
+		public Icon iconFromDrawable(Drawable drawable)
+		{
+				Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+				Canvas canvas = new Canvas(bitmap);
+				drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+				drawable.draw(canvas);
+				return mIconFactory.fromBitmap(bitmap);
+		}
+
 		class ColorfulSpinnerAdapter extends ArrayAdapter<String>
 		{
 				public ColorfulSpinnerAdapter(@NonNull Context context, @LayoutRes int resource)
@@ -259,10 +271,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				boat_color_count++; // use the next set of colors
 				if (boat_color_count > 5) boat_color_count = 0; // have a finite set of defined colors
 
+				// TODO: provide method to produce an icon from a drawable. Mapbox 5 requires it.
+
 				boat_markers_map.put(boat_name, new MarkerViewOptions()
 								.position(pHollowStartingPoint)
 								.title(boat_name)
-								.icon(mIconFactory.fromDrawable(arrow)).rotation(0));
+								.icon(iconFromDrawable(arrow)).rotation(0));
 
 				boat_markers_map.get(boat_name).getMarker().setAnchor(0.5f, 0.5f);
 
@@ -1400,7 +1414,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																return;
 														}
 														Drawable mhome = ContextCompat.getDrawable(getApplicationContext(), R.drawable.home1);
-														Icon home_icon = mIconFactory.fromDrawable(mhome);
+														Icon home_icon = iconFromDrawable(mhome);
 														MarkerOptions home_marker_options = new MarkerOptions()
 																		.position(home_location)
 																		.title("Home")
@@ -1424,7 +1438,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														if (loc != null)
 														{
 																Drawable mhome = ContextCompat.getDrawable(getApplicationContext(), R.drawable.home1);
-																Icon home_icon = mIconFactory.fromDrawable(mhome);
+																Icon home_icon = iconFromDrawable(mhome);
 																home_location = loc;
 																MarkerOptions home_marker_options = new MarkerOptions()
 																				.position(home_location)
