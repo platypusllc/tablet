@@ -626,7 +626,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														@Override
 														public void onClick(View v)
 														{
-																// next map click sets the marker's locationToastFailureCallback and resets the map click listener to null
+																// next map click sets the marker's location and resets the map click listener to null
 																mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
 																{
 																		@Override
