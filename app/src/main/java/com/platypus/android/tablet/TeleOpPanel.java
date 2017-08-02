@@ -63,7 +63,6 @@ import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -214,9 +213,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		int boat_color_count = 0;
 		Map<Integer, Map<String, Integer>> color_map = new HashMap<>();
 
-		// https://github.com/mapbox/mapbox-gl-native/issues/8185
 		public Icon iconFromDrawable(Drawable drawable)
 		{
+				// https://github.com/mapbox/mapbox-gl-native/issues/8185
 				Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
 				Canvas canvas = new Canvas(bitmap);
 				drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -271,8 +270,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				newBoat.setLineColor(line_color);
 				boat_color_count++; // use the next set of colors
 				if (boat_color_count > 5) boat_color_count = 0; // have a finite set of defined colors
-
-				// TODO: provide method to produce an icon from a drawable. Mapbox 5 requires it.
 
 				boat_markers_map.put(boat_name, new MarkerViewOptions()
 								.position(pHollowStartingPoint)
@@ -593,11 +590,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 
 				mv = (MapView) findViewById(R.id.mapview);
-				//mv.setAccessToken(ApiAccess.getToken(this));
-
-				// Replace the following line in Mapbox 5+
-				//MapboxAccountManager.start(this, getString(R.string.mapbox_access_token));
-
 				mv.onCreate(savedInstanceState);
 				mv.getMapAsync(new OnMapReadyCallback()
 				{
