@@ -22,6 +22,7 @@ import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
+import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.MarkerView;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.annotations.Polyline;
@@ -475,6 +476,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		protected void onCreate(final Bundle savedInstanceState)
 		{
 				super.onCreate(savedInstanceState);
+				Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
 				this.setContentView(R.layout.tabletlayoutswitch);
 
 				// establish color_map
@@ -593,7 +595,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				mv = (MapView) findViewById(R.id.mapview);
 				//mv.setAccessToken(ApiAccess.getToken(this));
 
-				MapboxAccountManager.start(this, getString(R.string.mapbox_access_token));
+				// Replace the following line in Mapbox 5+
+				//MapboxAccountManager.start(this, getString(R.string.mapbox_access_token));
+
 				mv.onCreate(savedInstanceState);
 				mv.getMapAsync(new OnMapReadyCallback()
 				{
@@ -1107,7 +1111,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		protected void onStart()
 		{
 				super.onStart();
-				//mv.onStart();
+				mv.onStart();
 		}
 
 		@Override
