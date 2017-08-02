@@ -609,7 +609,48 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 
 								mMapboxMap.setStyle(Style.MAPBOX_STREETS); //vector map
-								mMapboxMap.getUiSettings().setRotateGesturesEnabled(false); //broken on mapbox side, currently fixing issue 4635 https://github.com/mapbox/mapbox-gl-native/issues/4635
+								mMapboxMap.getUiSettings().setRotateGesturesEnabled(false);
+								mMapboxMap.setAllowConcurrentMultipleOpenInfoWindows(true);
+								mMapboxMap.setInfoWindowAdapter(new MapboxMap.InfoWindowAdapter()
+								{
+										// ASDF
+										@Override
+										public View getInfoWindow(final Marker marker)
+										{
+												View view = getLayoutInflater().inflate(R.layout.waypoint_info_window, null);
+												TextView waypoint_index_textview = (TextView) view.findViewById(R.id.waypoint_index_textview);
+												final int waypoint_index = Integer.valueOf(marker.getTitle());
+												Button move_button = (Button) view.findViewById(R.id.waypoint_move_button);
+												move_button.setOnClickListener(new OnClickListener()
+												{
+														@Override
+														public void onClick(View v)
+														{
+																// next map click sets the marker's locationToastFailureCallback and resets the map click listener to null
+																mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
+																{
+																		@Override
+																		public void onMapClick(@NonNull LatLng point)
+																		{
+																				marker.setPosition(point);
+																				waypoint_list.set(waypoint_index, point);
+																				mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
+																				{
+																						@Override
+																						public void onMapClick(@NonNull LatLng point) { }
+																				});
+																		}
+																});
+														}
+												});
+
+												// TODO: display different information based on marker type
+												// TODO: to support above, extend marker with an enum for type (vehicle, waypoint, home, breadcrumb)
+												waypoint_index_textview.setText("waypoint # " + marker.getTitle());
+
+												return view;
+										}
+								});
 								mMapboxMap.setOnMarkerClickListener(new MapboxMap.OnMarkerClickListener()
 								{
 										@Override

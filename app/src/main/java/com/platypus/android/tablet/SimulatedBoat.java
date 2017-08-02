@@ -380,9 +380,8 @@ public class SimulatedBoat extends Boat
 								double dy_to_last_crumb = q[1] - (new_crumb_UTM.northingValue(SI.METER) - original_northing);
 								if (Math.pow(dx_to_last_crumb, 2.) + Math.pow(dy_to_last_crumb, 2.) >= Math.pow(NEW_CRUMB_DISTANCE, 2.))
 								{
-										// TODO: test A* by forcing it to activate
 										updateCrumb();
-										if (crumbs_by_index.size() > 30)
+										if (crumbs_by_index.size() > 100)
 										{
 												executing_failsafe = true;
 												new Thread()
