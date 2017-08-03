@@ -118,6 +118,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		HashMap<String, Integer> current_wp_index_map = new HashMap<>();
 		HashMap<String, Integer> old_wp_index_map = new HashMap<>();
 		HashMap<String, ArrayList<Marker>> crumb_markers_map = new HashMap<>();
+		HashMap<String, PlatypusMarkerTypes> marker_types_map = new HashMap<>();
 
 		final Context context = this;
 		TextView ipAddressBox = null;
@@ -288,6 +289,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										Log.i(logTag, String.format("Adding boat marker for %s", boat_name));
 										mMapboxMap.addMarker(boat_markers_map.get(boat_name));
+										marker_types_map.put(boat_markers_map.get(boat_name).getTitle(),
+														PlatypusMarkerTypes.VEHICLE);
 								}
 								else
 								{
@@ -449,7 +452,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				{
 						crumb = boat.getNewCrumb();
 						int size = crumb_markers_map.get(name).size();
-						crumb_markers_map.get(name).add(mMapboxMap.addMarker(new MarkerOptions().position(crumb).icon(icon).title(Integer.toString(size))));
+						String title = "crumb_" + Integer.toString(size);
+						crumb_markers_map.get(name).add(mMapboxMap.addMarker(new MarkerOptions().position(crumb).icon(icon).title(title)));
+						marker_types_map.put(title, PlatypusMarkerTypes.BREADCRUMB);
 				}
 		}
 
@@ -617,38 +622,46 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										@Override
 										public View getInfoWindow(final Marker marker)
 										{
-												View view = getLayoutInflater().inflate(R.layout.waypoint_info_window, null);
-												TextView waypoint_index_textview = (TextView) view.findViewById(R.id.waypoint_index_textview);
-												final int waypoint_index = Integer.valueOf(marker.getTitle());
-												Button move_button = (Button) view.findViewById(R.id.waypoint_move_button);
-												move_button.setOnClickListener(new OnClickListener()
-												{
-														@Override
-														public void onClick(View v)
-														{
-																// next map click sets the marker's location and resets the map click listener to null
-																mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
-																{
-																		@Override
-																		public void onMapClick(@NonNull LatLng point)
-																		{
-																				marker.setPosition(point);
-																				waypoint_list.set(waypoint_index, point);
-																				mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
-																				{
-																						@Override
-																						public void onMapClick(@NonNull LatLng point) { }
-																				});
-																		}
-																});
-														}
-												});
-
+												String title = marker.getTitle();
 												// TODO: display different information based on marker type
-												// TODO: to support above, extend marker with an enum for type (vehicle, waypoint, home, breadcrumb)
-												waypoint_index_textview.setText("waypoint # " + marker.getTitle());
+												if (marker_types_map.get(title) == PlatypusMarkerTypes.WAYPOINT)
+												{
+														View view = getLayoutInflater().inflate(R.layout.waypoint_info_window, null);
+														TextView waypoint_index_textview = (TextView) view.findViewById(R.id.waypoint_index_textview);
 
-												return view;
+														// parse waypoint title to get its index
+														String[] title_parts = title.split("_");
+														final int waypoint_index = Integer.valueOf(title_parts[1]);
+														final Button move_button = (Button) view.findViewById(R.id.waypoint_move_button);
+														move_button.setOnClickListener(new OnClickListener()
+														{
+																@Override
+																public void onClick(View v)
+																{
+																		// next map click sets the marker's location and resets the map click listener to null
+																		mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
+																		{
+																				@Override
+																				public void onMapClick(@NonNull LatLng point)
+																				{
+																						marker.setPosition(point);
+																						waypoint_list.set(waypoint_index, point);
+																						mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
+																						{
+																								@Override
+																								public void onMapClick(@NonNull LatLng point) { }
+																						});
+																				}
+																		});
+																}
+														});
+														waypoint_index_textview.setText(marker.getTitle());
+														return view;
+												}
+												else
+												{
+														return null;
+												}
 										}
 								});
 								mMapboxMap.setOnMarkerClickListener(new MapboxMap.OnMarkerClickListener()
@@ -665,7 +678,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										public void onMapLongClick(LatLng point)
 										{
 												waypoint_list.add(point);
-												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(Integer.toString(marker_list.size()))));
+												String title = "waypoint_" + Integer.toString(marker_list.size());
+												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
+												marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
 												Log.d(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
 										}
 								});
@@ -1048,7 +1063,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										return;
 								}
 								waypoint_list.add(point);
-								marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(Integer.toString(marker_list.size()))));
+								String title = "waypoint_" + Integer.toString(marker_list.size());
+								marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
+								marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
 						}
 				});
 
@@ -1457,6 +1474,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																		.title("Home")
 																		.icon(home_icon);
 														home_marker = mMapboxMap.addMarker(home_marker_options);
+														marker_types_map.put(home_marker.getTitle(), PlatypusMarkerTypes.HOME);
 														mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home_location));
 												}
 										})
@@ -1482,6 +1500,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																				.title("Home")
 																				.icon(home_icon);
 																home_marker = mMapboxMap.addMarker(home_marker_options);
+																marker_types_map.put(home_marker.getTitle(), PlatypusMarkerTypes.HOME);
 																mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home_location));
 														}
 														else
@@ -2036,7 +2055,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										{
 												LatLng point = new LatLng(i.getLatitude(), i.getLongitude());
 												waypoint_list.add(point);
-												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(Integer.toString(marker_list.size()))));
+												String title = "waypoint_" + Integer.toString(marker_list.size());
+												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
+												marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
 										}
 
 										// don't bother generating a path. Let the user do that.
