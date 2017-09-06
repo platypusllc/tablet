@@ -17,9 +17,11 @@ import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 import org.apache.commons.math3.ode.nonstiff.ClassicalRungeKuttaIntegrator;
 
+import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
+import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 
 /**
@@ -37,7 +39,7 @@ public class SimulatedBoat extends Boat
 		Runnable _crumbListenerCallback = null;
 		final double NEW_CRUMB_DISTANCE = 5; // meters
 		boolean executing_failsafe = false;
-		UtmPose[] _waypoints = new UtmPose[0];
+		double[][] _waypoints = new double[0][0];
 		Object waypoints_lock = new Object();
 		double thrustSignal, headingSignal;
 		double thrustSurge, thrustSway, torque;
@@ -155,7 +157,9 @@ public class SimulatedBoat extends Boat
 								}
 								synchronized (waypoints_lock)
 								{
-										destination_pose = _waypoints[current_waypoint_index.get()].pose;
+										double[] latlng = _waypoints[current_waypoint_index.get()];
+										UtmPose utmpose = new UtmPose(latlng);
+										destination_pose = utmpose.pose;
 								}
 								x_dest = destination_pose.getX() - original_easting;
 								y_dest = destination_pose.getY() - original_northing;
@@ -183,7 +187,7 @@ public class SimulatedBoat extends Boat
 
 										synchronized (waypoints_lock)
 										{
-												_waypoints = new UtmPose[0]; // empty
+												_waypoints = new double[0][0]; // empty
 										}
 										synchronized (waypoint_state_lock)
 										{
@@ -420,7 +424,7 @@ public class SimulatedBoat extends Boat
 		}
 
 		@Override
-		public void startWaypoints(UtmPose[] waypoints, String controller_name, Runnable failureCallback)
+		public void startWaypoints(double[][] waypoints, Runnable failureCallback)
 		{
 				synchronized (waypoints_lock)
 				{
@@ -505,10 +509,10 @@ public class SimulatedBoat extends Boat
 		}
 
 		@Override
-		public void addWaypoint(UtmPose waypoint, String controller_name, Runnable failureCallback)
+		public void addWaypoint(double[] waypoint, Runnable failureCallback)
 		{
-				UtmPose[] wpPose = {waypoint};
-				startWaypoints(wpPose, controller_name, failureCallback);
+				double[][] waypoints = {waypoint};
+				startWaypoints(waypoints, failureCallback);
 		}
 
 		@Override
@@ -687,11 +691,14 @@ public class SimulatedBoat extends Boat
 
 		public void startPathSequence(List<Long> path_sequence)
 		{
-				UtmPose[] waypoints = new UtmPose[path_sequence.size()];
+				double[][] waypoints = new double[path_sequence.size()][2];
 				for (int i = 0; i < path_sequence.size(); i++)
 				{
-						waypoints[i] = UTM_to_UtmPose(crumbs_by_index.get(path_sequence.get(i)).getLocation());
+						//waypoints[i] = UTM_to_UtmPose(crumbs_by_index.get(path_sequence.get(i)).getLocation());
+						UTM utm = crumbs_by_index.get(path_sequence.get(i)).getLocation();
+						LatLong latlong = UTM.utmToLatLong(utm, ReferenceEllipsoid.WGS84);
+						waypoints[i] = new double[]{latlong.latitudeValue(NonSI.DEGREE_ANGLE), latlong.longitudeValue(NonSI.DEGREE_ANGLE)};
 				}
-				startWaypoints(waypoints, "POINT_AND_SHOOT", null);
+				startWaypoints(waypoints, null);
 		}
 }

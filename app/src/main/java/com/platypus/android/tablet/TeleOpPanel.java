@@ -882,15 +882,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										return;
 								}
 
-								//Convert all LatLng to UtmPose
 								ArrayList<LatLng> points = (ArrayList<LatLng>)unowned_path.getPoints().clone();
 								path_map.put(boat_name, new Path(points));
-								UtmPose[] wpPose = new UtmPose[points.size()];
+								double[][] waypoints = new double[points.size()][2];
 								for (int i = 0; i < points.size(); i++)
 								{
-										wpPose[i] = convertLatLngUtm(points.get(i));
+										LatLng latlng = points.get(i);
+										waypoints[i] = new double[] {latlng.getLatitude(), latlng.getLongitude()};
 								}
-								boat.startWaypoints(wpPose, "POINT_AND_SHOOT", new ToastFailureCallback("Start Waypoints Msg Timed Out"));
+								boat.startWaypoints(waypoints, new ToastFailureCallback("Start Waypoints Msg Timed Out"));
 								current_wp_index_map.put(boat_name, 0);
 
 								// draw the boat's lines, independent from the ones used to generate paths
@@ -1488,9 +1488,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										public void onClick(DialogInterface dialog, int which)
 										{
-												UtmPose homeUtmPose = convertLatLngUtm(home_location);
+												//UtmPose homeUtmPose = convertLatLngUtm(home_location);
+												double[] home = new double[]{home_location.getLatitude(), home_location.getLongitude()};
 												Boat boat = currentBoat();
-												boat.addWaypoint(homeUtmPose, "POINT_AND_SHOOT", new ToastFailureCallback("Go home msg timed out"));
+												boat.addWaypoint(home, new ToastFailureCallback("Go home msg timed out"));
 												Log.i(logTag, "Go home");
 										}
 								})

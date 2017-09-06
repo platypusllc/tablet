@@ -15,6 +15,7 @@ import com.platypus.crw.data.Twist;
 import com.platypus.crw.data.UtmPose;
 import com.platypus.crw.udp.UdpVehicleServer;
 
+import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
@@ -22,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 
 /**
@@ -160,7 +162,7 @@ public class RealBoat extends Boat
 						cl = new CrumbListener()
 						{
 								@Override
-								public void receivedCrumb(UtmPose utmPose, long index)
+								public void receivedCrumb(double[] crumb, long index)
 								{
 										setConnected(true);
 
@@ -168,12 +170,15 @@ public class RealBoat extends Boat
 										if (!crumb_map.containsKey(index))
 										{
 												// add the index to the known ones
-												crumb_map.put(index, utmPose);
+												crumb_map.put(index, crumb);
 												// create a LatLng from it
 												synchronized (crumb_lock)
 												{
-														new_crumb_LatLng = UtmPose_to_LatLng(utmPose);
-														new_crumb_UTM = UtmPose_to_UTM(utmPose);
+														new_crumb_LatLng = new LatLng(crumb[0], crumb[1]);
+														new_crumb_UTM = UTM.latLongToUtm(
+																		LatLong.valueOf(crumb[0], crumb[1], NonSI.DEGREE_ANGLE),
+																		ReferenceEllipsoid.WGS84
+														);
 												}
 												uiHandler.post(crumbListenerCallback); // update GUI with result
 										}
@@ -245,14 +250,14 @@ public class RealBoat extends Boat
 		}
 
 		@Override
-		public void startWaypoints(final UtmPose[] waypoints, final String controller_name, final Runnable failureCallback)
+		public void startWaypoints(final double[][] waypoints, final Runnable failureCallback)
 		{
 				class StartWaypointsAsyncTask extends AsyncTask<Void, Void, Void>
 				{
 						@Override
 						protected Void doInBackground(Void... params)
 						{
-								server.startWaypoints(waypoints, controller_name, new FunctionObserver<Void>()
+								server.startWaypoints(waypoints, new FunctionObserver<Void>()
 								{
 										@Override
 										public void completed(Void aVoid)
@@ -428,11 +433,11 @@ public class RealBoat extends Boat
 		}
 
 		@Override
-		public void addWaypoint(final UtmPose waypoint, final String controller_name, final Runnable failureCallback)
+		public void addWaypoint(final double[] waypoint, final Runnable failureCallback)
 		{
 				if (server == null) return;
-				UtmPose[] wpPose = {waypoint};
-				startWaypoints(wpPose, controller_name, failureCallback);
+				double[][] waypoints = {waypoint};
+				startWaypoints(waypoints, failureCallback);
 		}
 
 		@Override
