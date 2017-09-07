@@ -90,9 +90,11 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.PopupMenu;
+import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -125,6 +127,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		RelativeLayout linlay = null;
 
 		Button connect_button = null;
+		RadioButton real_boat_button = null;
+		RadioButton sim_boat_button = null;
+		boolean use_real_boat = true;
 		Button advanced_options_button = null;
 		Button center_view_button = null;
 		Button start_wp_button = null;
@@ -214,8 +219,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		int boat_color_count = 0;
 		Map<Integer, Map<String, Integer>> color_map = new HashMap<>();
 
-		public Icon iconFromDrawable(Drawable drawable)
+		public Icon colorIconFromDrawable(Drawable drawable, Integer color)
 		{
+				if (color != null)
+				{
+						PorterDuff.Mode mMode = PorterDuff.Mode.MULTIPLY;
+						drawable.setColorFilter(color, mMode);
+				}
 				// https://github.com/mapbox/mapbox-gl-native/issues/8185
 				Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
 				Canvas canvas = new Canvas(bitmap);
@@ -252,12 +262,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		void startNewBoat(final String boat_name)
 		{
 				// generate Boat object and put it into the boat_map
-				//Boat newBoat = new RealBoat(boat_name);
-				// TODO: give user option between real boat and simulated boat
-				// TODO: set the initial UTM to be the center of the current map view
-				UTM initial_utm = UTM.latLongToUtm(LatLong.valueOf(45.404586,
-								10.998773, NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
-				Boat newBoat = new SimulatedBoat(boat_name, initial_utm);
+				Boat newBoat;
+				if (use_real_boat)
+				{
+						newBoat = new RealBoat(boat_name);
+				}
+				else
+				{
+						// set the initial UTM to be the center of the current map view
+						LatLng center = mMapboxMap.getCameraPosition().target;
+						UTM initial_simulated_utm = UTM.latLongToUtm(LatLong.valueOf(center.getLatitude(),
+										center.getLongitude(), NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
+						newBoat = new SimulatedBoat(boat_name, initial_simulated_utm);
+				}
+
+
 				available_boats_spinner_adapter.add(boat_name);
 				available_boats_spinner_adapter.notifyDataSetChanged();
 
@@ -266,7 +285,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				PorterDuff.Mode mMode = PorterDuff.Mode.MULTIPLY;
 				int boat_color = color_map.get(boat_color_count).get("boat");
 				int line_color = color_map.get(boat_color_count).get("line");
-				arrow.setColorFilter(boat_color, mMode);
+				//arrow.setColorFilter(boat_color, mMode);
 				newBoat.setBoatColor(boat_color);
 				newBoat.setLineColor(line_color);
 				boat_color_count++; // use the next set of colors
@@ -275,7 +294,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				boat_markers_map.put(boat_name, new MarkerViewOptions()
 								.position(pHollowStartingPoint)
 								.title(boat_name)
-								.icon(iconFromDrawable(arrow)).rotation(0));
+								.icon(colorIconFromDrawable(arrow, boat_color)).rotation(0));
 
 				boat_markers_map.get(boat_name).getMarker().setAnchor(0.5f, 0.5f);
 
@@ -446,7 +465,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						boat = _boat;
 						name = boat.getName();
 						crumb_markers_map.put(name, new ArrayList<Marker>());
-						icon = mIconFactory.fromResource(R.drawable.empty_circle);
+						icon = colorIconFromDrawable(
+										getResources().getDrawable(R.drawable.breadcrumb_pin, null),
+										_boat.getBoatColor());
 				}
 				public void run()
 				{
@@ -938,15 +959,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										return;
 								}
 
-								//Convert all LatLng to UtmPose
 								ArrayList<LatLng> points = (ArrayList<LatLng>)unowned_path.getPoints().clone();
 								path_map.put(boat_name, new Path(points));
-								UtmPose[] wpPose = new UtmPose[points.size()];
+								double[][] waypoints = new double[points.size()][2];
 								for (int i = 0; i < points.size(); i++)
 								{
-										wpPose[i] = convertLatLngUtm(points.get(i));
+										LatLng latlng = points.get(i);
+										waypoints[i] = new double[] {latlng.getLatitude(), latlng.getLongitude()};
 								}
-								boat.startWaypoints(wpPose, "POINT_AND_SHOOT", new ToastFailureCallback("Start Waypoints Msg Timed Out"));
+								boat.startWaypoints(waypoints, new ToastFailureCallback("Start Waypoints Msg Timed Out"));
 								current_wp_index_map.put(boat_name, 0);
 
 								// draw the boat's lines, independent from the ones used to generate paths
@@ -1372,9 +1393,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				dialog.setTitle("Connect To A Boat");
 				ipAddressInput = (EditText) dialog.findViewById(R.id.ip_address_input);
 				Button submitButton = (Button) dialog.findViewById(R.id.submit);
+				real_boat_button = (RadioButton) dialog.findViewById(R.id.realBoatButton);
+				sim_boat_button = (RadioButton) dialog.findViewById(R.id.simBoatButton);
 
 				loadPreferences();
 				ipAddressInput.setText(textIpAddress);
+
+				real_boat_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+				{
+						@Override
+						public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+						{
+								use_real_boat = isChecked;
+						}
+				});
 
 				submitButton.setOnClickListener(new OnClickListener()
 				{
@@ -1468,7 +1500,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																return;
 														}
 														Drawable mhome = ContextCompat.getDrawable(getApplicationContext(), R.drawable.home1);
-														Icon home_icon = iconFromDrawable(mhome);
+														Icon home_icon = colorIconFromDrawable(mhome, null);
 														MarkerOptions home_marker_options = new MarkerOptions()
 																		.position(home_location)
 																		.title("Home")
@@ -1493,7 +1525,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														if (loc != null)
 														{
 																Drawable mhome = ContextCompat.getDrawable(getApplicationContext(), R.drawable.home1);
-																Icon home_icon = iconFromDrawable(mhome);
+																Icon home_icon = colorIconFromDrawable(mhome, null);
 																home_location = loc;
 																MarkerOptions home_marker_options = new MarkerOptions()
 																				.position(home_location)
@@ -1548,9 +1580,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										public void onClick(DialogInterface dialog, int which)
 										{
-												UtmPose homeUtmPose = convertLatLngUtm(home_location);
+												double[] home = new double[]{home_location.getLatitude(), home_location.getLongitude()};
 												Boat boat = currentBoat();
-												boat.addWaypoint(homeUtmPose, "POINT_AND_SHOOT", new ToastFailureCallback("Go home msg timed out"));
+												boat.addWaypoint(home, new ToastFailureCallback("Go home msg timed out"));
 												Log.i(logTag, "Go home");
 										}
 								})

@@ -1,6 +1,7 @@
 package com.platypus.android.tablet;
 import android.util.Log;
 
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.data.Pose3D;
 import com.platypus.crw.data.UtmPose;
 import java.net.InetSocketAddress;
@@ -17,9 +18,11 @@ import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 import org.apache.commons.math3.ode.nonstiff.ClassicalRungeKuttaIntegrator;
 
+import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
+import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 
 /**
@@ -37,7 +40,7 @@ public class SimulatedBoat extends Boat
 		Runnable _crumbListenerCallback = null;
 		final double NEW_CRUMB_DISTANCE = 5; // meters
 		boolean executing_failsafe = false;
-		UtmPose[] _waypoints = new UtmPose[0];
+		double[][] _waypoints = new double[0][0];
 		Object waypoints_lock = new Object();
 		double thrustSignal, headingSignal;
 		double thrustSurge, thrustSway, torque;
@@ -155,7 +158,9 @@ public class SimulatedBoat extends Boat
 								}
 								synchronized (waypoints_lock)
 								{
-										destination_pose = _waypoints[current_waypoint_index.get()].pose;
+										double[] latlng = _waypoints[current_waypoint_index.get()];
+										UtmPose utmpose = new UtmPose(latlng);
+										destination_pose = utmpose.pose;
 								}
 								x_dest = destination_pose.getX() - original_easting;
 								y_dest = destination_pose.getY() - original_northing;
@@ -183,12 +188,13 @@ public class SimulatedBoat extends Boat
 
 										synchronized (waypoints_lock)
 										{
-												_waypoints = new UtmPose[0]; // empty
+												_waypoints = new double[0][0]; // empty
 										}
 										synchronized (waypoint_state_lock)
 										{
 												waypointState = "DONE";
 										}
+
 										return;
 								}
 						}
@@ -300,8 +306,9 @@ public class SimulatedBoat extends Boat
 										northing,
 										SI.METER
 						);
-						new_crumb_LatLng = jscienceLatLng_to_mapboxLatLng(
-										UTM.utmToLatLong(new_crumb_UTM, ReferenceEllipsoid.WGS84));
+						LatLong latlong = UTM.utmToLatLong(new_crumb_UTM, ReferenceEllipsoid.WGS84);
+						new_crumb_LatLng = new LatLng(latlong.latitudeValue(NonSI.DEGREE_ANGLE),
+										latlong.longitudeValue(NonSI.DEGREE_ANGLE));
 						newCrumb(new_crumb_UTM);
 						uiHandler.post(_crumbListenerCallback);
 				}
@@ -380,6 +387,7 @@ public class SimulatedBoat extends Boat
 								double dy_to_last_crumb = q[1] - (new_crumb_UTM.northingValue(SI.METER) - original_northing);
 								if (Math.pow(dx_to_last_crumb, 2.) + Math.pow(dy_to_last_crumb, 2.) >= Math.pow(NEW_CRUMB_DISTANCE, 2.))
 								{
+										// test A* by forcing it to activate
 										updateCrumb();
 										if (crumbs_by_index.size() > 100)
 										{
@@ -419,7 +427,7 @@ public class SimulatedBoat extends Boat
 		}
 
 		@Override
-		public void startWaypoints(UtmPose[] waypoints, String controller_name, Runnable failureCallback)
+		public void startWaypoints(double[][] waypoints, Runnable failureCallback)
 		{
 				synchronized (waypoints_lock)
 				{
@@ -504,10 +512,10 @@ public class SimulatedBoat extends Boat
 		}
 
 		@Override
-		public void addWaypoint(UtmPose waypoint, String controller_name, Runnable failureCallback)
+		public void addWaypoint(double[] waypoint, Runnable failureCallback)
 		{
-				UtmPose[] wpPose = {waypoint};
-				startWaypoints(wpPose, controller_name, failureCallback);
+				double[][] waypoints = {waypoint};
+				startWaypoints(waypoints, failureCallback);
 		}
 
 		@Override
@@ -686,11 +694,13 @@ public class SimulatedBoat extends Boat
 
 		public void startPathSequence(List<Long> path_sequence)
 		{
-				UtmPose[] waypoints = new UtmPose[path_sequence.size()];
+				double[][] waypoints = new double[path_sequence.size()][2];
 				for (int i = 0; i < path_sequence.size(); i++)
 				{
-						waypoints[i] = UTM_to_UtmPose(crumbs_by_index.get(path_sequence.get(i)).getLocation());
+						UTM utm = crumbs_by_index.get(path_sequence.get(i)).getLocation();
+						LatLong latlong = UTM.utmToLatLong(utm, ReferenceEllipsoid.WGS84);
+						waypoints[i] = new double[]{latlong.latitudeValue(NonSI.DEGREE_ANGLE), latlong.longitudeValue(NonSI.DEGREE_ANGLE)};
 				}
-				startWaypoints(waypoints, "POINT_AND_SHOOT", null);
+				startWaypoints(waypoints, null);
 		}
 }

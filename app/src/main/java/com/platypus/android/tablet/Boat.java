@@ -42,7 +42,7 @@ public abstract class Boat
 		Object location_lock = new Object();
 		LatLng new_crumb_LatLng = null;
 		UTM new_crumb_UTM = null;
-		HashMap<Long, UtmPose> crumb_map= new HashMap<Long, UtmPose>();
+		HashMap<Long, double[]> crumb_map= new HashMap<>();
 		Object crumb_lock = new Object();
 		double currentYaw = 0.0; // [-pi, pi]
 		Object yaw_lock = new Object();
@@ -64,12 +64,12 @@ public abstract class Boat
 						final Runnable sensorListenerCallback,
 						final Runnable waypointListenerCallback,
 						final Runnable crumbListenerCallback);
-		abstract public void startWaypoints(final UtmPose[] waypoints, final String controller_name, final Runnable failureCallback);
+		abstract public void startWaypoints(final double[][] waypoints, final Runnable failureCallback);
 		abstract public void stopWaypoints(final Runnable failureCallback);
 		abstract public void updateControlSignals(final double thrust, final double heading, final Runnable failureCallback);
 		abstract public void setAutonomous(final boolean b, final Runnable failureCallback);
 		abstract public void setPID(final double[] thrustPID, final double[] headingPID, final Runnable failureCallback);
-		abstract public void addWaypoint(UtmPose waypoint, final String controller_name, final Runnable failureCallback);
+		abstract public void addWaypoint(double[] waypoint, final Runnable failureCallback);
 		abstract public void setAddress(InetSocketAddress a);
 		abstract public InetSocketAddress getIpAddress();
 
