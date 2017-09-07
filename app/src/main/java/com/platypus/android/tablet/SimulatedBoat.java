@@ -1,6 +1,7 @@
 package com.platypus.android.tablet;
 import android.util.Log;
 
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.platypus.crw.data.Pose3D;
 import com.platypus.crw.data.UtmPose;
 import java.net.InetSocketAddress;
@@ -193,6 +194,7 @@ public class SimulatedBoat extends Boat
 										{
 												waypointState = "DONE";
 										}
+
 										return;
 								}
 						}
@@ -304,8 +306,9 @@ public class SimulatedBoat extends Boat
 										northing,
 										SI.METER
 						);
-						new_crumb_LatLng = jscienceLatLng_to_mapboxLatLng(
-										UTM.utmToLatLong(new_crumb_UTM, ReferenceEllipsoid.WGS84));
+						LatLong latlong = UTM.utmToLatLong(new_crumb_UTM, ReferenceEllipsoid.WGS84);
+						new_crumb_LatLng = new LatLng(latlong.latitudeValue(NonSI.DEGREE_ANGLE),
+										latlong.longitudeValue(NonSI.DEGREE_ANGLE));
 						newCrumb(new_crumb_UTM);
 						uiHandler.post(_crumbListenerCallback);
 				}
@@ -384,7 +387,7 @@ public class SimulatedBoat extends Boat
 								double dy_to_last_crumb = q[1] - (new_crumb_UTM.northingValue(SI.METER) - original_northing);
 								if (Math.pow(dx_to_last_crumb, 2.) + Math.pow(dy_to_last_crumb, 2.) >= Math.pow(NEW_CRUMB_DISTANCE, 2.))
 								{
-										// TODO: test A* by forcing it to activate
+										// test A* by forcing it to activate
 										updateCrumb();
 										if (crumbs_by_index.size() > 30)
 										{
@@ -694,7 +697,6 @@ public class SimulatedBoat extends Boat
 				double[][] waypoints = new double[path_sequence.size()][2];
 				for (int i = 0; i < path_sequence.size(); i++)
 				{
-						//waypoints[i] = UTM_to_UtmPose(crumbs_by_index.get(path_sequence.get(i)).getLocation());
 						UTM utm = crumbs_by_index.get(path_sequence.get(i)).getLocation();
 						LatLong latlong = UTM.utmToLatLong(utm, ReferenceEllipsoid.WGS84);
 						waypoints[i] = new double[]{latlong.latitudeValue(NonSI.DEGREE_ANGLE), latlong.longitudeValue(NonSI.DEGREE_ANGLE)};

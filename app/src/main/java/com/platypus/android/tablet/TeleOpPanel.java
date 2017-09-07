@@ -1488,7 +1488,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										public void onClick(DialogInterface dialog, int which)
 										{
-												//UtmPose homeUtmPose = convertLatLngUtm(home_location);
 												double[] home = new double[]{home_location.getLatitude(), home_location.getLongitude()};
 												Boat boat = currentBoat();
 												boat.addWaypoint(home, new ToastFailureCallback("Go home msg timed out"));
