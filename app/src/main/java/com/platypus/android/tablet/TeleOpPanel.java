@@ -90,9 +90,11 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.PopupMenu;
+import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -124,6 +126,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		RelativeLayout linlay = null;
 
 		Button connect_button = null;
+		RadioButton real_boat_button = null;
+		RadioButton sim_boat_button = null;
+		boolean use_real_boat = true;
 		Button advanced_options_button = null;
 		Button center_view_button = null;
 		Button start_wp_button = null;
@@ -251,12 +256,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		void startNewBoat(final String boat_name)
 		{
 				// generate Boat object and put it into the boat_map
-				//Boat newBoat = new RealBoat(boat_name);
-				// TODO: give user option between real boat and simulated boat
-				// TODO: set the initial UTM to be the center of the current map view
-				UTM initial_utm = UTM.latLongToUtm(LatLong.valueOf(45.404586,
-								10.998773, NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
-				Boat newBoat = new SimulatedBoat(boat_name, initial_utm);
+				Boat newBoat;
+				if (use_real_boat)
+				{
+						newBoat = new RealBoat(boat_name);
+				}
+				else
+				{
+						// set the initial UTM to be the center of the current map view
+						LatLng center = mMapboxMap.getCameraPosition().target;
+						UTM initial_simulated_utm = UTM.latLongToUtm(LatLong.valueOf(center.getLatitude(),
+										center.getLongitude(), NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
+						newBoat = new SimulatedBoat(boat_name, initial_simulated_utm);
+				}
+
+
 				available_boats_spinner_adapter.add(boat_name);
 				available_boats_spinner_adapter.notifyDataSetChanged();
 
@@ -1314,9 +1328,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				dialog.setTitle("Connect To A Boat");
 				ipAddressInput = (EditText) dialog.findViewById(R.id.ip_address_input);
 				Button submitButton = (Button) dialog.findViewById(R.id.submit);
+				real_boat_button = (RadioButton) dialog.findViewById(R.id.realBoatButton);
+				sim_boat_button = (RadioButton) dialog.findViewById(R.id.simBoatButton);
 
 				loadPreferences();
 				ipAddressInput.setText(textIpAddress);
+
+				real_boat_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+				{
+						@Override
+						public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+						{
+								use_real_boat = isChecked;
+						}
+				});
 
 				submitButton.setOnClickListener(new OnClickListener()
 				{
