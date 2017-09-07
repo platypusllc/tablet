@@ -218,8 +218,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		int boat_color_count = 0;
 		Map<Integer, Map<String, Integer>> color_map = new HashMap<>();
 
-		public Icon iconFromDrawable(Drawable drawable)
+		public Icon colorIconFromDrawable(Drawable drawable, Integer color)
 		{
+				if (color != null)
+				{
+						PorterDuff.Mode mMode = PorterDuff.Mode.MULTIPLY;
+						drawable.setColorFilter(color, mMode);
+				}
 				// https://github.com/mapbox/mapbox-gl-native/issues/8185
 				Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
 				Canvas canvas = new Canvas(bitmap);
@@ -279,7 +284,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				PorterDuff.Mode mMode = PorterDuff.Mode.MULTIPLY;
 				int boat_color = color_map.get(boat_color_count).get("boat");
 				int line_color = color_map.get(boat_color_count).get("line");
-				arrow.setColorFilter(boat_color, mMode);
+				//arrow.setColorFilter(boat_color, mMode);
 				newBoat.setBoatColor(boat_color);
 				newBoat.setLineColor(line_color);
 				boat_color_count++; // use the next set of colors
@@ -288,7 +293,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				boat_markers_map.put(boat_name, new MarkerViewOptions()
 								.position(pHollowStartingPoint)
 								.title(boat_name)
-								.icon(iconFromDrawable(arrow)).rotation(0));
+								.icon(colorIconFromDrawable(arrow, boat_color)).rotation(0));
 
 				boat_markers_map.get(boat_name).getMarker().setAnchor(0.5f, 0.5f);
 
@@ -457,7 +462,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						boat = _boat;
 						name = boat.getName();
 						crumb_markers_map.put(name, new ArrayList<Marker>());
-						icon = mIconFactory.fromResource(R.drawable.empty_circle);
+						icon = colorIconFromDrawable(
+										getResources().getDrawable(R.drawable.breadcrumb_pin, null),
+										_boat.getBoatColor());
 				}
 				public void run()
 				{
@@ -1435,7 +1442,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																return;
 														}
 														Drawable mhome = ContextCompat.getDrawable(getApplicationContext(), R.drawable.home1);
-														Icon home_icon = iconFromDrawable(mhome);
+														Icon home_icon = colorIconFromDrawable(mhome, null);
 														MarkerOptions home_marker_options = new MarkerOptions()
 																		.position(home_location)
 																		.title("Home")
@@ -1459,7 +1466,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														if (loc != null)
 														{
 																Drawable mhome = ContextCompat.getDrawable(getApplicationContext(), R.drawable.home1);
-																Icon home_icon = iconFromDrawable(mhome);
+																Icon home_icon = colorIconFromDrawable(mhome, null);
 																home_location = loc;
 																MarkerOptions home_marker_options = new MarkerOptions()
 																				.position(home_location)
