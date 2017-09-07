@@ -52,6 +52,7 @@ public class Boat
 		private Object PID_lock = new Object();
 		final int THRUST_GAIN_AXIS = 0;
 		final int RUDDER_GAIN_AXIS = 5;
+		final int SAMPLER_GAIN_AXIS = 7;
 		private final int CONNECTION_POLL_S = 3;
 		private final int WAYPOINTS_INDEX_POLL_S = 1;
 		private ScheduledThreadPoolExecutor polling_thread_pool;
@@ -518,6 +519,67 @@ public class Boat
 				{
 						return PID_gains.clone();
 				}
+		}
+
+		public void startSample(final int jar_number, final Runnable TimerStartRunnable, final Runnable failureCallback)
+		{
+				class StartSampleAsyncTask extends AsyncTask<Void, Void, Void>
+				{
+						@Override
+						protected Void doInBackground(Void... params)
+						{
+								double[] jar = {jar_number};
+								server.setGains(SAMPLER_GAIN_AXIS, jar, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												Log.i(logTag, String.format("Started sampler jar %d", jar_number));
+												uiHandler.post(TimerStartRunnable);
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.e(logTag, String.format("Could not start jar %d", jar_number));
+												uiHandler.post(failureCallback);
+										}
+								});
+								return null;
+						}
+				}
+				new StartSampleAsyncTask().execute();
+		}
+
+		public void resetSampler(final Runnable successCallback, final Runnable failureCallback)
+		{
+				class ResetSamplerAsyncTask extends AsyncTask<Void, Void, Void>
+				{
+
+						@Override
+						protected Void doInBackground(Void... params)
+						{
+								double[] jar = {-1};
+								server.setGains(SAMPLER_GAIN_AXIS, jar, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												Log.i(logTag, "Reset sampler");
+												uiHandler.post(successCallback);
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.e(logTag, "Could not reset sample");
+												uiHandler.post(failureCallback);
+										}
+								});
+								return null;
+						}
+				}
+				new ResetSamplerAsyncTask().execute();
 		}
 
 

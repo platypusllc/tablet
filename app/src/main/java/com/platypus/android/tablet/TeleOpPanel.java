@@ -53,6 +53,7 @@ import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 
 import android.net.Uri;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -133,6 +134,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		Button normal_path_button = null;
 		Button spiral_button = null;
 		Button lawnmower_button = null;
+		Button jar1_button = null;
+		Button jar2_button = null;
+		Button jar3_button = null;
+		Button jar4_button = null;
+		Button sampler_reset_button = null;
+
+		TextView jar1_text = null;
+		TextView jar2_text = null;
+		TextView jar3_text = null;
+		TextView jar4_text = null;
 
 		TextView sensorData1 = null;
 		TextView sensorData2 = null;
@@ -479,6 +490,24 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				normal_path_button = (Button) this.findViewById(R.id.path_button);
 				spiral_button = (Button) this.findViewById(R.id.spiral_button);
 				lawnmower_button = (Button) this.findViewById(R.id.lawnmower_button);
+
+				jar1_button = (Button) this.findViewById(R.id.jar1_button);
+				jar2_button = (Button) this.findViewById(R.id.jar2_button);
+				jar3_button = (Button) this.findViewById(R.id.jar3_button);
+				jar4_button = (Button) this.findViewById(R.id.jar4_button);
+				sampler_reset_button = (Button) this.findViewById(R.id.sampler_reset_button);
+				jar1_button.setClickable(true);
+				jar2_button.setClickable(true);
+				jar3_button.setClickable(true);
+				jar4_button.setClickable(true);
+				jar1_text = (TextView) this.findViewById(R.id.jar1_text);
+				jar2_text = (TextView) this.findViewById(R.id.jar2_text);
+				jar3_text = (TextView) this.findViewById(R.id.jar3_text);
+				jar4_text = (TextView) this.findViewById(R.id.jar4_text);
+				jar1_text.setTextIsSelectable(false);
+				jar2_text.setTextIsSelectable(false);
+				jar3_text.setTextIsSelectable(false);
+				jar4_text.setTextIsSelectable(false);
 
 				alarm_ringtone = RingtoneManager.getRingtone(getApplicationContext(), alarmUri);
 				notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -1055,6 +1084,146 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										Toast.makeText(context, "Need 3 waypoints to generate lawnmower", Toast.LENGTH_SHORT).show();
 								}
+						}
+				});
+
+				class JarCountdownTimer extends CountDownTimer
+				{
+						TextView clock_text;
+						int seconds;
+						int minutes;
+						int full_seconds;
+						int left_seconds;
+
+						public JarCountdownTimer(long durationMillis, long tickIntervalMillis, TextView jar_textview)
+						{
+								super(durationMillis, tickIntervalMillis);
+								clock_text = jar_textview;
+						}
+
+						public void onTick(long millisUntilFinished)
+						{
+								seconds = (int)millisUntilFinished/1000;
+								minutes = seconds/60;
+								full_seconds = minutes*60;
+								left_seconds = seconds - full_seconds;
+								if (left_seconds < 10)
+								{
+										clock_text.setText(String.format("%d:0%d", minutes, left_seconds));
+								}
+								else
+								{
+										clock_text.setText(String.format("%d:%d", minutes, left_seconds));
+								}
+
+						}
+
+						public void onFinish()
+						{
+								clock_text.setText("DONE");
+						}
+				}
+				class JarCountdownRunnable implements Runnable
+				{
+						TextView clock_text;
+						Button button;
+						CountDownTimer timer;
+						public JarCountdownRunnable(TextView jar_textview, Button jar_button)
+						{
+								clock_text = jar_textview;
+								button = jar_button;
+						}
+						@Override
+						public void run()
+						{
+								timer = new JarCountdownTimer(1000*60*4, 1000, clock_text).start();
+								button.setClickable(false);
+						}
+
+						public void cancel() { timer.cancel(); }
+				}
+				class JarOnClickListener implements OnClickListener
+				{
+						TextView clock_text;
+						Button button;
+						int number;
+						JarCountdownRunnable runnable;
+						public JarOnClickListener(int jar_number, TextView jar_textview, Button jar_button)
+						{
+								clock_text = jar_textview;
+								button = jar_button;
+								number = jar_number;
+						}
+						@Override
+						public void onClick(View v)
+						{
+								if (button.isClickable())
+								{
+										Boat boat = currentBoat();
+										if (boat == null)
+										{
+												Toast.makeText(context, "Connect to a boat first", Toast.LENGTH_SHORT).show();
+												return;
+										}
+										runnable = new JarCountdownRunnable(clock_text, button);
+										boat.startSample(number-1, runnable,
+														new ToastFailureCallback("Sampler Start Msg timed out"));
+								}
+								else
+								{
+										// TODO: why does this not run?
+										Toast.makeText(context, String.format("Jar %d is not available until reset", number), Toast.LENGTH_SHORT).show();
+								}
+						}
+						public void cancel()
+						{
+								// cancel the timer inside the countdown runnable
+								if (runnable != null) runnable.cancel();
+						}
+				}
+
+				final JarOnClickListener jar1_listener = new JarOnClickListener(1, jar1_text, jar1_button);
+				final JarOnClickListener jar2_listener = new JarOnClickListener(2, jar2_text, jar2_button);
+				final JarOnClickListener jar3_listener = new JarOnClickListener(3, jar3_text, jar3_button);
+				final JarOnClickListener jar4_listener = new JarOnClickListener(4, jar4_text, jar4_button);
+				jar1_button.setOnClickListener(jar1_listener);
+				jar2_button.setOnClickListener(jar2_listener);
+				jar3_button.setOnClickListener(jar3_listener);
+				jar4_button.setOnClickListener(jar4_listener);
+
+				class ResetSamplerSuccessRunnable implements Runnable
+				{
+						@Override
+						public void run()
+						{
+								jar1_button.setClickable(true);
+								jar2_button.setClickable(true);
+								jar3_button.setClickable(true);
+								jar4_button.setClickable(true);
+								jar1_listener.cancel();
+								jar2_listener.cancel();
+								jar3_listener.cancel();
+								jar4_listener.cancel();
+								jar1_text.setText("");
+								jar2_text.setText("");
+								jar3_text.setText("");
+								jar4_text.setText("");
+
+								Toast.makeText(context, "Sampler reset successfully", Toast.LENGTH_SHORT).show();
+						}
+				}
+				sampler_reset_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+								Boat boat = currentBoat();
+								if (boat == null)
+								{
+										Toast.makeText(context, "Connect to a boat first", Toast.LENGTH_SHORT).show();
+								}
+								boat.resetSampler(new ResetSamplerSuccessRunnable(),
+												new ToastFailureCallback("Sampler Reset Msg timed out"));
 						}
 				});
 		}
