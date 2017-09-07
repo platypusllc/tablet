@@ -82,10 +82,6 @@ dependencies {
     compile files('libs/microlog4android-1.0.0.jar')
     compile files('libs/jscience.jar')
     compile files('libs/platypus-core.jar')
-    //compile 'com.google.firebase:firebase-crash:9.4.0'
-
-    //compile 'com.android.support:support-v4:25.0.1'
-    //compile 'com.firebase:firebase-client-android:2.3.1'
 }
 
 repositories {

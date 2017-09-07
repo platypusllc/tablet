@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 
+
 //TODO what is causing the random lines across the polygon that occur in spiral mode?
 //TODO ok caused by the previous polygon has points that get added for some reason
 //TODO fix the random lines
