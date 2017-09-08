@@ -107,146 +107,142 @@ public class RealBoat extends Boat
 		                            final Runnable waypointListenerCallback,
 		                            final Runnable crumbListenerCallback)
 		{
+				pl = new PoseListener()
 				{
-						pl = new PoseListener()
+						@Override
+						public void receivedPose(UtmPose utmPose)
 						{
-								@Override
-								public void receivedPose(UtmPose utmPose)
-								{
-										setConnected(true);
-										setYaw(Math.PI / 2 - utmPose.pose.getRotation().toYaw());
-										setLocation(
-														jscienceLatLng_to_mapboxLatLng(
-																		UTM.utmToLatLong(
-																						UTM.valueOf(
-																										utmPose.origin.zone,
-																										utmPose.origin.isNorth ? 'T' : 'L',
-																										utmPose.pose.getX(),
-																										utmPose.pose.getY(),
-																										SI.METER
-																						),
-																						ReferenceEllipsoid.WGS84
-																		)
-														)
-										);
-										uiHandler.post(poseListenerCallback); // update GUI with result
-								}
-						};
-						sl = new SensorListener()
-						{
-								@Override
-								public void receivedSensor(SensorData sensorData)
-								{
-										setConnected(true);
-										synchronized (sensor_lock)
-										{
-												lastSensorDataReceived = sensorData;
-										}
-										sensors_ready.set(true);
-										uiHandler.post(sensorListenerCallback); // update GUI with result
-								}
-						};
-						wl = new WaypointListener()
-						{
-								@Override
-								public void waypointUpdate(VehicleServer.WaypointState state)
-								{
-										setConnected(true);
-										synchronized (waypoint_state_lock)
-										{
-												waypointState = state.toString();
-										}
-										uiHandler.post(waypointListenerCallback); // update GUI with result
-								}
-						};
-						cl = new CrumbListener()
-						{
-								@Override
-								public void receivedCrumb(double[] crumb, long index)
-								{
-										setConnected(true);
+								setConnected(true);
 
-										// check if the index has been seen before
-										if (!crumb_map.containsKey(index))
-										{
-												// add the index to the known ones
-												crumb_map.put(index, crumb);
-												// create a LatLng from it
-												synchronized (crumb_lock)
-												{
-														new_crumb_LatLng = new LatLng(crumb[0], crumb[1]);
-														new_crumb_UTM = UTM.latLongToUtm(
-																		LatLong.valueOf(crumb[0], crumb[1], NonSI.DEGREE_ANGLE),
-																		ReferenceEllipsoid.WGS84
-														);
-												}
-												uiHandler.post(crumbListenerCallback); // update GUI with result
-										}
+								// check if the boat does not have a GPS lock yet
+								if (utmPose.equals(new UtmPose()))
+								{
+										Log.e(logTag, "Received default pose from boat. Ignoring.");
+										return;
 								}
-						};
-						try
+
+								setYaw(Math.PI / 2 - utmPose.pose.getRotation().toYaw());
+								double[] latlng = utmPose.getLatLong();
+								Log.e(logTag, String.format("Received pose UtmPose = %s", utmPose.toString()));
+								Log.e(logTag, String.format("Received pose lat = %f, lng = %f", latlng[0], latlng[1]));
+								setLocation(new LatLng(latlng[0], latlng[1]));
+								uiHandler.post(poseListenerCallback); // update GUI with result
+						}
+				};
+				sl = new SensorListener()
+				{
+						@Override
+						public void receivedSensor(SensorData sensorData)
 						{
-								if (pl != null)
+								setConnected(true);
+								synchronized (sensor_lock)
 								{
-										server.addPoseListener(pl, new FunctionObserver<Void>()
-										{
-												@Override
-												public void completed(Void aVoid)
-												{
-														Log.i(logTag, "addPoseListener");
-												}
-
-												@Override
-												public void failed(FunctionError functionError) { }
-										});
+										lastSensorDataReceived = sensorData;
 								}
-								if (sl != null)
+								sensors_ready.set(true);
+								uiHandler.post(sensorListenerCallback); // update GUI with result
+						}
+				};
+				wl = new WaypointListener()
+				{
+						@Override
+						public void waypointUpdate(VehicleServer.WaypointState state)
+						{
+								setConnected(true);
+								synchronized (waypoint_state_lock)
 								{
-										for (int channel = 0; channel < 5; channel++)
-										{
-												server.addSensorListener(channel, sl, new FunctionObserver<Void>()
-												{
-														@Override
-														public void completed(Void aVoid) { Log.i(logTag, "add sensor listener"); }
+										waypointState = state.toString();
+								}
+								uiHandler.post(waypointListenerCallback); // update GUI with result
+						}
+				};
+				cl = new CrumbListener()
+				{
+						@Override
+						public void receivedCrumb(double[] crumb, long index)
+						{
+								setConnected(true);
 
-														@Override
-														public void failed(FunctionError functionError) { }
-												});
+								// check if the index has been seen before
+								if (!crumb_map.containsKey(index))
+								{
+										// add the index to the known ones
+										crumb_map.put(index, crumb);
+										// create a LatLng from it
+										synchronized (crumb_lock)
+										{
+												new_crumb_LatLng = new LatLng(crumb[0], crumb[1]);
+												new_crumb_UTM = UTM.latLongToUtm(
+																LatLong.valueOf(crumb[0], crumb[1], NonSI.DEGREE_ANGLE),
+																ReferenceEllipsoid.WGS84
+												);
 										}
+										uiHandler.post(crumbListenerCallback); // update GUI with result
 								}
-								if (wl != null)
+						}
+				};
+				try
+				{
+						if (pl != null)
+						{
+								server.addPoseListener(pl, new FunctionObserver<Void>()
 								{
-										server.addWaypointListener(wl, new FunctionObserver<Void>()
+										@Override
+										public void completed(Void aVoid)
 										{
-												@Override
-												public void completed(Void aVoid) { Log.i(logTag, "add waypoint listener"); }
+												Log.i(logTag, "addPoseListener");
+										}
 
-												@Override
-												public void failed(FunctionError functionError) { }
-										});
-								}
-								if (cl != null)
+										@Override
+										public void failed(FunctionError functionError) { }
+								});
+						}
+						if (sl != null)
+						{
+								for (int channel = 0; channel < 5; channel++)
 								{
-										server.addCrumbListener(cl, new FunctionObserver<Void>()
+										server.addSensorListener(channel, sl, new FunctionObserver<Void>()
 										{
 												@Override
-												public void completed(Void aVoid) { Log.i(logTag, "add crumb listener"); }
+												public void completed(Void aVoid) { Log.i(logTag, "add sensor listener"); }
 
 												@Override
 												public void failed(FunctionError functionError) { }
 										});
 								}
 						}
-						catch (Exception e)
+						if (wl != null)
 						{
-								Log.i(logTag, "Failed to add listener");
+								server.addWaypointListener(wl, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid) { Log.i(logTag, "add waypoint listener"); }
+
+										@Override
+										public void failed(FunctionError functionError) { }
+								});
 						}
-						polling_thread_pool = new ScheduledThreadPoolExecutor(2);
-						polling_thread_pool.scheduleAtFixedRate(
-										isConnectedPoll, 0, CONNECTION_POLL_S, TimeUnit.SECONDS);
-						polling_thread_pool.scheduleAtFixedRate(
-										currentWaypointIndexPoll, 0, WAYPOINTS_INDEX_POLL_S, TimeUnit.SECONDS);
+						if (cl != null)
+						{
+								server.addCrumbListener(cl, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid) { Log.i(logTag, "add crumb listener"); }
+
+										@Override
+										public void failed(FunctionError functionError) { }
+								});
+						}
 				}
+				catch (Exception e)
+				{
+						Log.i(logTag, "Failed to add listener");
+				}
+				polling_thread_pool = new ScheduledThreadPoolExecutor(2);
+				polling_thread_pool.scheduleAtFixedRate(
+								isConnectedPoll, 0, CONNECTION_POLL_S, TimeUnit.SECONDS);
+				polling_thread_pool.scheduleAtFixedRate(
+								currentWaypointIndexPoll, 0, WAYPOINTS_INDEX_POLL_S, TimeUnit.SECONDS);
 		}
 
 		@Override

@@ -66,7 +66,7 @@ import android.support.v4.content.ContextCompat;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.mapzen.android.lost.api.LocationServices;
+// import com.mapzen.android.lost.api.LocationServices;
 
 import com.platypus.android.tablet.Path.AreaType;
 import com.platypus.android.tablet.Path.Path;
@@ -296,7 +296,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								.title(boat_name)
 								.icon(colorIconFromDrawable(arrow, boat_color)).rotation(0));
 
-				boat_markers_map.get(boat_name).getMarker().setAnchor(0.5f, 0.5f);
+				// TODO: get the arrow centered on the boat's actual location using setAnchor
+				//boat_markers_map.get(boat_name).getMarker().setAnchor(0.5f, 0.5f);
 
 				// try to add the marker until mMapboxMap exists and it is added
 				uiHandler.post(new Runnable()
@@ -1514,6 +1515,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										{
 												public void onClick(DialogInterface dialog, int which)
 												{
+														/* TODO: tablet location as home
 														Location tempLocation = LocationServices.FusedLocationApi.getLastLocation();
 														if (tempLocation == null)
 														{
@@ -1539,6 +1541,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														{
 																Toast.makeText(getApplicationContext(), "Tablet doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
 														}
+														*/
 												}
 										})
 										.show();
