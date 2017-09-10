@@ -4,12 +4,13 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.platypus.crw.CrumbListener;
 import com.platypus.crw.FunctionObserver;
 import com.platypus.crw.PoseListener;
 import com.platypus.crw.SensorListener;
 import com.platypus.crw.VehicleServer;
 import com.platypus.crw.WaypointListener;
-import com.platypus.crw.CrumbListener;
+//import com.platypus.crw.CrumbListener;
 import com.platypus.crw.data.SensorData;
 import com.platypus.crw.data.Twist;
 import com.platypus.crw.data.UtmPose;
@@ -166,6 +167,7 @@ public class RealBoat extends Boat
 								// check if the index has been seen before
 								if (!crumb_map.containsKey(index))
 								{
+										Log.i(logTag, String.format("Received new crumb, index %d", index));
 										// add the index to the known ones
 										crumb_map.put(index, crumb);
 										// create a LatLng from it
