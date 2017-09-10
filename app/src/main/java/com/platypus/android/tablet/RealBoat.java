@@ -118,14 +118,14 @@ public class RealBoat extends Boat
 								// check if the boat does not have a GPS lock yet
 								if (utmPose.equals(new UtmPose()))
 								{
-										Log.e(logTag, "Received default pose from boat. Ignoring.");
+										Log.d(logTag, "Received default pose from boat. Ignoring.");
 										return;
 								}
 
 								setYaw(Math.PI / 2 - utmPose.pose.getRotation().toYaw());
 								double[] latlng = utmPose.getLatLong();
-								Log.e(logTag, String.format("Received pose UtmPose = %s", utmPose.toString()));
-								Log.e(logTag, String.format("Received pose lat = %f, lng = %f", latlng[0], latlng[1]));
+								Log.v(logTag, String.format("Received pose UtmPose = %s", utmPose.toString()));
+								Log.v(logTag, String.format("Received pose lat = %f, lng = %f", latlng[0], latlng[1]));
 								setLocation(new LatLng(latlng[0], latlng[1]));
 								uiHandler.post(poseListenerCallback); // update GUI with result
 						}
@@ -180,6 +180,10 @@ public class RealBoat extends Boat
 												);
 										}
 										uiHandler.post(crumbListenerCallback); // update GUI with result
+								}
+								else
+								{
+										Log.d(logTag, "Received a previously known crumb, ignoring...");
 								}
 						}
 				};
