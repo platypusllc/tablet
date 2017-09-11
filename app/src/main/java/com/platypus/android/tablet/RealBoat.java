@@ -450,6 +450,34 @@ public class RealBoat extends Boat
 		}
 
 		@Override
+		public void sendAutonomousPredicateMessage(final String apm, final Runnable failureCallback)
+		{
+				class sendAPMAsyncTask extends AsyncTask<Void, Void, Void>
+				{
+						@Override
+						protected Void doInBackground(Void... params)
+						{
+								server.newAutonomousPredicateMessage(apm, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												uiHandler.post(failureCallback);
+												Log.w(logTag, )
+										}
+								});
+						}
+				}
+				new sendAPMAsyncTask().execute();
+		}
+
+		@Override
 		public InetSocketAddress getIpAddress()
 		{
 				return (InetSocketAddress) server.getVehicleService();

@@ -519,6 +519,12 @@ public class SimulatedBoat extends Boat
 		}
 
 		@Override
+		public void sendAutonomousPredicateMessage(String apm, final Runnable failureCallback)
+		{
+
+		}
+
+		@Override
 		public void setAddress(InetSocketAddress a) { addr = a; }
 
 		@Override

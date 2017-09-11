@@ -70,6 +70,7 @@ public abstract class Boat
 		abstract public void setAutonomous(final boolean b, final Runnable failureCallback);
 		abstract public void setPID(final double[] thrustPID, final double[] headingPID, final Runnable failureCallback);
 		abstract public void addWaypoint(double[] waypoint, final Runnable failureCallback);
+		abstract public void sendAutonomousPredicateMessage(String apm, final Runnable failureCallback);
 		abstract public void setAddress(InetSocketAddress a);
 		abstract public InetSocketAddress getIpAddress();
 

@@ -121,6 +121,29 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		HashMap<String, Integer> old_wp_index_map = new HashMap<>();
 		HashMap<String, ArrayList<Marker>> crumb_markers_map = new HashMap<>();
 		HashMap<String, PlatypusMarkerTypes> marker_types_map = new HashMap<>();
+		HashMap<Integer, AutonomousPredicateMessage> ap_messages_map = new HashMap<>();
+
+		void newAutonomousPredicateMessage(String name, String action,
+		                                   String trigger, long interval, boolean ends)
+		{
+				AutonomousPredicateMessage apm = new AutonomousPredicateMessage(name, action, trigger, interval, ends);
+				if (apm.generateStringifiedJSON() != null)
+				{
+						ap_messages_map.put(ap_messages_map.size(), apm);
+				}
+		}
+
+		void sendAllAPMessages()
+		{
+				for (AutonomousPredicateMessage apm : ap_messages_map.values())
+				{
+						if (!apm.getAcknowledged())
+						{
+								Boat boat = currentBoat();
+								// TODO: core lib call with void listener, if completed, set acknowledged to true
+						}
+				}
+		}
 
 		final Context context = this;
 		TextView ipAddressBox = null;
