@@ -10,7 +10,6 @@ import com.platypus.crw.PoseListener;
 import com.platypus.crw.SensorListener;
 import com.platypus.crw.VehicleServer;
 import com.platypus.crw.WaypointListener;
-//import com.platypus.crw.CrumbListener;
 import com.platypus.crw.data.SensorData;
 import com.platypus.crw.data.Twist;
 import com.platypus.crw.data.UtmPose;
@@ -25,7 +24,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.measure.unit.NonSI;
-import javax.measure.unit.SI;
 
 /**
  * Created by jason on 7/12/17.
@@ -462,16 +460,17 @@ public class RealBoat extends Boat
 										@Override
 										public void completed(Void aVoid)
 										{
-												
+
 										}
 
 										@Override
 										public void failed(FunctionError functionError)
 										{
 												uiHandler.post(failureCallback);
-												Log.w(logTag, )
+												Log.w(logTag, "sendAutonomousPredicateMessage failure");
 										}
 								});
+								return null;
 						}
 				}
 				new sendAPMAsyncTask().execute();
