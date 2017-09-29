@@ -450,6 +450,50 @@ public class RealBoat extends Boat
 		@Override
 		public void sendAutonomousPredicateMessage(final String apm, final Runnable failureCallback)
 		{
+				// TODO: need user interface to generate APMs
+				// 1) Waypoint menu quick build
+				//    a) automatic "near: here AND ..."
+				//    b) available actions. Maybe that's it.
+				//    c) "create" is not send. It only populates a partially defined APM in the list
+				// 2) New layout that you access via advanced options
+				//    a) list of APMs (each with its own sub-layout) (corresponding HashMap(String: APM layout))
+				//    b) APM layout
+				//         i) key:value definition pull-down menus or whatever
+				//             1) name (automatically generated, but can edit maybe?)
+				//             2) action (limited pull-down menu of action strings)
+				//             3) interval/Hz (type it in, default 1000 ms, enforced minimum 200 ms)
+				//             4) priority #/level (pulldown menu with helpful labels)
+				//             5) trigger...this needs its own section below. See #3.
+				//             6) isPermanent or ends (just a checkbox)
+				//        ii) send button
+				//       iii) "sent" status checkbox
+				//        iv) big red X delete button (only if unsent)
+				//    c) a send all button at the top
+				//         i) only send unsent
+				//         ii) only send completely defined APMs (for example,
+				//    d) every time a new APM is added, a new blank layout should appear with a plus button
+				//         i) when the plus button is pressed, populate the other stuff and make a new blank one
+				//    e) when an APM is successfully sent, it checks the checkbox and removes the invidual send button
+				//    f) when APM is added, it pushes the list down and new stuff is added at the top.
+				//    g) when APM is sent or added, list is sorted to move successfully sent APMs to the bottom
+				// 3) Creating the trigger. Need to build a string.
+				//    a) easiest option would be to just have them type it all manually, but that is error prone
+				//    b) Remember, this is going to be dominated by starting the sampler, so don't make it crazy complicated
+				//    c) main APM layout has a button to generate trigger, which pops up another layout
+				//    d) popup has buttons at the top that insert variables
+				//    e) buttons in that popup trigger generator layout
+				//       i) add variable (companion pull-down chooses which variable)
+				//      ii) add predicate (), step inside
+				//     iii) add negated predicate ^(), step inside
+				//      iv) add number (companion text field)
+				//       v) add boolean comparator (<, ==, etc. pull-down or distinct buttons)
+				//      vi) add boolean logical (&, | distinct buttons)
+				//     vii) undo button
+				//    viii) "step out" button to exit parentheses, or maybe touch the text field to position cursor
+				//      ix) done (closes popup)
+				//       x) abandon, maybe big red x in the corner
+				// HOW DO YOU STEP BACK OUT OF A PREDICATE?
+
 				class sendAPMAsyncTask extends AsyncTask<Void, Void, Void>
 				{
 						@Override
