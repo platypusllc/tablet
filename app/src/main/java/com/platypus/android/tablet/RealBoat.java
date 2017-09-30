@@ -456,6 +456,7 @@ public class RealBoat extends Boat
 				//    b) available actions. Maybe that's it.
 				//    c) "create" is not send. It only populates a partially defined APM in the list
 				// 2) New layout that you access via advanced options
+				//    RecyclerView: https://developer.android.com/training/material/lists-cards.html
 				//    a) list of APMs (each with its own sub-layout) (corresponding HashMap(String: APM layout))
 				//    b) APM layout
 				//         i) key:value definition pull-down menus or whatever
@@ -489,10 +490,10 @@ public class RealBoat extends Boat
 				//       v) add boolean comparator (<, ==, etc. pull-down or distinct buttons)
 				//      vi) add boolean logical (&, | distinct buttons)
 				//     vii) undo button
-				//    viii) "step out" button to exit parentheses, or maybe touch the text field to position cursor
+				//    viii) "step out" button to exit parentheses, or maybe just touch the text field to position cursor
 				//      ix) done (closes popup)
 				//       x) abandon, maybe big red x in the corner
-				// HOW DO YOU STEP BACK OUT OF A PREDICATE?
+				// OR ALTERNATIVELY, just have buttons for variable names too (i.e. there is a "battery_voltage" button)
 
 				class sendAPMAsyncTask extends AsyncTask<Void, Void, Void>
 				{
