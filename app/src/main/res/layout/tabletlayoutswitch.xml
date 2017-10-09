@@ -424,12 +424,25 @@
 
         <Button
             android:id="@+id/sampler_reset_button"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_below="@id/relativeLayout_sampler_jar4"
-            android:layout_centerInParent="true"
             android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginRight="35dp"
+            android:layout_alignParentRight="true"
             android:background="@drawable/reset"/>
+
+        <Button
+            android:id="@+id/sampler_stop_all_button"
+            android:layout_below="@id/relativeLayout_sampler_jar3"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="35dp"
+            android:background="@drawable/stop_button"/>
 
     </RelativeLayout>
 

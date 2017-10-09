@@ -50,6 +50,7 @@ public class Boat
 		private Object yaw_lock = new Object();
 		private double[][] PID_gains = {{0., 0., 0.}, {0., 0., 0.}}; // thrust, heading
 		private Object PID_lock = new Object();
+		private boolean[] sampler_running = {false, false, false, false};
 		final int THRUST_GAIN_AXIS = 0;
 		final int RUDDER_GAIN_AXIS = 5;
 		final int SAMPLER_GAIN_AXIS = 7;
@@ -528,13 +529,19 @@ public class Boat
 						@Override
 						protected Void doInBackground(Void... params)
 						{
-								double[] jar = {jar_number};
+								double[] jar = {jar_number, 1};
+								if (sampler_running[jar_number])
+								{
+										// don't resend a duplicate start
+										return null;
+								}
 								server.setGains(SAMPLER_GAIN_AXIS, jar, new FunctionObserver<Void>()
 								{
 										@Override
 										public void completed(Void aVoid)
 										{
 												Log.i(logTag, String.format("Started sampler jar %d", jar_number));
+												sampler_running[jar_number] = true;
 												uiHandler.post(TimerStartRunnable);
 										}
 
@@ -551,6 +558,66 @@ public class Boat
 				new StartSampleAsyncTask().execute();
 		}
 
+		public void stopSample(final int jar_number, final Runnable successCallback, final Runnable failureCallback)
+		{
+				class StopSampleAsyncTask extends AsyncTask<Void, Void, Void>
+				{
+						@Override
+						protected Void doInBackground(Void... params)
+						{
+								double[] jar = {jar_number, 0};
+								server.setGains(SAMPLER_GAIN_AXIS, jar, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												uiHandler.post(successCallback);
+										}
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.e(logTag, "Could not stop jar");
+												uiHandler.post(failureCallback);
+										}
+								});
+
+								return null;
+						}
+				}
+				// stop a single jar
+				new StopSampleAsyncTask().execute();
+		}
+
+		public void stopSampleAll(final Runnable successCallback, final Runnable failureCallback)
+		{
+				class StopSampleAllAsyncTask extends AsyncTask<Void, Void, Void>
+				{
+						@Override
+						protected Void doInBackground(Void... params)
+						{
+								double[] jar = {-1, 0};
+								server.setGains(SAMPLER_GAIN_AXIS, jar, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												uiHandler.post(successCallback);
+										}
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.e(logTag, "Could not stop all jars");
+												uiHandler.post(failureCallback);
+										}
+								});
+
+								return null;
+						}
+				}
+				// stop all the jars
+				new StopSampleAllAsyncTask().execute();
+		}
+
 		public void resetSampler(final Runnable successCallback, final Runnable failureCallback)
 		{
 				class ResetSamplerAsyncTask extends AsyncTask<Void, Void, Void>
@@ -559,13 +626,17 @@ public class Boat
 						@Override
 						protected Void doInBackground(Void... params)
 						{
-								double[] jar = {-1};
+								double[] jar = {-1, 1};
 								server.setGains(SAMPLER_GAIN_AXIS, jar, new FunctionObserver<Void>()
 								{
 										@Override
 										public void completed(Void aVoid)
 										{
 												Log.i(logTag, "Reset sampler");
+												for (int i = 0; i < 4; i++)
+												{
+														sampler_running[i] = false;
+												}
 												uiHandler.post(successCallback);
 										}
 
