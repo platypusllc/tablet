@@ -71,5 +71,7 @@ public class AutonomousPredicateMessage
 		{
 				sent_and_acknowledged = o;
 		}
+		public String getName() { return name; }
+		public String getTrigger() { return trigger_string; }
 
 }

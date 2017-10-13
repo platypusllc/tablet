@@ -44,7 +44,13 @@
         <activity android:name=".SettingsActivity"
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/app_name"
-            android:screenOrientation="landscape"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen">
+        </activity>
+
+        <activity android:name=".AutonomyActivity"
+            android:label="Platypus Control App"
+            android:screenOrientation="sensorLandscape"
             android:theme="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen">
         </activity>
 

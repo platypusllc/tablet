@@ -874,6 +874,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																context.startActivity(intent);
 																break;
 														}
+														case "Autonomy":
+														{
+																Intent intent = new Intent(context, AutonomyActivity.class);
+																context.startActivity(intent);
+																break;
+														}
 												}
 												return true;
 										}

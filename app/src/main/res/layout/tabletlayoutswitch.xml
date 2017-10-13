@@ -5,7 +5,10 @@
                 android:id="@+id/linlay"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:focusableInTouchMode="true">
+    <!-- need android:focusableInTouchMode="true" here to prevent transect distance from
+         immediately being focused and making the keyboard pop up -->
 
     <RelativeLayout
         android:id="@+id/relativeLayout_boat"

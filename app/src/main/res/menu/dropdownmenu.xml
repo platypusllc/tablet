@@ -34,6 +34,11 @@
         android:id="@+id/preferences"
         android:title="Preferences" />
 
+    <item
+        android:id="@+id/auto_pred_button"
+        android:title="Autonomy"
+        />
+
 
 
 </menu>
