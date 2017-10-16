@@ -11,9 +11,10 @@
 
         <Button
             android:id="@+id/create_new_apm_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="New"/>
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:background="@android:drawable/ic_input_add"
+            />
 
     </RelativeLayout>
 
