@@ -420,14 +420,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				{
 						// update the sensor text
 						lastReceived = boat.getLastSensorDataReceived();
-						String label = unit(lastReceived.type);
-						String data = Arrays.toString(lastReceived.data);
+						String label = String.format("%s [%s]",lastReceived.type.getType(), lastReceived.type.getUnits());
+						String data = Double.valueOf(lastReceived.value).toString();
 
 						// is the boat with this listener the selected boat?
 						String selected_boat_name = available_boats_spinner.getSelectedItem().toString();
 						if (name.equals(selected_boat_name))
 						{
-								// TODO: only update the text fields if the current boat is selected
+								// TODO: use a recycler view instead of fixed "channels"
 								switch (lastReceived.channel)
 								{
 										case 1:
@@ -452,6 +452,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												break;
 								}
 						}
+
+						// TODO: generate a quasi-heatmap using GeoJSON collections and blurred circles
+						// TODO: https://github.com/mapbox/mapbox-android-demo/blob/master/MapboxAndroidDemo/src/main/java/com/mapbox/mapboxandroiddemo/examples/dds/CreateHeatmapPointsActivity.java
 				}
 		}
 
@@ -1348,6 +1351,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 		};
 
+		/*
 		private String unit(VehicleServer.SensorType stype)
 		{
 				String unit = "";
@@ -1372,6 +1376,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 				return unit;
 		}
+		*/
 
 		// Converts from progress bar value to linear scaling between min and
 		// max

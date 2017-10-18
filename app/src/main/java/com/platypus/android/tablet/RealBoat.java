@@ -131,7 +131,7 @@ public class RealBoat extends Boat
 				sl = new SensorListener()
 				{
 						@Override
-						public void receivedSensor(SensorData sensorData)
+						public void receivedSensor(SensorData sensorData, long index)
 						{
 								setConnected(true);
 								synchronized (sensor_lock)
@@ -140,6 +140,7 @@ public class RealBoat extends Boat
 								}
 								sensors_ready.set(true);
 								uiHandler.post(sensorListenerCallback); // update GUI with result
+								server.acknowledgeSensorData(index, null); // don't need function observer at all
 						}
 				};
 				wl = new WaypointListener()
@@ -178,6 +179,7 @@ public class RealBoat extends Boat
 												);
 										}
 										uiHandler.post(crumbListenerCallback); // update GUI with result
+										server.acknowledgeCrumb(index, null); // don't need function observer at all
 								}
 								else
 								{
@@ -203,17 +205,14 @@ public class RealBoat extends Boat
 						}
 						if (sl != null)
 						{
-								for (int channel = 0; channel < 5; channel++)
+								server.addSensorListener(sl, new FunctionObserver<Void>()
 								{
-										server.addSensorListener(channel, sl, new FunctionObserver<Void>()
-										{
-												@Override
-												public void completed(Void aVoid) { Log.i(logTag, "add sensor listener"); }
+										@Override
+										public void completed(Void aVoid) { Log.i(logTag, "add sensor listener"); }
 
-												@Override
-												public void failed(FunctionError functionError) { }
-										});
-								}
+										@Override
+										public void failed(FunctionError functionError) { }
+								});
 						}
 						if (wl != null)
 						{
