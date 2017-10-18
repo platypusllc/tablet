@@ -120,7 +120,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		HashMap<String, Integer> current_wp_index_map = new HashMap<>();
 		HashMap<String, Integer> old_wp_index_map = new HashMap<>();
 		HashMap<String, ArrayList<Marker>> crumb_markers_map = new HashMap<>();
+
+		// TODO: key: boat name, value: {key: sensor's (channel, type) hash, value: Mapbox marker objects}
+		HashMap<String, HashMap<Integer, ArrayList<Marker>>> sensordata_markers_map = new HashMap<>();
+
 		HashMap<String, PlatypusMarkerTypes> marker_types_map = new HashMap<>();
+
+		// TODO: if I'm using a recycler view for the APM GUI, that has a List of views
+		// TODO: Doesn't this key: id, value: APM hashmap have to align with that list?
 		HashMap<Integer, AutonomousPredicateMessage> ap_messages_map = new HashMap<>();
 
 		void newAutonomousPredicateMessage(String name, String action,
@@ -141,6 +148,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						{
 								Boat boat = currentBoat();
 								// TODO: core lib call with void listener, if completed, set acknowledged to true
+								boat.sendAutonomousPredicateMessage(apm.generateStringifiedJSON(), null);
 						}
 				}
 		}
@@ -428,6 +436,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						if (name.equals(selected_boat_name))
 						{
 								// TODO: use a recycler view instead of fixed "channels"
+								// TODO: could use SensorData.key() to identify unique sensor tuple (channel, type)
+								// TODO: each unique sensor get its own label to appear
+								// TODO: the layout that appears has on-long-click listener to toggle the data overlay
 								switch (lastReceived.channel)
 								{
 										case 1:
