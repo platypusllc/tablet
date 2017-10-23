@@ -10,7 +10,6 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -22,7 +21,7 @@ import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
-import com.mapbox.mapboxsdk.MapboxAccountManager;
+import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.MarkerView;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
 import com.mapbox.mapboxsdk.annotations.Polyline;
@@ -44,6 +43,8 @@ import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -65,7 +66,7 @@ import android.support.v4.content.ContextCompat;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.mapzen.android.lost.api.LocationServices;
+// import com.mapzen.android.lost.api.LocationServices;
 
 import com.platypus.android.tablet.Path.AreaType;
 import com.platypus.android.tablet.Path.Path;
@@ -89,9 +90,11 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.PopupMenu;
+import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -116,12 +119,48 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		//HashMap<String, Polyline> boat_to_wp_line_map = new HashMap<>();
 		HashMap<String, Integer> current_wp_index_map = new HashMap<>();
 		HashMap<String, Integer> old_wp_index_map = new HashMap<>();
+		HashMap<String, ArrayList<Marker>> crumb_markers_map = new HashMap<>();
+
+		// TODO: key: boat name, value: {key: sensor's (channel, type) hash, value: Mapbox marker objects}
+		HashMap<String, HashMap<Integer, ArrayList<Marker>>> sensordata_markers_map = new HashMap<>();
+
+		HashMap<String, PlatypusMarkerTypes> marker_types_map = new HashMap<>();
+
+		// TODO: if I'm using a recycler view for the APM GUI, that has a List of views
+		// TODO: Doesn't this key: id, value: APM hashmap have to align with that list?
+		HashMap<Integer, AutonomousPredicateMessage> ap_messages_map = new HashMap<>();
+
+		void newAutonomousPredicateMessage(String name, String action,
+		                                   String trigger, long interval, boolean ends)
+		{
+				AutonomousPredicateMessage apm = new AutonomousPredicateMessage(name, action, trigger, interval, ends);
+				if (apm.generateStringifiedJSON() != null)
+				{
+						ap_messages_map.put(ap_messages_map.size(), apm);
+				}
+		}
+
+		void sendAllAPMessages()
+		{
+				for (AutonomousPredicateMessage apm : ap_messages_map.values())
+				{
+						if (!apm.getAcknowledged())
+						{
+								Boat boat = currentBoat();
+								// TODO: core lib call with void listener, if completed, set acknowledged to true
+								boat.sendAutonomousPredicateMessage(apm.generateStringifiedJSON(), null);
+						}
+				}
+		}
 
 		final Context context = this;
 		TextView ipAddressBox = null;
 		RelativeLayout linlay = null;
 
 		Button connect_button = null;
+		RadioButton real_boat_button = null;
+		RadioButton sim_boat_button = null;
+		boolean use_real_boat = true;
 		Button advanced_options_button = null;
 		Button center_view_button = null;
 		Button start_wp_button = null;
@@ -222,6 +261,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		int boat_color_count = 0;
 		Map<Integer, Map<String, Integer>> color_map = new HashMap<>();
 
+		public Icon colorIconFromDrawable(Drawable drawable, Integer color)
+		{
+				if (color != null)
+				{
+						PorterDuff.Mode mMode = PorterDuff.Mode.MULTIPLY;
+						drawable.setColorFilter(color, mMode);
+				}
+				// https://github.com/mapbox/mapbox-gl-native/issues/8185
+				Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+				Canvas canvas = new Canvas(bitmap);
+				drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+				drawable.draw(canvas);
+				return mIconFactory.fromBitmap(bitmap);
+		}
+
 		class ColorfulSpinnerAdapter extends ArrayAdapter<String>
 		{
 				public ColorfulSpinnerAdapter(@NonNull Context context, @LayoutRes int resource)
@@ -250,7 +304,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		void startNewBoat(final String boat_name)
 		{
 				// generate Boat object and put it into the boat_map
-				Boat newBoat = new Boat(boat_name);
+				Boat newBoat;
+				if (use_real_boat)
+				{
+						newBoat = new RealBoat(boat_name);
+				}
+				else
+				{
+						// set the initial UTM to be the center of the current map view
+						LatLng center = mMapboxMap.getCameraPosition().target;
+						UTM initial_simulated_utm = UTM.latLongToUtm(LatLong.valueOf(center.getLatitude(),
+										center.getLongitude(), NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
+						newBoat = new SimulatedBoat(boat_name, initial_simulated_utm);
+				}
+
+
 				available_boats_spinner_adapter.add(boat_name);
 				available_boats_spinner_adapter.notifyDataSetChanged();
 
@@ -259,7 +327,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				PorterDuff.Mode mMode = PorterDuff.Mode.MULTIPLY;
 				int boat_color = color_map.get(boat_color_count).get("boat");
 				int line_color = color_map.get(boat_color_count).get("line");
-				arrow.setColorFilter(boat_color, mMode);
+				//arrow.setColorFilter(boat_color, mMode);
 				newBoat.setBoatColor(boat_color);
 				newBoat.setLineColor(line_color);
 				boat_color_count++; // use the next set of colors
@@ -268,9 +336,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				boat_markers_map.put(boat_name, new MarkerViewOptions()
 								.position(pHollowStartingPoint)
 								.title(boat_name)
-								.icon(mIconFactory.fromDrawable(arrow)).rotation(0));
+								.icon(colorIconFromDrawable(arrow, boat_color)).rotation(0));
 
-				boat_markers_map.get(boat_name).getMarker().setAnchor(0.5f, 0.5f);
+				// TODO: get the arrow centered on the boat's actual location using setAnchor
+				//boat_markers_map.get(boat_name).getMarker().setAnchor(0.5f, 0.5f);
 
 				// try to add the marker until mMapboxMap exists and it is added
 				uiHandler.post(new Runnable()
@@ -282,6 +351,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										Log.i(logTag, String.format("Adding boat marker for %s", boat_name));
 										mMapboxMap.addMarker(boat_markers_map.get(boat_name));
+										marker_types_map.put(boat_markers_map.get(boat_name).getTitle(),
+														PlatypusMarkerTypes.VEHICLE);
 								}
 								else
 								{
@@ -302,7 +373,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				newBoat.createListeners(
 								new BoatMarkerUpdateRunnable(newBoat),
 								new SensorDataReceivedRunnable(newBoat),
-								new WaypointStateReceivedRunnable(newBoat));
+								new WaypointStateReceivedRunnable(newBoat),
+								new CrumbReceivedRunnable(newBoat));
 				boats_map.put(boat_name, newBoat);
 		}
 		class BoatMarkerUpdateRunnable implements Runnable
@@ -352,6 +424,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						*/
 				}
 		}
+
 		class SensorDataReceivedRunnable implements Runnable
 		{
 				Boat boat;
@@ -366,14 +439,17 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				{
 						// update the sensor text
 						lastReceived = boat.getLastSensorDataReceived();
-						String label = unit(lastReceived.type);
-						String data = Arrays.toString(lastReceived.data);
+						String label = String.format("%s [%s]",lastReceived.type.getType(), lastReceived.type.getUnits());
+						String data = Double.valueOf(lastReceived.value).toString();
 
 						// is the boat with this listener the selected boat?
 						String selected_boat_name = available_boats_spinner.getSelectedItem().toString();
 						if (name.equals(selected_boat_name))
 						{
-								// TODO: only update the text fields if the current boat is selected
+								// TODO: use a recycler view instead of fixed "channels"
+								// TODO: could use SensorData.key() to identify unique sensor tuple (channel, type)
+								// TODO: each unique sensor get its own label to appear
+								// TODO: the layout that appears has on-long-click listener to toggle the data overlay
 								switch (lastReceived.channel)
 								{
 										case 1:
@@ -398,6 +474,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												break;
 								}
 						}
+
+						// TODO: generate a quasi-heatmap using GeoJSON collections and blurred circles
+						// TODO: https://github.com/mapbox/mapbox-android-demo/blob/master/MapboxAndroidDemo/src/main/java/com/mapbox/mapboxandroiddemo/examples/dds/CreateHeatmapPointsActivity.java
 				}
 		}
 
@@ -423,6 +502,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 		}
 
+		class CrumbReceivedRunnable implements Runnable
+		{
+				Boat boat;
+				String name;
+				LatLng crumb;
+				Icon icon;
+				public CrumbReceivedRunnable(Boat _boat)
+				{
+						Log.i("ODE", "CrumbReceivedRunnable constructor");
+						boat = _boat;
+						name = boat.getName();
+						crumb_markers_map.put(name, new ArrayList<Marker>());
+						icon = colorIconFromDrawable(
+										getResources().getDrawable(R.drawable.breadcrumb_pin, null),
+										_boat.getBoatColor());
+				}
+				public void run()
+				{
+						crumb = boat.getNewCrumb();
+						int size = crumb_markers_map.get(name).size();
+						String title = "crumb_" + Integer.toString(size);
+						crumb_markers_map.get(name).add(mMapboxMap.addMarker(new MarkerOptions().position(crumb).icon(icon).title(title)));
+						marker_types_map.put(title, PlatypusMarkerTypes.BREADCRUMB);
+				}
+		}
+
 		Boat currentBoat()
 		{
 				Object result = available_boats_spinner.getSelectedItem();
@@ -443,6 +548,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		protected void onCreate(final Bundle savedInstanceState)
 		{
 				super.onCreate(savedInstanceState);
+				Mapbox.getInstance(getApplicationContext(), getString(R.string.mapbox_access_token));
 				this.setContentView(R.layout.tabletlayoutswitch);
 
 				// establish color_map
@@ -578,9 +684,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 
 				mv = (MapView) findViewById(R.id.mapview);
-				//mv.setAccessToken(ApiAccess.getToken(this));
-
-				MapboxAccountManager.start(this, getString(R.string.mapbox_access_token));
 				mv.onCreate(savedInstanceState);
 				mv.getMapAsync(new OnMapReadyCallback()
 				{
@@ -600,7 +703,56 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 
 								mMapboxMap.setStyle(Style.MAPBOX_STREETS); //vector map
-								mMapboxMap.getUiSettings().setRotateGesturesEnabled(false); //broken on mapbox side, currently fixing issue 4635 https://github.com/mapbox/mapbox-gl-native/issues/4635
+								mMapboxMap.getUiSettings().setRotateGesturesEnabled(false);
+								mMapboxMap.setAllowConcurrentMultipleOpenInfoWindows(true);
+								mMapboxMap.setInfoWindowAdapter(new MapboxMap.InfoWindowAdapter()
+								{
+										// ASDF
+										@Override
+										public View getInfoWindow(final Marker marker)
+										{
+												String title = marker.getTitle();
+												// TODO: display different information based on marker type
+												if (marker_types_map.get(title) == PlatypusMarkerTypes.WAYPOINT)
+												{
+														View view = getLayoutInflater().inflate(R.layout.waypoint_info_window, null);
+														TextView waypoint_index_textview = (TextView) view.findViewById(R.id.waypoint_index_textview);
+
+														// parse waypoint title to get its index
+														String[] title_parts = title.split("_");
+														final int waypoint_index = Integer.valueOf(title_parts[1]);
+														final Button move_button = (Button) view.findViewById(R.id.waypoint_move_button);
+														move_button.setOnClickListener(new OnClickListener()
+														{
+																@Override
+																public void onClick(View v)
+																{
+																		// next map click sets the marker's location and resets the map click listener to null
+																		mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
+																		{
+																				@Override
+																				public void onMapClick(@NonNull LatLng point)
+																				{
+																						marker.setPosition(point);
+																						waypoint_list.set(waypoint_index, point);
+																						mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
+																						{
+																								@Override
+																								public void onMapClick(@NonNull LatLng point) { }
+																						});
+																				}
+																		});
+																}
+														});
+														waypoint_index_textview.setText(marker.getTitle());
+														return view;
+												}
+												else
+												{
+														return null;
+												}
+										}
+								});
 								mMapboxMap.setOnMarkerClickListener(new MapboxMap.OnMarkerClickListener()
 								{
 										@Override
@@ -615,7 +767,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										public void onMapLongClick(LatLng point)
 										{
 												waypoint_list.add(point);
-												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(Integer.toString(marker_list.size()))));
+												String title = "waypoint_" + Integer.toString(marker_list.size());
+												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
+												marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
 												Log.d(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
 										}
 								});
@@ -764,6 +918,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																context.startActivity(intent);
 																break;
 														}
+														case "Autonomy":
+														{
+																Intent intent = new Intent(context, AutonomyActivity.class);
+																context.startActivity(intent);
+																break;
+														}
 												}
 												return true;
 										}
@@ -873,15 +1033,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										return;
 								}
 
-								//Convert all LatLng to UtmPose
 								ArrayList<LatLng> points = (ArrayList<LatLng>)unowned_path.getPoints().clone();
 								path_map.put(boat_name, new Path(points));
-								UtmPose[] wpPose = new UtmPose[points.size()];
+								double[][] waypoints = new double[points.size()][2];
 								for (int i = 0; i < points.size(); i++)
 								{
-										wpPose[i] = convertLatLngUtm(points.get(i));
+										LatLng latlng = points.get(i);
+										waypoints[i] = new double[] {latlng.getLatitude(), latlng.getLongitude()};
 								}
-								boat.startWaypoints(wpPose, "POINT_AND_SHOOT", new ToastFailureCallback("Start Waypoints Msg Timed Out"));
+								boat.startWaypoints(waypoints, new ToastFailureCallback("Start Waypoints Msg Timed Out"));
 								current_wp_index_map.put(boat_name, 0);
 
 								// draw the boat's lines, independent from the ones used to generate paths
@@ -998,7 +1158,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										return;
 								}
 								waypoint_list.add(point);
-								marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(Integer.toString(marker_list.size()))));
+								String title = "waypoint_" + Integer.toString(marker_list.size());
+								marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
+								marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
 						}
 				});
 
@@ -1250,7 +1412,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		protected void onStart()
 		{
 				super.onStart();
-				//mv.onStart();
+				mv.onStart();
 		}
 
 		@Override
@@ -1386,6 +1548,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 		};
 
+		/*
 		private String unit(VehicleServer.SensorType stype)
 		{
 				String unit = "";
@@ -1410,6 +1573,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 				return unit;
 		}
+		*/
 
 		// Converts from progress bar value to linear scaling between min and
 		// max
@@ -1461,9 +1625,20 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				dialog.setTitle("Connect To A Boat");
 				ipAddressInput = (EditText) dialog.findViewById(R.id.ip_address_input);
 				Button submitButton = (Button) dialog.findViewById(R.id.submit);
+				real_boat_button = (RadioButton) dialog.findViewById(R.id.realBoatButton);
+				sim_boat_button = (RadioButton) dialog.findViewById(R.id.simBoatButton);
 
 				loadPreferences();
 				ipAddressInput.setText(textIpAddress);
+
+				real_boat_button.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+				{
+						@Override
+						public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+						{
+								use_real_boat = isChecked;
+						}
+				});
 
 				submitButton.setOnClickListener(new OnClickListener()
 				{
@@ -1557,12 +1732,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																return;
 														}
 														Drawable mhome = ContextCompat.getDrawable(getApplicationContext(), R.drawable.home1);
-														Icon home_icon = mIconFactory.fromDrawable(mhome);
+														Icon home_icon = colorIconFromDrawable(mhome, null);
 														MarkerOptions home_marker_options = new MarkerOptions()
 																		.position(home_location)
 																		.title("Home")
 																		.icon(home_icon);
 														home_marker = mMapboxMap.addMarker(home_marker_options);
+														marker_types_map.put(home_marker.getTitle(), PlatypusMarkerTypes.HOME);
 														mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home_location));
 												}
 										})
@@ -1570,6 +1746,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										{
 												public void onClick(DialogInterface dialog, int which)
 												{
+														/* TODO: tablet location as home
 														Location tempLocation = LocationServices.FusedLocationApi.getLastLocation();
 														if (tempLocation == null)
 														{
@@ -1581,19 +1758,21 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														if (loc != null)
 														{
 																Drawable mhome = ContextCompat.getDrawable(getApplicationContext(), R.drawable.home1);
-																Icon home_icon = mIconFactory.fromDrawable(mhome);
+																Icon home_icon = colorIconFromDrawable(mhome, null);
 																home_location = loc;
 																MarkerOptions home_marker_options = new MarkerOptions()
 																				.position(home_location)
 																				.title("Home")
 																				.icon(home_icon);
 																home_marker = mMapboxMap.addMarker(home_marker_options);
+																marker_types_map.put(home_marker.getTitle(), PlatypusMarkerTypes.HOME);
 																mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home_location));
 														}
 														else
 														{
 																Toast.makeText(getApplicationContext(), "Tablet doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
 														}
+														*/
 												}
 										})
 										.show();
@@ -1635,9 +1814,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										public void onClick(DialogInterface dialog, int which)
 										{
-												UtmPose homeUtmPose = convertLatLngUtm(home_location);
+												double[] home = new double[]{home_location.getLatitude(), home_location.getLongitude()};
 												Boat boat = currentBoat();
-												boat.addWaypoint(homeUtmPose, "POINT_AND_SHOOT", new ToastFailureCallback("Go home msg timed out"));
+												boat.addWaypoint(home, new ToastFailureCallback("Go home msg timed out"));
 												Log.i(logTag, "Go home");
 										}
 								})
@@ -2142,7 +2321,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										{
 												LatLng point = new LatLng(i.getLatitude(), i.getLongitude());
 												waypoint_list.add(point);
-												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(Integer.toString(marker_list.size()))));
+												String title = "waypoint_" + Integer.toString(marker_list.size());
+												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
+												marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
 										}
 
 										// don't bother generating a path. Let the user do that.

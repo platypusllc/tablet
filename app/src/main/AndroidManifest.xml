@@ -13,15 +13,13 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
-
-    <android:uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <android:uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -30,33 +28,43 @@
         android:label="@string/app_name"
         android:logo="@drawable/logo"
         android:theme="@style/AppTheme"> <!-- lock orienation so async task doesnt die (shitty workaround) -->
-        <service android:name="com.mapbox.mapboxsdk.telemetry.TelemetryService" />
 
         <activity
             android:name=".TeleOpPanel"
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/app_name"
-            android:screenOrientation="landscape"
+            android:screenOrientation="sensorLandscape"
             android:theme="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
-                <!-- <action android:name="android.intent.action.TeleOpPanel" /> -->
             </intent-filter>
         </activity>
 
         <activity android:name=".SettingsActivity"
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/app_name"
-            android:screenOrientation="landscape"
+            android:screenOrientation="sensorLandscape"
             android:theme="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen">
         </activity>
-        <meta-data
-            android:name="com.mapbox.AccessToken"
-            android:value="" />
 
-        <service android:name="com.mapbox.mapboxsdk.telemetry.TelemetryService" />
+        <activity android:name=".AutonomyActivity"
+            android:label="Platypus Control App"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen">
+        </activity>
+
+        <activity android:name=".MapboxHeatmapExampleActivity"
+            android:label="MapBox Heatmap Example"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/AlertDialog.AppCompat.Light">
+            <!--
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            -->
+        </activity>
 
     </application>
 
