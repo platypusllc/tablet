@@ -39,23 +39,25 @@ public abstract class Boat
 		AtomicInteger current_waypoint_index = new AtomicInteger(-1);
 		String logTag = "Boat"; //Boat.class.getName();
 		LatLng currentLocation = null;
-		Object location_lock = new Object();
+		final Object location_lock = new Object();
 		LatLng new_crumb_LatLng = null;
 		UTM new_crumb_UTM = null;
 		HashMap<Long, double[]> crumb_map= new HashMap<>();
-		Object crumb_lock = new Object();
+		final Object crumb_lock = new Object();
 		double currentYaw = 0.0; // [-pi, pi]
-		Object yaw_lock = new Object();
+		final Object yaw_lock = new Object();
 		double[][] PID_gains = {{0., 0., 0.}, {0., 0., 0.}}; // thrust, heading
-		Object PID_lock = new Object();
+		final Object PID_lock = new Object();
 		final int THRUST_GAIN_AXIS = 0;
 		final int RUDDER_GAIN_AXIS = 5;
+		final int SAMPLER_GAIN_AXIS = 7;
 		ScheduledThreadPoolExecutor polling_thread_pool;
 		Handler uiHandler = new Handler(Looper.getMainLooper());
 		SensorData lastSensorDataReceived;
 		Object sensor_lock = new Object();
 		String waypointState;
 		Object waypoint_state_lock = new Object();
+		boolean[] sampler_running = {false, false, false, false};
 		int boat_color;
 		int line_color;
 
@@ -73,6 +75,10 @@ public abstract class Boat
 		abstract public void sendAutonomousPredicateMessage(String apm, final Runnable failureCallback);
 		abstract public void setAddress(InetSocketAddress a);
 		abstract public InetSocketAddress getIpAddress();
+		abstract public void startSample(final int jar_number, final Runnable TimerStartRunnable, final Runnable failureCallback);
+		abstract public void stopSample(final int jar_number, final Runnable successCallback, final Runnable failureCallback);
+		abstract public void stopSampleAll(final Runnable successCallback, final Runnable failureCallback);
+		abstract public void resetSampler(final Runnable successCallback, final Runnable failureCallback);
 
 		public String getName() { return name; }
 		public void setBoatColor(int _color) { boat_color = _color; }

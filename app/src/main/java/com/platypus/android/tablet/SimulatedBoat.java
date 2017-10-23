@@ -41,10 +41,10 @@ public class SimulatedBoat extends Boat
 		final double NEW_CRUMB_DISTANCE = 5; // meters
 		boolean executing_failsafe = false;
 		double[][] _waypoints = new double[0][0];
-		Object waypoints_lock = new Object();
+		final Object waypoints_lock = new Object();
 		double thrustSignal, headingSignal;
 		double thrustSurge, thrustSway, torque;
-		Object control_signals_lock = new Object();
+		final Object control_signals_lock = new Object();
 		final int DYNAMICS_POLL_MS = 200;
 		UTM original_utm;
 		double original_easting, original_northing;
@@ -532,6 +532,31 @@ public class SimulatedBoat extends Boat
 		{
 				return addr;
 		}
+
+		@Override
+		public void startSample(final int jar_number, final Runnable TimerStartRunnable, final Runnable failureCallback)
+		{
+
+		}
+
+		@Override
+		public void stopSample(final int jar_number, final Runnable successCallback, final Runnable failureCallback)
+		{
+
+		}
+
+		@Override
+		public void stopSampleAll(final Runnable successCallback, final Runnable failureCallback)
+		{
+
+		}
+
+		@Override
+		public void resetSampler(final Runnable successCallback, final Runnable failureCallback)
+		{
+
+		}
+
 
 		///////////////////////////////////////////////////////////////////////////
 		// BREADCRUMBS STUFF
