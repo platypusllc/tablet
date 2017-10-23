@@ -140,6 +140,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		Button jar3_button = null;
 		Button jar4_button = null;
 		Button sampler_reset_button = null;
+		Button sampler_stop_all_button = null;
 
 		TextView jar1_text = null;
 		TextView jar2_text = null;
@@ -497,6 +498,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				jar3_button = (Button) this.findViewById(R.id.jar3_button);
 				jar4_button = (Button) this.findViewById(R.id.jar4_button);
 				sampler_reset_button = (Button) this.findViewById(R.id.sampler_reset_button);
+				sampler_stop_all_button = (Button) this.findViewById(R.id.sampler_stop_all_button);
 				jar1_button.setClickable(true);
 				jar2_button.setClickable(true);
 				jar3_button.setClickable(true);
@@ -1141,7 +1143,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								button.setClickable(false);
 						}
 
-						public void cancel() { timer.cancel(); }
+						public void cancel() { if (timer != null) timer.cancel(); }
 				}
 				class JarOnClickListener implements OnClickListener
 				{
@@ -1210,13 +1212,13 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								jar3_text.setText("");
 								jar4_text.setText("");
 
-								Toast.makeText(context, "Sampler reset successfully", Toast.LENGTH_SHORT).show();
+								Toast.makeText(context, "Sampler reset or stopped successfully", Toast.LENGTH_SHORT).show();
 						}
 				}
-				sampler_reset_button.setOnClickListener(new OnClickListener()
+				sampler_reset_button.setOnLongClickListener(new View.OnLongClickListener()
 				{
 						@Override
-						public void onClick(View v)
+						public boolean onLongClick(View v)
 						{
 								Boat boat = currentBoat();
 								if (boat == null)
@@ -1225,6 +1227,22 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								}
 								boat.resetSampler(new ResetSamplerSuccessRunnable(),
 												new ToastFailureCallback("Sampler Reset Msg timed out"));
+								return false;
+						}
+				});
+				sampler_stop_all_button.setOnLongClickListener(new View.OnLongClickListener()
+				{
+						@Override
+						public boolean onLongClick(View v)
+						{
+								Boat boat = currentBoat();
+								if (boat == null)
+								{
+										Toast.makeText(context, "Connect to a boat first", Toast.LENGTH_SHORT).show();
+								}
+								boat.stopSampleAll(new ResetSamplerSuccessRunnable(),
+												new ToastFailureCallback("Sampler Stop All Msg timed out"));
+								return false;
 						}
 				});
 		}
