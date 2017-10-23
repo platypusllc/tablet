@@ -10,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -1041,6 +1042,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										LatLng latlng = points.get(i);
 										waypoints[i] = new double[] {latlng.getLatitude(), latlng.getLongitude()};
 								}
+
 								boat.startWaypoints(waypoints, new ToastFailureCallback("Start Waypoints Msg Timed Out"));
 								current_wp_index_map.put(boat_name, 0);
 
@@ -1094,6 +1096,12 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										path_map.get(boat_name).clearPoints();
 										waypath_outline_map.get(boat_name).clear();
 										waypath_top_map.get(boat_name).clear();
+										mMapboxMap.removeAnnotations(marker_list);
+										marker_list.clear();
+										waypoint_list.clear();
+										remove_waypaths("");
+										unowned_path.clearPoints();
+										calculatePathDistance();
 								}
 						}
 				});

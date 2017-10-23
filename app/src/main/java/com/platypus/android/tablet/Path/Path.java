@@ -8,8 +8,8 @@ public class Path
 {
 		int current_index = 0;
 
-		protected ArrayList<LatLng> points = new ArrayList<LatLng>();
-		protected ArrayList<LatLng> quickHulledPoints = new ArrayList<LatLng>();
+		protected ArrayList<LatLng> points = new ArrayList<>();
+		protected ArrayList<LatLng> quickHulledPoints = new ArrayList<>();
 		protected double transectDistance = .00000898 * 5; //10 meters, initial value
 		protected final double ONE_METER = transectDistance / 10;
 

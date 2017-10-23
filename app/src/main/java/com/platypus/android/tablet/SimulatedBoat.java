@@ -38,7 +38,7 @@ public class SimulatedBoat extends Boat
 		Runnable _sensorListenerCallback = null;
 		Runnable _waypointListenerCallback = null;
 		Runnable _crumbListenerCallback = null;
-		final double NEW_CRUMB_DISTANCE = 5; // meters
+		final double NEW_CRUMB_DISTANCE = 10; // meters
 		boolean executing_failsafe = false;
 		double[][] _waypoints = new double[0][0];
 		final Object waypoints_lock = new Object();
@@ -134,6 +134,8 @@ public class SimulatedBoat extends Boat
 						if (_waypoints.length <= 0 || current_waypoint_index.get() < 0)
 						{
 								Log.d("ODE", "Control: no waypoints to perform");
+								last_wp_index = -2;
+								current_waypoint_index.set(-1);
 								synchronized (control_signals_lock)
 								{
 										thrustSignal = 0.;
@@ -141,7 +143,7 @@ public class SimulatedBoat extends Boat
 								}
 								return;
 						}
-						Log.v("ODE", String.format("current wp index = %d   last wp index = %d", current_waypoint_index.get(), last_wp_index));
+						Log.d("ODE", String.format("current wp index = %d   last wp index = %d", current_waypoint_index.get(), last_wp_index));
 						if (current_waypoint_index.get() != last_wp_index)
 						{
 								Log.i("ODE", String.format("new waypoint, # = %d", current_waypoint_index.get()));
@@ -176,7 +178,7 @@ public class SimulatedBoat extends Boat
 						distanceSq = Math.pow(x_dest - x_current, 2.0) + Math.pow(y_dest - y_current, 2.0);
 						Log.v("ODE", String.format("source: %.0f, %.0f\ncurrent: %.0f, %.0f\ndest: %.0f, %.0f",
 										x_source, y_source, x_current, y_current, x_dest, y_dest));
-						Log.d("ODE", String.format("DistanceSq = %.1f", distanceSq));
+						Log.v("ODE", String.format("DistanceSq = %.1f", distanceSq));
 						if (distanceSq <= SUFFICIENT_PROXIMITY*SUFFICIENT_PROXIMITY)
 						{
 								Log.i("ODE", String.format("Control: finished waypoint # %d", current_waypoint_index.get()));
@@ -218,8 +220,8 @@ public class SimulatedBoat extends Boat
 								y_lookahead = y_dest;
 						}
 						Log.v("ODE", String.format("dth = %.2f", dth*180./Math.PI));
-						Log.d("ODE", String.format("Distance from ideal line = %.1f", distance_from_ideal_line));
-						Log.d("ODE", String.format("Lookahead = %.1f", lookahead));
+						Log.v("ODE", String.format("Distance from ideal line = %.1f", distance_from_ideal_line));
+						Log.v("ODE", String.format("Lookahead = %.1f", lookahead));
 
 						heading_desired = Math.atan2(y_lookahead - y_current, x_lookahead - x_current);
 						heading_error = normalizeAngle(heading_current - heading_desired);
@@ -232,7 +234,7 @@ public class SimulatedBoat extends Boat
 						{
 								heading_signal = Math.copySign(1.0, heading_signal);
 						}
-						Log.d("ODE", String.format("Heading signal = %.1f", heading_signal));
+						Log.v("ODE", String.format("Heading signal = %.1f", heading_signal));
 
 						base_thrust = thrust_pid[0];
 						angle_from_projected_to_boat = Math.atan2(y_lookahead - y_current, x_lookahead - x_current);
@@ -242,7 +244,7 @@ public class SimulatedBoat extends Boat
 
 						if (Math.abs(heading_error)*180./Math.PI > 45.0)
 						{
-								Log.d("ODE", "Heading error > 45 deg, cutting thrust");
+								Log.v("ODE", "Heading error > 45 deg, cutting thrust");
 								thrust_coefficient = 0.0;
 						}
 						thrust_signal = base_thrust*thrust_coefficient;
@@ -324,11 +326,13 @@ public class SimulatedBoat extends Boat
 						Log.v("ODE", String.format("ODE: t = %.2f", (t - t0)/1000.));
 						if (!autonomous.get())
 						{
-								// nothing
+								current_waypoint_index.set(-1);
+								control();
 						}
 						else if (_waypoints.length == 0)
 						{
 								current_waypoint_index.set(-1);
+								control();
 								synchronized (waypoint_state_lock)
 								{
 										waypointState = "DONE";
@@ -446,6 +450,7 @@ public class SimulatedBoat extends Boat
 				synchronized (waypoint_state_lock)
 				{
 						waypointState = "CANCELLED";
+						_waypoints = new double[0][0];
 				}
 				synchronized (control_signals_lock)
 				{
