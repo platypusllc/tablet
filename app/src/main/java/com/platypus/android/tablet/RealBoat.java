@@ -140,7 +140,9 @@ public class RealBoat extends Boat
 								}
 								sensors_ready.set(true);
 								uiHandler.post(sensorListenerCallback); // update GUI with result
-								server.acknowledgeSensorData(index, null); // don't need function observer at all
+
+								// TODO: using memoryless sensordata transmission for now
+								//server.acknowledgeSensorData(index, null); // don't need function observer at all
 						}
 				};
 				wl = new WaypointListener()
