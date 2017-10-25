@@ -15,7 +15,9 @@ import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -58,6 +60,7 @@ public abstract class Boat
 		String waypointState;
 		Object waypoint_state_lock = new Object();
 		boolean[] sampler_running = {false, false, false, false};
+		List<Integer> unique_sensor_keys = new ArrayList<>();
 		int boat_color;
 		int line_color;
 
@@ -81,20 +84,20 @@ public abstract class Boat
 		abstract public void resetSampler(final Runnable successCallback, final Runnable failureCallback);
 
 		public String getName() { return name; }
-		public void setBoatColor(int _color) { boat_color = _color; }
-		public int getBoatColor() { return boat_color; }
-		public void setLineColor(int _color) { line_color = _color; }
-		public int getLineColor() { return line_color; }
-		public void setIpAddressString(String addr)
+		void setBoatColor(int _color) { boat_color = _color; }
+		int getBoatColor() { return boat_color; }
+		void setLineColor(int _color) { line_color = _color; }
+		int getLineColor() { return line_color; }
+		void setIpAddressString(String addr)
 		{
 				ipAddressString = addr;
 		}
-		public String getIpAddressString()
+		String getIpAddressString()
 		{
 				return ipAddressString;
 		}
 
-		public double getYaw()
+		double getYaw()
 		{
 				synchronized (yaw_lock)
 				{
@@ -102,7 +105,7 @@ public abstract class Boat
 				}
 		}
 
-		public void setYaw(double yaw)
+		void setYaw(double yaw)
 		{
 				while (Math.abs(yaw) > Math.PI)
 				{
@@ -114,7 +117,7 @@ public abstract class Boat
 				}
 		}
 
-		public SensorData getLastSensorDataReceived()
+		SensorData getLastSensorDataReceived()
 		{
 				synchronized (sensor_lock)
 				{
@@ -122,7 +125,7 @@ public abstract class Boat
 				}
 		}
 
-		public String getWaypointState()
+		String getWaypointState()
 		{
 				synchronized (waypoint_state_lock)
 				{
@@ -130,18 +133,18 @@ public abstract class Boat
 				}
 		}
 
-		public void setConnected(boolean b)
+		void setConnected(boolean b)
 		{
 				connected.set(b);
 				time_of_last_connection.set(System.currentTimeMillis());
 		}
 
-		public boolean isConnected()
+		boolean isConnected()
 		{
 				return connected.get();
 		}
 
-		public LatLng getLocation()
+		LatLng getLocation()
 		{
 				synchronized (location_lock)
 				{
@@ -149,7 +152,7 @@ public abstract class Boat
 				}
 		}
 
-		public void setLocation(LatLng loc)
+		void setLocation(LatLng loc)
 		{
 				synchronized (location_lock)
 				{
@@ -157,7 +160,7 @@ public abstract class Boat
 				}
 		}
 
-		public int getWaypointsIndex()
+		int getWaypointsIndex()
 		{
 				return current_waypoint_index.get();
 		}
@@ -170,7 +173,7 @@ public abstract class Boat
 				}
 		}
 
-		public LatLng getNewCrumb()
+		LatLng getNewCrumb()
 		{
 				synchronized (crumb_lock)
 				{
@@ -178,15 +181,21 @@ public abstract class Boat
 				}
 		}
 
-		public static com.mapbox.mapboxsdk.geometry.LatLng jscienceLatLng_to_mapboxLatLng(org.jscience.geography.coordinates.LatLong jlatlng)
+		//////////////////////////////////////////////////////////////////////////////
+		List<Integer> getUniqueSensorList()
 		{
-				LatLng result = new LatLng(
+				return unique_sensor_keys;
+		}
+		//////////////////////////////////////////////////////////////////////////////
+
+		static com.mapbox.mapboxsdk.geometry.LatLng jscienceLatLng_to_mapboxLatLng(org.jscience.geography.coordinates.LatLong jlatlng)
+		{
+				return new LatLng(
 								jlatlng.latitudeValue(SI.RADIAN)*180./Math.PI,
 								jlatlng.longitudeValue(SI.RADIAN)*180./Math.PI);
-				return result;
 		}
 
-		public static UTM UtmPose_to_UTM(UtmPose utmPose)
+		private static UTM UtmPose_to_UTM(UtmPose utmPose)
 		{
 				return UTM.valueOf (
 								utmPose.origin.zone,
@@ -223,7 +232,7 @@ public abstract class Boat
 								(dest.getX() - src.getX()));
 		}
 
-		public static double normalizeAngle(double angle) {
+		static double normalizeAngle(double angle) {
 				while (angle > Math.PI)
 						angle -= 2 * Math.PI;
 				while (angle < -Math.PI)

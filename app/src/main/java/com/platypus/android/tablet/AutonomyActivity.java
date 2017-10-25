@@ -16,12 +16,14 @@ import java.util.List;
 /**
  * Created by jason on 10/13/17.
  * https://www.raywenderlich.com/170075/android-recyclerview-tutorial-kotlin
+ * That tutorial uses a weird language on top of java, so syntax is obviously different,
+ * but it still shows the overall structure required.
  */
 
 public class AutonomyActivity extends Activity
 {
-		private static TeleOpPanel tpanel;
-		public static final void set_TeleOpPanel(TeleOpPanel tpanel_) { tpanel = tpanel_;}
+		private TeleOpPanel tpanel;
+		public final void set_TeleOpPanel(TeleOpPanel tpanel_) { tpanel = tpanel_;}
 
 		private RecyclerView mRecyclerView;
 		private RecyclerView.Adapter mAdapter;
@@ -67,7 +69,7 @@ public class AutonomyActivity extends Activity
 				List<AutonomousPredicateMessage> adapter_apm_list;
 
 				// Provide a suitable constructor (depends on the kind of dataset)
-				public AutonomyAdapter(List<AutonomousPredicateMessage> list)
+				AutonomyAdapter(List<AutonomousPredicateMessage> list)
 				{
 						adapter_apm_list = list;
 				}

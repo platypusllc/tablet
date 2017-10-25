@@ -27,7 +27,7 @@
         android:icon="@drawable/logo"
         android:label="@string/app_name"
         android:logo="@drawable/logo"
-        android:theme="@style/AppTheme"> <!-- lock orienation so async task doesnt die (shitty workaround) -->
+        android:theme="@style/AppTheme"> <!-- lock orientation so async task doesn't die (bad workaround) -->
 
         <activity
             android:name=".TeleOpPanel"
