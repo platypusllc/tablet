@@ -69,6 +69,7 @@ import com.platypus.android.tablet.Path.AreaType;
 import com.platypus.android.tablet.Path.Path;
 import com.platypus.android.tablet.Path.Region;
 import com.platypus.crw.CrwNetworkUtils;
+import com.platypus.crw.VehicleServer;
 import com.platypus.crw.data.SensorData;
 import com.platypus.crw.data.Pose3D;
 
@@ -181,13 +182,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		TextView jar3_text = null;
 		TextView jar4_text = null;
 
+		/* TODO
 		TextView sensorData1 = null;
 		TextView sensorData2 = null;
 		TextView sensorData3 = null;
-
 		TextView sensorType1 = null;
 		TextView sensorType2 = null;
 		TextView sensorType3 = null;
+		*/
+		SensorStuff sensor_stuff = null;
 
 		TextView battery_value = null;
 		TextView waypointInfo = null;
@@ -433,6 +436,23 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 				public void run()
 				{
+						lastReceived = boat.getLastSensorDataReceived();
+						Log.v("SensorStuff", String.format("New SensorData received for %s: %s", name, lastReceived.toString()));
+						// is the boat with this listener the selected boat?
+						String selected_boat_name = available_boats_spinner.getSelectedItem().toString();
+						if (name.equals(selected_boat_name))
+						{
+								// battery gets special treatment
+								if (lastReceived.type == VehicleServer.DataType.BATTERY)
+								{
+										battery_value.setText(Double.toString(lastReceived.value) + " V");
+								}
+								else
+								{
+										sensor_stuff.newSensorData(lastReceived);
+								}
+						}
+						/*
 						// update the sensor text
 						lastReceived = boat.getLastSensorDataReceived();
 						String label = String.format("%s [%s]",lastReceived.type.getType(), lastReceived.type.getUnits());
@@ -473,6 +493,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 						// TODO: generate a quasi-heatmap using GeoJSON collections and blurred circles
 						// TODO: https://github.com/mapbox/mapbox-android-demo/blob/master/MapboxAndroidDemo/src/main/java/com/mapbox/mapboxandroiddemo/examples/dds/CreateHeatmapPointsActivity.java
+						*/
 				}
 		}
 
@@ -546,6 +567,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				super.onCreate(savedInstanceState);
 				Mapbox.getInstance(getApplicationContext(), getString(R.string.mapbox_access_token));
 				this.setContentView(R.layout.tabletlayoutswitch);
+				sensor_stuff = new SensorStuff(this);
 
 				// establish color_map
 				color_map.put(0, new HashMap<String, Integer>());
@@ -573,12 +595,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				start_wp_button = (Button) this.findViewById(R.id.start_button);
 				pause_wp_button = (Button) this.findViewById(R.id.pause_button);
 				stop_wp_button = (Button) this.findViewById(R.id.stop_button);
+				/* TODO
 				sensorData1 = (TextView) this.findViewById(R.id.SValue1);
 				sensorData2 = (TextView) this.findViewById(R.id.SValue2);
 				sensorData3 = (TextView) this.findViewById(R.id.SValue3);
 				sensorType1 = (TextView) this.findViewById(R.id.sensortype1);
 				sensorType2 = (TextView) this.findViewById(R.id.sensortype2);
 				sensorType3 = (TextView) this.findViewById(R.id.sensortype3);
+				*/
 				battery_value = (TextView) this.findViewById(R.id.batteryVoltage);
 				joystick = (JoystickView) findViewById(R.id.joystickView);
 				transect_distance_input = (EditText) this.findViewById(R.id.transect_distance_input);
@@ -640,12 +664,15 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										ipAddressBox.setText(boat.getIpAddressString());
 										// reset the other status elements, let the listeners update them
+										/* TODO
 										sensorType1.setText("");
 										sensorData1.setText("");
 										sensorType2.setText("");
 										sensorData2.setText("");
 										sensorType3.setText("");
 										sensorData3.setText("");
+										*/
+										sensor_stuff.newSensorSet(); // clear the sensor text data
 										waypointInfo.setText("");
 										battery_value.setText("");
 								}
@@ -664,12 +691,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				SettingsActivity.set_TeleOpPanel(this);
 				loadPreferences();
 
+				/* TODO
 				sensorType1.setText("");
 				sensorType2.setText("");
 				sensorType3.setText("");
 				sensorData1.setText("");
 				sensorData2.setText("");
 				sensorData3.setText("");
+				*/
 				battery_value.setText("");
 
 				//Create folder for the first time if it does not exist
@@ -1729,6 +1758,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																return;
 														}
 														home_location = boat.getLocation();
+
+														// TODO: set the home location for the server with a core lib call
+
 														if (home_location == null)
 														{
 																Toast.makeText(context, "Waiting for boat GPS", Toast.LENGTH_SHORT).show();
@@ -1749,6 +1781,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										{
 												public void onClick(DialogInterface dialog, int which)
 												{
+														Toast.makeText(getApplicationContext(), "Tablet-based home location not available", Toast.LENGTH_SHORT).show();
 														/* TODO: tablet location as home
 														Location tempLocation = LocationServices.FusedLocationApi.getLastLocation();
 														if (tempLocation == null)

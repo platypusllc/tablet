@@ -494,6 +494,19 @@
             android:layout_alignParentRight="true"
             />
 
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/sensor_recycler_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="125dp"
+            android:layout_marginRight="100dp"
+            android:layout_toLeftOf="@id/joystickView"
+            android:background="@color/background_holo_light"
+            android:clipToPadding="false"
+            android:scrollbars="vertical"/>
+        <!--
         <RelativeLayout
             android:id="@+id/relativeLayout_sensors"
             android:layout_width="wrap_content"
@@ -505,6 +518,7 @@
             android:layout_toLeftOf="@id/joystickView"
             android:background="?android:attr/windowBackground"
             >
+
 
             <TextView
                 android:id="@+id/sensorDataLabel"
@@ -566,7 +580,6 @@
                 android:layout_marginRight="15dp"
                 android:layout_toEndOf="@+id/sensortype2"
                 android:text="0.0"/>
-            <!--android:textSize="18dp"-->
 
             <TextView
                 android:id="@+id/sensortype3"
@@ -593,6 +606,7 @@
                 android:text="0.0"/>
 
         </RelativeLayout>
+        -->
 
         </RelativeLayout>
 

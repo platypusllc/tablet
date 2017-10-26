@@ -56,11 +56,10 @@ public abstract class Boat
 		ScheduledThreadPoolExecutor polling_thread_pool;
 		Handler uiHandler = new Handler(Looper.getMainLooper());
 		SensorData lastSensorDataReceived;
-		Object sensor_lock = new Object();
+		final Object sensor_lock = new Object();
 		String waypointState;
 		Object waypoint_state_lock = new Object();
 		boolean[] sampler_running = {false, false, false, false};
-		List<Integer> unique_sensor_keys = new ArrayList<>();
 		int boat_color;
 		int line_color;
 
@@ -180,13 +179,6 @@ public abstract class Boat
 						return new_crumb_LatLng;
 				}
 		}
-
-		//////////////////////////////////////////////////////////////////////////////
-		List<Integer> getUniqueSensorList()
-		{
-				return unique_sensor_keys;
-		}
-		//////////////////////////////////////////////////////////////////////////////
 
 		static com.mapbox.mapboxsdk.geometry.LatLng jscienceLatLng_to_mapboxLatLng(org.jscience.geography.coordinates.LatLong jlatlng)
 		{
