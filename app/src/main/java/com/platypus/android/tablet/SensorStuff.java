@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,7 +15,6 @@ import com.platypus.crw.data.SensorData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +31,6 @@ public class SensorStuff
 		// each boat has its own list of unique sensors
 		// when you switch boats, the recycler view needs to start referencing the new boat's list
 		private List<SensorData> data_list = new ArrayList<>();
-		//private Set<Integer> unique_sensors_set = new HashSet<>();
 		private HashMap<Integer, Runnable> unique_sensors_runnable_map = new HashMap<>();
 		Handler item_remover_handler = new Handler();
 		long item_removal_delay_ms = 10000;
@@ -51,9 +48,9 @@ public class SensorStuff
 				mRecyclerView = (RecyclerView) main_gui_activity.findViewById(R.id.sensor_recycler_view);
 				mAdapter = new SensorDataTextAdapter();
 				mRecyclerView.setAdapter(mAdapter);
-				int spanCount = 5; // number of columns
-				int spacing = 10;
-				boolean includeEdge = false;
+				int spanCount = 4; // number of columns
+				int spacing = 20;
+				boolean includeEdge = true;
 				mLayoutManager = new GridLayoutManager(main_gui_activity.getApplicationContext(), spanCount);
 				mRecyclerView.setLayoutManager(mLayoutManager);
 				mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(spanCount, spacing, includeEdge));
@@ -189,6 +186,7 @@ public class SensorStuff
 												unique_sensors_runnable_map.remove(key);
 												data_list.remove(i);
 												mAdapter.notifyItemRemoved(i);
+												mAdapter.notifyDataSetChanged(); // stops the buggy growth of the recycler view box when this runnable executes
 												return;
 										}
 								}

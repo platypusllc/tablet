@@ -501,7 +501,7 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
             android:layout_marginLeft="125dp"
-            android:layout_marginRight="100dp"
+            android:layout_marginRight="75dp"
             android:layout_toLeftOf="@id/joystickView"
             android:background="@color/background_holo_light"
             android:clipToPadding="false"
