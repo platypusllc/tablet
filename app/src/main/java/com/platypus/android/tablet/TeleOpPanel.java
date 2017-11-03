@@ -454,43 +454,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						}
 						/*
 						// update the sensor text
-						lastReceived = boat.getLastSensorDataReceived();
-						String label = String.format("%s [%s]",lastReceived.type.getType(), lastReceived.type.getUnits());
-						String data = Double.valueOf(lastReceived.value).toString();
-
-						// is the boat with this listener the selected boat?
-						String selected_boat_name = available_boats_spinner.getSelectedItem().toString();
-						if (name.equals(selected_boat_name))
-						{
-								// TODO: use a recycler view instead of fixed "channels"
-								// TODO: could use SensorData.key() to identify unique sensor tuple (channel, type)
-								// TODO: each unique sensor get its own label to appear
-								// TODO: the layout that appears has on-long-click listener to toggle the data overlay
-								switch (lastReceived.channel)
-								{
-										case 1:
-												sensorType1.setText(label);
-												sensorData1.setText(data);
-												break;
-										case 2:
-												sensorType2.setText(label);
-												sensorData2.setText(data);
-												break;
-										case 3:
-												sensorType3.setText(label);
-												sensorData3.setText(data);
-												break;
-										case 4:
-												String[] data_split = data.split(",");
-												battery_value.setText(data_split[0].substring(1) + " V");
-												synchronized (_batteryVoltageLock)
-												{
-														battery_voltage = Double.parseDouble(data_split[0].substring(1));
-												}
-												break;
-								}
-						}
-
 						// TODO: generate a quasi-heatmap using GeoJSON collections and blurred circles
 						// TODO: https://github.com/mapbox/mapbox-android-demo/blob/master/MapboxAndroidDemo/src/main/java/com/mapbox/mapboxandroiddemo/examples/dds/CreateHeatmapPointsActivity.java
 						*/
@@ -742,6 +705,10 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												{
 														View view = getLayoutInflater().inflate(R.layout.waypoint_info_window, null);
 														TextView waypoint_index_textview = (TextView) view.findViewById(R.id.waypoint_index_textview);
+														TextView waypoint_latlng_textview = (TextView) view.findViewById(R.id.waypoint_latlong_textview);
+														waypoint_latlng_textview.setText(String.format("%s, %s",
+																		marker.getPosition().getLatitude(),
+																		marker.getPosition().getLongitude()));
 
 														// parse waypoint title to get its index
 														String[] title_parts = title.split("_");
