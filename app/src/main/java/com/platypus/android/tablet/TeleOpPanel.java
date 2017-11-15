@@ -6,10 +6,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -170,6 +172,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		Button normal_path_button = null;
 		Button spiral_button = null;
 		Button lawnmower_button = null;
+		Button reverse_order_button = null;
 		Button jar1_button = null;
 		Button jar2_button = null;
 		Button jar3_button = null;
@@ -182,14 +185,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		TextView jar3_text = null;
 		TextView jar4_text = null;
 
-		/* TODO
-		TextView sensorData1 = null;
-		TextView sensorData2 = null;
-		TextView sensorData3 = null;
-		TextView sensorType1 = null;
-		TextView sensorType2 = null;
-		TextView sensorType3 = null;
-		*/
 		SensorStuff sensor_stuff = null;
 
 		TextView battery_value = null;
@@ -558,14 +553,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				start_wp_button = (Button) this.findViewById(R.id.start_button);
 				pause_wp_button = (Button) this.findViewById(R.id.pause_button);
 				stop_wp_button = (Button) this.findViewById(R.id.stop_button);
-				/* TODO
-				sensorData1 = (TextView) this.findViewById(R.id.SValue1);
-				sensorData2 = (TextView) this.findViewById(R.id.SValue2);
-				sensorData3 = (TextView) this.findViewById(R.id.SValue3);
-				sensorType1 = (TextView) this.findViewById(R.id.sensortype1);
-				sensorType2 = (TextView) this.findViewById(R.id.sensortype2);
-				sensorType3 = (TextView) this.findViewById(R.id.sensortype3);
-				*/
 				battery_value = (TextView) this.findViewById(R.id.batteryVoltage);
 				joystick = (JoystickView) findViewById(R.id.joystickView);
 				transect_distance_input = (EditText) this.findViewById(R.id.transect_distance_input);
@@ -580,6 +567,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				normal_path_button = (Button) this.findViewById(R.id.path_button);
 				spiral_button = (Button) this.findViewById(R.id.spiral_button);
 				lawnmower_button = (Button) this.findViewById(R.id.lawnmower_button);
+				reverse_order_button = (Button) this.findViewById(R.id.reverse_order_button);
 
 				jar1_button = (Button) this.findViewById(R.id.jar1_button);
 				jar2_button = (Button) this.findViewById(R.id.jar2_button);
@@ -627,14 +615,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								{
 										ipAddressBox.setText(boat.getIpAddressString());
 										// reset the other status elements, let the listeners update them
-										/* TODO
-										sensorType1.setText("");
-										sensorData1.setText("");
-										sensorType2.setText("");
-										sensorData2.setText("");
-										sensorType3.setText("");
-										sensorData3.setText("");
-										*/
 										sensor_stuff.newSensorSet(); // clear the sensor text data
 										waypointInfo.setText("");
 										battery_value.setText("");
@@ -653,15 +633,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 				SettingsActivity.set_TeleOpPanel(this);
 				loadPreferences();
-
-				/* TODO
-				sensorType1.setText("");
-				sensorType2.setText("");
-				sensorType3.setText("");
-				sensorData1.setText("");
-				sensorData2.setText("");
-				sensorData3.setText("");
-				*/
 				battery_value.setText("");
 
 				//Create folder for the first time if it does not exist
@@ -695,7 +666,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								mMapboxMap.setAllowConcurrentMultipleOpenInfoWindows(true);
 								mMapboxMap.setInfoWindowAdapter(new MapboxMap.InfoWindowAdapter()
 								{
-										// ASDF
 										@Override
 										public View getInfoWindow(final Marker marker)
 										{
@@ -1173,8 +1143,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								// calculate the path length and show it in the text
 								unowned_path.clearPoints();
 								remove_waypaths("");
-								Log.d(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
-								remove_waypaths("");
+								Log.v(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
 								if (waypoint_list.size() > 0)
 								{
 										unowned_path = new Path((ArrayList<LatLng>)waypoint_list.clone());
@@ -1231,9 +1200,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								catch (Exception ex)
 								{
 										// user probably has a bad transect distance typed in
-										Toast.makeText(context, "Strange transect distance. Using 10.", Toast.LENGTH_SHORT).show();
-										transect_distance_input.setText("10");
-										currentTransectDist = 10;
+										Toast.makeText(context, "Strange transect distance. Using 20.", Toast.LENGTH_SHORT).show();
+										transect_distance_input.setText("20");
+										currentTransectDist = 20;
 								}
 								unowned_path.clearPoints();
 								remove_waypaths("");
@@ -1246,6 +1215,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								else
 								{
 										Toast.makeText(context, "Need 3 waypoints to generate lawnmower", Toast.LENGTH_SHORT).show();
+								}
+						}
+				});
+
+				reverse_order_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+								if (waypoint_list.size() > 1)
+								{
+										unowned_path.clearPoints();
+										remove_waypaths("");
+										Collections.reverse(waypoint_list);
+										ArrayList<LatLng> temp = (ArrayList<LatLng>)waypoint_list.clone(); // shallow copy
+										waypoint_list.clear();
+										mMapboxMap.removeAnnotations(marker_list);
+										marker_list.clear();
+										for (LatLng wp : temp)
+										{
+												String title = "waypoint_" + Integer.toString(marker_list.size());
+												LatLng point = new LatLng(wp.getLatitude(), wp.getLongitude());
+												waypoint_list.add(point);
+												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
+												marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
+										}
 								}
 						}
 				});
