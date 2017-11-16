@@ -6,12 +6,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -21,7 +23,11 @@ import javax.measure.unit.SI;
 import org.jscience.geography.coordinates.LatLong;
 import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
+import com.google.gson.Gson;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.MarkerView;
 import com.mapbox.mapboxsdk.annotations.MarkerViewOptions;
@@ -63,6 +69,7 @@ import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.util.JsonReader;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -185,6 +192,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		TextView jar4_text = null;
 
 		SensorStuff sensor_stuff = null;
+		SavedWaypointsStuff saved_waypoint_stuff = null;
 
 		TextView battery_value = null;
 		TextView waypointInfo = null;
@@ -518,6 +526,35 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				public void run() { Toast.makeText(context, toastString, Toast.LENGTH_SHORT).show(); }
 		}
 
+		void addSingleWaypointMarker(LatLng point) // ASDF
+		{
+				waypoint_list.add(point);
+				String title = "waypoint_" + Integer.toString(marker_list.size());
+				marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
+				marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
+				Log.v(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
+		}
+		void addWaypointMarkers(ArrayList<LatLng> points)
+		{
+				for (LatLng wp : points)
+				{
+						addSingleWaypointMarker(wp);
+				}
+		}
+		void clearWaypointMarkers()
+		{
+				unowned_path.clearPoints();
+				remove_waypaths("");
+				waypoint_list.clear();
+				mMapboxMap.removeAnnotations(marker_list);
+				marker_list.clear();
+				calculatePathDistance();
+		}
+		void replaceWaypointMarkers(ArrayList<LatLng> new_points)
+		{
+				clearWaypointMarkers();
+				addWaypointMarkers(new_points);
+		}
 
 		protected void onCreate(final Bundle savedInstanceState)
 		{
@@ -525,6 +562,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				Mapbox.getInstance(getApplicationContext(), getString(R.string.mapbox_access_token));
 				this.setContentView(R.layout.tabletlayoutswitch);
 				sensor_stuff = new SensorStuff(this);
+				saved_waypoint_stuff = new SavedWaypointsStuff();
 
 				// establish color_map
 				color_map.put(0, new HashMap<String, Integer>());
@@ -727,11 +765,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										@Override
 										public void onMapLongClick(LatLng point)
 										{
-												waypoint_list.add(point);
-												String title = "waypoint_" + Integer.toString(marker_list.size());
-												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
-												marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
-												Log.d(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
+												addSingleWaypointMarker(point);
 										}
 								});
 								mIconFactory = IconFactory.getInstance(context);
@@ -832,28 +866,23 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														}
 														case "Save Waypoints":
 														{
+																// TODO ASDF
+																if (waypoint_list.size() < 1)
 																{
-																		try
-																		{
-																				SaveWaypointsToFile();
-																		}
-																		catch (Exception e) { }
+																		Toast.makeText(context, "Need at least 1 wp first", Toast.LENGTH_SHORT).show();
 																		break;
 																}
+																saved_waypoint_stuff.saveWaypointsToFile(waypoint_list);
+																break;
 														}
 														case "Load Waypoints":
 														{
-																try
-																{
-																		LoadWaypointsFromFile(waypointFileName);  // TODO: reimplement this
-																}
-																catch (Exception e)
-																{
-																		Log.e(logTag, "failed to load WP file");
-																		Log.e(logTag, e.toString());
-																}
+																ArrayList<LatLng> temp = saved_waypoint_stuff.loadWaypointsFromFile();
+																if (temp == null) break;
+
 																break;
 														}
+														/*
 														case "Load Waypoint File":
 														{
 																try
@@ -863,6 +892,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 																catch (Exception e) { }
 																break;
 														}
+														*/
 														case "Snooze Alarms":
 														{
 																synchronized (_batteryVoltageLock)
@@ -1056,12 +1086,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										path_map.get(boat_name).clearPoints();
 										waypath_outline_map.get(boat_name).clear();
 										waypath_top_map.get(boat_name).clear();
-										mMapboxMap.removeAnnotations(marker_list);
-										marker_list.clear();
-										waypoint_list.clear();
-										remove_waypaths("");
-										unowned_path.clearPoints();
-										calculatePathDistance();
+										clearWaypointMarkers(); // ASDF
 								}
 						}
 				});
@@ -1093,12 +1118,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								Log.i(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
 								if (marker_list.size() > 0)
 								{
-										mMapboxMap.removeAnnotations(marker_list);
-										marker_list.clear();
-										waypoint_list.clear();
-										remove_waypaths("");
-										unowned_path.clearPoints();
-										calculatePathDistance();
+										clearWaypointMarkers();
 								}
 						}
 				});
@@ -1125,10 +1145,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										Toast.makeText(getApplicationContext(), "Map still loading", Toast.LENGTH_LONG).show();
 										return;
 								}
-								waypoint_list.add(point);
-								String title = "waypoint_" + Integer.toString(marker_list.size());
-								marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
-								marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
+								addSingleWaypointMarker(point);
 						}
 				});
 
@@ -1229,17 +1246,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										remove_waypaths("");
 										Collections.reverse(waypoint_list);
 										ArrayList<LatLng> temp = (ArrayList<LatLng>)waypoint_list.clone(); // shallow copy
-										waypoint_list.clear();
-										mMapboxMap.removeAnnotations(marker_list);
-										marker_list.clear();
-										for (LatLng wp : temp)
-										{
-												String title = "waypoint_" + Integer.toString(marker_list.size());
-												LatLng point = new LatLng(wp.getLatitude(), wp.getLongitude());
-												waypoint_list.add(point);
-												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
-												marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
-										}
+										replaceWaypointMarkers(temp);
 								}
 						}
 				});
@@ -1695,10 +1702,39 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				// TODO: this causes a crash. Disabling the back button for now.
 		}
 
-		public void SaveWaypointsToFile() throws IOException
+		public void saveWaypointsToFile() throws IOException
 		{
 				// ASDF TODO: add this back in
-				Toast.makeText(context, "Save Waypoints is under construction", Toast.LENGTH_SHORT).show();
+				//Toast.makeText(context, "Save Waypoints is under construction", Toast.LENGTH_SHORT).show();
+
+
+				// TODO: dialog to select waypoint file
+
+				// select the "mission" you want to save a path to (or name a new one)
+				// TODO: dialog box popup with pulldown of available missions, an okay button, and a create new button
+				final Dialog dialog = new Dialog(context);
+				dialog.setContentView(R.layout.choose_saved_wp_file_dialog);
+				dialog.setTitle("Choose a mission");
+
+
+
+				// name the new path (deal with duplicate names)
+
+				// build a JSONObject from the current waypoint list
+				JSONObject waypoint_list_json = new JSONObject();
+				for (int i = 0; i < waypoint_list.size(); i++)
+				{
+
+						LatLng wp = waypoint_list.get(i);
+						try
+						{
+								waypoint_list_json.put(Integer.toString(i), new double[]{wp.getLatitude(), wp.getLongitude()});
+						}
+						catch (Exception e)
+						{
+								Log.e(logTag, String.format("SaveWaypointsToFile error: %s", e.getMessage()));
+						}
+				}
 		}
 
 		public void setHome()
