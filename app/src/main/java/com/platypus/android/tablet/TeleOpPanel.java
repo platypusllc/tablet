@@ -339,7 +339,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								.title(boat_name)
 								.icon(colorIconFromDrawable(arrow, boat_color))
 								.rotation(0)
-								.anchor(0.5f, 0.5f));
+								.anchor(0.5f, 0.5f)
+								.flat(true));
 
 				// try to add the marker until mMapboxMap exists and it is added
 				uiHandler.post(new Runnable()
@@ -561,7 +562,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				Mapbox.getInstance(getApplicationContext(), getString(R.string.mapbox_access_token));
 				this.setContentView(R.layout.tabletlayoutswitch);
 				sensor_stuff = new SensorStuff(this);
-				saved_waypoint_stuff = new SavedWaypointsStuff();
+				saved_waypoint_stuff = new SavedWaypointsStuff(context);
 
 				// establish color_map
 				color_map.put(0, new HashMap<String, Integer>());
@@ -1549,35 +1550,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 		};
 
-		/*
-		private String unit(VehicleServer.SensorType stype)
-		{
-				String unit = "";
-
-				if (stype == VehicleServer.SensorType.ATLAS_PH)
-				{
-						unit = "pH";
-				}
-				else if (stype == VehicleServer.SensorType.ATLAS_DO)
-				{
-						unit = "DO (mg/L)";
-				}
-				else if (stype == VehicleServer.SensorType.ES2)
-				{
-						unit = "EC(µS/cm)\n" +
-										"T(°C)";
-				}
-				else if (stype == VehicleServer.SensorType.HDS_DEPTH)
-				{
-						unit = "depth (m)";
-				}
-
-				return unit;
-		}
-		*/
-
-		// Converts from progress bar value to linear scaling between min and
-		// max
+		// Converts from progress bar value to linear scaling between min and max
 		private double fromProgressToRange(int progress, double min, double max)
 		{
 				// progress will be between -10 and 10, with 0 being the center
@@ -1604,18 +1577,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		{
 				Sensor mySensor = sensorEvent.sensor;
 				if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) { }
-		}
-
-		public UtmPose convertLatLngUtm(ILatLng point)
-		{
-				UTM utmLoc = UTM.latLongToUtm(LatLong.valueOf(point.getLatitude(),
-								point.getLongitude(), NonSI.DEGREE_ANGLE), ReferenceEllipsoid.WGS84);
-
-				// Convert to UTM data structure
-				Pose3D pose = new Pose3D(utmLoc.eastingValue(SI.METER), utmLoc.northingValue(SI.METER), 0.0, 0, 0, 0);
-				Utm origin = new Utm(utmLoc.longitudeZone(), utmLoc.latitudeZone() > 'O');
-				UtmPose utm = new UtmPose(pose, origin);
-				return utm;
 		}
 
 		public void connectBox()
@@ -2080,261 +2041,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				System.out.println(mMapboxMap.getCameraPosition().target.toString());
 				writer.close();
 				*/
-		}
-
-		public void loadWayointFiles() throws IOException
-		{
-				File waypointDir = new File(Environment.getExternalStorageDirectory() + "/waypoints");
-				if (waypointDir.exists() == false)
-				{
-						waypointDir.mkdir();
-						Toast.makeText(getApplicationContext(), "Folder Does not Exist Creating Folder", Toast.LENGTH_LONG).show();
-						return;
-				}
-				final File[] listOfFiles = waypointDir.listFiles();
-				if (listOfFiles.length == 0)
-				{
-						Toast.makeText(getApplicationContext(), "Waypoint Directory is empty", Toast.LENGTH_LONG).show();
-						return;
-				}
-				final Dialog dialog = new Dialog(context);
-				dialog.setContentView(R.layout.waypointsavelistview);
-				dialog.setTitle("List of Waypoint Files");
-
-				final ListView fileList = (ListView) dialog.findViewById(R.id.waypointlistview);
-				Button submitButton = (Button) dialog.findViewById(R.id.submitsave);
-				System.out.println("length s" + listOfFiles.length);
-
-				final ArrayAdapter<String> adapter = new ArrayAdapter<String>(
-								TeleOpPanel.this,
-								android.R.layout.select_dialog_singlechoice);
-				fileList.setAdapter(adapter);
-				for (File i : listOfFiles)
-				{
-						System.out.println(i.getName());
-						adapter.add(i.getName());
-						adapter.notifyDataSetChanged();
-				}
-				fileList.setOnItemClickListener(new AdapterView.OnItemClickListener()
-				{
-						@Override
-						public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-						{
-								current_wp_list_selected = position; //Use a different variable, this is used by the list adapter in loading waypoints ..
-						}
-				});
-				submitButton.setOnClickListener(new OnClickListener()
-				{
-						@Override
-						public void onClick(View v)
-						{
-								dialog.dismiss();
-								try
-								{
-										waypointFileName = listOfFiles[current_wp_list_selected].getName();
-								}
-								catch (Exception e)
-								{
-										Log.e(logTag, "err loading file in waypoint file load: ");
-										Log.e(logTag, e.toString());
-								}
-						}
-				});
-				dialog.show();
-		}
-
-		void LoadWaypointsFromFile(String waypoints_filename)
-		{
-				final File waypointFile = new File(Environment.getExternalStorageDirectory() + "/waypoints/" + waypoints_filename);
-				Scanner fileScanner;
-				try
-				{
-						fileScanner = new Scanner(waypointFile); //Scans each line of the file
-				}
-				catch (Exception ex)
-				{
-						Toast.makeText(context, "Could not open waypoints file", Toast.LENGTH_SHORT).show();
-						return;
-				}
-
-				final ArrayList<ArrayList<ILatLng>> waypointsaves = new ArrayList<ArrayList<ILatLng>>();
-				final ArrayList<String> saveName = new ArrayList<>();
-				// scans each line of the file as a waypoint save then scans each line every two elements makes a latlng
-
-				if (waypointFile.exists())
-				{
-						while (fileScanner.hasNext())
-						{
-								final ArrayList<ILatLng> currentSave = new ArrayList<ILatLng>();
-								String s = fileScanner.nextLine();
-								Log.i(logTag, "fileScanner.nextLine():  " + s);
-
-								final Scanner stringScanner = new Scanner(s);
-
-								//get save name (everything between quotes)
-								if (stringScanner.hasNext())
-								{
-										if (stringScanner.next().equals("\""))
-										{ //found first "
-												String currentdata = stringScanner.next();
-												String name = currentdata;
-												while (!currentdata.equals("\""))
-												{
-														currentdata = stringScanner.next();
-														if (!currentdata.equals("\""))
-														{
-																name = name + " " + currentdata;
-														}
-												}
-												saveName.add(name);
-										}
-								}
-
-								while (stringScanner.hasNext())
-								{
-										final double templat = Double.parseDouble(stringScanner.next());
-										final double templon = Double.parseDouble(stringScanner.next());
-										Log.d(logTag, "load waypoints from file iteration");
-										Log.d(logTag, Double.toString(templat) + " " + Double.toString(templon));
-
-										ILatLng temp = new ILatLng()
-										{
-												@Override
-												public double getLatitude() { return templat; }
-
-												@Override
-												public double getLongitude() { return templon; }
-
-												@Override
-												public double getAltitude() { return 0; }
-										};
-										currentSave.add(temp);
-								}
-								if (currentSave.size() > 0)
-								{ //make sure no empty arrays
-										waypointsaves.add(currentSave);
-								}
-								stringScanner.close();
-						}
-						fileScanner.close();
-
-						final Dialog dialog = new Dialog(context);
-						dialog.setContentView(R.layout.waypointsavelistview);
-						dialog.setTitle("List of Waypoint Saves");
-						final ListView wpsaves = (ListView) dialog.findViewById(R.id.waypointlistview);
-						Button submitButton = (Button) dialog.findViewById(R.id.submitsave);
-
-						final ArrayAdapter<String> adapter = new ArrayAdapter<>(TeleOpPanel.this, android.R.layout.select_dialog_singlechoice);
-						wpsaves.setAdapter(adapter);
-						for (String s : saveName)
-						{
-								adapter.add(s);
-								adapter.notifyDataSetChanged();
-						}
-
-						wpsaves.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
-						{
-								@Override
-								public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id)
-								{
-										final Dialog confirmdialog = new Dialog(context);
-										confirmdialog.setContentView(R.layout.confirmdeletewaypoints);
-										confirmdialog.setTitle("Delete This Waypoint Path?");
-										Button deletebutton = (Button) confirmdialog.findViewById(R.id.yesbutton);
-										Button cancel = (Button) confirmdialog.findViewById(R.id.nobutton);
-										deletebutton.setOnClickListener(new OnClickListener()
-										{
-												@Override
-												public void onClick(View v)
-												{
-														//delete line from file
-
-														//delete object from list since update wont occur until you press load wp again
-														adapter.remove(adapter.getItem(position));
-														try
-														{
-																File inputFile = new File(getFilesDir() + "/waypoints.txt");
-																File tempFile = new File(getFilesDir() + "/tempwaypoints.txt");
-
-																BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-																BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
-
-																String lineToRemove = "\" " + saveName.get(position) + " \"";
-																String currentLine;
-
-																while ((currentLine = reader.readLine()) != null)
-																{
-
-																		String trimmedLine = currentLine.trim();
-																		if (trimmedLine.contains(lineToRemove))
-																		{
-																				continue;
-																		}
-																		writer.write(currentLine + System.getProperty("line.separator"));
-																}
-																writer.close();
-																reader.close();
-																tempFile.renameTo(inputFile);
-														}
-														catch (Exception e)
-														{
-														}
-														confirmdialog.dismiss();
-												}
-										});
-										cancel.setOnClickListener(new OnClickListener()
-										{
-												@Override
-												public void onClick(View v)
-												{
-														confirmdialog.dismiss();
-												}
-										});
-										confirmdialog.show();
-
-										return false;
-								}
-						});
-						wpsaves.setOnItemClickListener(new AdapterView.OnItemClickListener()
-						{
-								@Override
-								public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-								{
-										current_wp_list_selected = position;
-								}
-						});
-						submitButton.setOnClickListener(new OnClickListener()
-						{
-								@Override
-								public void onClick(View v)
-								{
-										/*ASDF*/
-										if (current_wp_list_selected == -1)
-										{
-												dialog.dismiss();
-												//write no selected box
-										}
-										mMapboxMap.removeAnnotations(marker_list);
-										marker_list.clear();
-										waypoint_list.clear();
-										removeWaypaths("");
-
-										for (ILatLng i : waypointsaves.get(current_wp_list_selected)) //tbh not sure why there is a 1 offset but there is
-										{
-												LatLng point = new LatLng(i.getLatitude(), i.getLongitude());
-												waypoint_list.add(point);
-												String title = "waypoint_" + Integer.toString(marker_list.size());
-												marker_list.add(mMapboxMap.addMarker(new MarkerOptions().position(point).title(title)));
-												marker_types_map.put(title, PlatypusMarkerTypes.WAYPOINT);
-										}
-
-										// don't bother generating a path. Let the user do that.
-
-										dialog.dismiss();
-								}
-						});
-						dialog.show();
-				}
 		}
 
 		public void loadPreferences()

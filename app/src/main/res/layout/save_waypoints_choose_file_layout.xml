@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+    <Spinner
+        android:id="@+id/existing_wp_file_spinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"/>
+
+    <Button
+        android:id="@+id/use_existing_wp_file_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@id/existing_wp_file_spinner"
+        android:layout_alignParentRight="true"
+        android:text="Use existing file"/>
+
+    <EditText
+        android:id="@+id/new_wp_filename_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/use_existing_wp_file_button"
+        android:ems="10"
+        android:inputType="text"
+        android:text="Name"/>
+
+    <Button
+        android:id="@+id/create_new_wp_file_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create new file"
+        android:layout_toRightOf="@id/new_wp_filename_text"
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/use_existing_wp_file_button"/>
+</RelativeLayout>

@@ -339,7 +339,7 @@ public class Region extends Path
 		public ArrayList<ArrayList<LatLng>> computeSpiralsPolygonOffset()
 		{
 				ArrayList<ArrayList<LatLng>> spirals = new ArrayList<ArrayList<LatLng>>();
-				//quickHull(); //causing the fuckshit lines everywhere
+				//quickHull(); //causing the lines everywhere
 				spirals.add(points); //add first polygon
 				if (points.size() <= 2)
 				{
