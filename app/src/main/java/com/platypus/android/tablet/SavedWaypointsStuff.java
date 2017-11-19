@@ -44,6 +44,7 @@ class SavedWaypointsStuff
 		private String logTag = "SavedWaypointsStuff";
 		private Context mContext;
 		private String directory = Environment.getExternalStorageDirectory() + "/waypoints/";
+
 		SavedWaypointsStuff(Context context)
 		{
 				mContext = context;
@@ -54,7 +55,7 @@ class SavedWaypointsStuff
 				JSONArray result = new JSONArray();
 				for (LatLng wp : points)
 				{
-						result.put(Arrays.toString(new Double[]{wp.getLatitude(), wp.getLongitude()}));
+						result.put(String.format("%s, %s", Double.toString(wp.getLatitude()), Double.toString(wp.getLongitude())));
 				}
 				return result;
 		}
@@ -230,47 +231,76 @@ class SavedWaypointsStuff
 				}
 		}
 
-		private HashMap<String, ArrayList<LatLng>> parseWaypointsFile(String filename)
+		private void loadWaypointsFromFile(String filename, final TeleOpPanel.LoadedWaypointsRunnable loadedWaypointsRunnable)
 		{
-				JSONObject file_json = parseWaypointsFileIntoJSONObject(filename);
-				// iterate through JSONArray path and fill waypoint_list with new LatLng objects
-				Iterator<String> file_keys = file_json.keys();
-				String path_name;
-				HashMap<String, ArrayList<LatLng>> available_paths_map = new HashMap<>();
-				while (file_keys.hasNext())
+				//final HashMap<String, ArrayList<LatLng>> waypoints_map = parseWaypointsFile(filename);
+				final JSONObject file_json = parseWaypointsFileIntoJSONObject(filename);
+				if (file_json == null)
 				{
-						path_name = file_keys.next();
-						JSONArray path;
-						try
-						{
-								path = file_json.getJSONArray(path_name);
-								available_paths_map.put(path_name, new ArrayList<LatLng>());
-								for (int i = 0; i < path.length(); i++)
-								{
-										double[] raw_latlng = (double[])path.get(i);
-										available_paths_map.get(path_name).add(new LatLng(raw_latlng[0], raw_latlng[1]));
-								}
-						}
-						catch (Exception e)
-						{
-								Log.e(logTag, String.format("readWaypointsFile() path parsing error: %s", e.getMessage()));
-								continue;
-						}
+						Log.w(logTag, String.format("No paths found in filename %s", filename));
+						return;
+				}
+				final ArrayList<String> path_names = new ArrayList<>();
+				Iterator<String> keys = file_json.keys();
+				while (keys.hasNext())
+				{
+						path_names.add(keys.next());
 				}
 
-				return available_paths_map;
+				final Dialog dialog = new Dialog(mContext);
+				dialog.setContentView(R.layout.save_waypoints_choose_file_layout);
+				dialog.setTitle("Choose a path");
+				final EditText filename_edittext = (EditText) dialog.findViewById(R.id.new_wp_filename_text);
+				Button use_existing_button = (Button) dialog.findViewById(R.id.use_existing_wp_file_button);
+				use_existing_button.setText("Load this path");
+				Button create_new_button = (Button) dialog.findViewById(R.id.create_new_wp_file_button);
+				final Spinner existing_files_spinner = (Spinner) dialog.findViewById(R.id.existing_wp_file_spinner);
+				SpinnerAdapter existing_files_spinner_adapter = new ArrayAdapter<>(mContext, R.layout.boat_name, path_names.toArray(new String[]{}));
+				existing_files_spinner.setAdapter(existing_files_spinner_adapter);
+				create_new_button.setVisibility(View.GONE); // don't need this
+				filename_edittext.setVisibility(View.GONE); // don't need this
+				use_existing_button.setOnClickListener(new View.OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+								Long iL = existing_files_spinner.getSelectedItemId();
+								int i = iL.intValue();
+								String path_name = path_names.get(i);
+								ArrayList<LatLng> result = new ArrayList<>();
+								try
+								{
+										JSONArray path_json_array = file_json.getJSONArray(path_name);
+										for (int j = 0; j < path_json_array.length(); j++)
+										{
+												String wp_string = path_json_array.getString(j);
+												String[] wp_string_chunks = wp_string.split(",");
+												wp_string_chunks[0] = wp_string_chunks[0].trim();
+												wp_string_chunks[1] = wp_string_chunks[1].trim();
+												result.add(new LatLng(Double.valueOf(wp_string_chunks[0]), Double.valueOf(wp_string_chunks[1])));
+										}
+								}
+								catch (Exception e)
+								{
+										Log.e(logTag, String.format("loadWaypointsFromFile() path parsing error: %s", e.getMessage()));
+								}
+
+								loadedWaypointsRunnable.setWaypoints(result);
+								loadedWaypointsRunnable.run();
+								dialog.dismiss();
+								StringBuilder sb = new StringBuilder();
+								for (LatLng wp : result)
+								{
+										sb.append(wp.toString() + "\n");
+								}
+								Log.i(logTag, String.format("Loaded waypoints: %s", sb.toString()));
+						}
+				});
+				dialog.show();
 		}
 
-		void loadWaypointsFromFile(String filename, ArrayList<LatLng> result)
-		{
-				HashMap<String, ArrayList<LatLng>> waypoints_map = parseWaypointsFile(filename);
-				// TODO: dialog to select which path
 
-				result.add(new LatLng(45.40662232640679, 11.00061325283366));
-		}
-
-
-		ArrayList<LatLng> loadWaypointsFromFile()
+		void loadWaypointsFromFile(final TeleOpPanel.LoadedWaypointsRunnable loadedWaypointsRunnable)
 		{
 				File[] waypoint_files = new File(directory).listFiles();
 				final String[] waypoint_filenames = new String[waypoint_files.length];
@@ -278,7 +308,6 @@ class SavedWaypointsStuff
 				{
 						waypoint_filenames[i] = waypoint_files[i].getName();
 				}
-				// TODO: dialog to select a file
 				final Dialog dialog = new Dialog(mContext);
 				dialog.setContentView(R.layout.save_waypoints_choose_file_layout);
 				dialog.setTitle("Choose a saved waypoints file");
@@ -292,29 +321,17 @@ class SavedWaypointsStuff
 				create_new_button.setVisibility(View.GONE); // don't need this
 				filename_edittext.setVisibility(View.GONE);
 
-				final ArrayList<LatLng> result = new ArrayList<>();
 				use_existing_button.setOnClickListener(new View.OnClickListener()
 				{
 						@Override
 						public void onClick(View v)
 						{
-								// TODO: dialog to choose a path from the available ones (spinner with the above map's keys as options)
 								Long iL = existing_files_spinner.getSelectedItemId();
 								int i = iL.intValue();
-								// TODO: have to pass the results list in order to make this process synchronous?
-								loadWaypointsFromFile(waypoint_filenames[i], result);
+								loadWaypointsFromFile(waypoint_filenames[i], loadedWaypointsRunnable);
 								dialog.dismiss();
 						}
 				});
 				dialog.show();
-
-				StringBuilder sb = new StringBuilder();
-				for (LatLng wp : result)
-				{
-						sb.append(wp.toString() + "\n");
-				}
-				Log.i(logTag, String.format("Loaded waypoints: %s", sb.toString()));
-
-				return result;
 		}
 }

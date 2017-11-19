@@ -510,6 +510,25 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				}
 		}
 
+		class LoadedWaypointsRunnable implements Runnable
+		{
+				// Custom runnable that owns a list of waypoints, used for loading waypoints from a file
+				private ArrayList<LatLng> waypoints;
+				private LoadedWaypointsRunnable(ArrayList<LatLng> _waypoints)
+				{
+						waypoints = _waypoints;
+				}
+				public void setWaypoints(ArrayList<LatLng> _waypoints)
+				{
+						waypoints = _waypoints;
+				}
+				@Override
+				public void run()
+				{
+						if (waypoints != null) replaceWaypointMarkers(waypoints);
+				}
+		}
+
 		Boat currentBoat()
 		{
 				Object result = available_boats_spinner.getSelectedItem();
@@ -866,7 +885,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														}
 														case "Save Waypoints":
 														{
-																// TODO ASDF
 																if (waypoint_list.size() < 1)
 																{
 																		Toast.makeText(context, "Need at least 1 wp first", Toast.LENGTH_SHORT).show();
@@ -877,9 +895,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														}
 														case "Load Waypoints":
 														{
-																ArrayList<LatLng> temp = saved_waypoint_stuff.loadWaypointsFromFile();
-																if (temp == null) break;
-																replaceWaypointMarkers(temp);
+																saved_waypoint_stuff.loadWaypointsFromFile(new LoadedWaypointsRunnable(new ArrayList<LatLng>()));
 																break;
 														}
 														case "Snooze Alarms":
@@ -908,7 +924,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												return true;
 										}
 								});
-								popup.show(); //showing popup menu
+								popup.show();
 						}
 				});
 
