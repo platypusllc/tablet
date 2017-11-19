@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
+import android.widget.TextView;
 import android.widget.ThemedSpinnerAdapter;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
@@ -19,8 +20,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.Writer;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
@@ -43,28 +49,73 @@ class SavedWaypointsStuff
 				mContext = context;
 		}
 
-		private void choosePathNameSaveDialog(ArrayList<LatLng> points, String filename)
+		private JSONArray convertLatLngListToJSONArray(ArrayList<LatLng> points)
 		{
-				// TODO: convert list of LatLng into JSONObject with JSONArray inside, print to a string
-				// TODO: append or overwrite the points to the file in the form of that string
-
-				// TODO: show list with existing paths --> requires parsing the file for existing paths
-				HashMap<String, ArrayList<LatLng>> available_paths_map = parseWaypointsFile(new File(directory + filename));
-				String[] available_path_names;
-				if (available_paths_map == null)
+				JSONArray result = new JSONArray();
+				for (LatLng wp : points)
 				{
-						Log.i(logTag, "No paths found in file.");
-						available_path_names = new String[]{};
+						result.put(Arrays.toString(new Double[]{wp.getLatitude(), wp.getLongitude()}));
+				}
+				return result;
+		}
+
+		private void choosePathNameSaveDialog(final ArrayList<LatLng> points, final String filename)
+		{
+				JSONObject json_file = parseWaypointsFileIntoJSONObject(filename);
+				ArrayList<String> available_path_names = new ArrayList<>();
+				if (json_file == null)
+				{
+						Log.w(logTag, "parseWaypointsFileIntoJSONObject() could not find paths");
+						json_file = new JSONObject();
 				}
 				else
 				{
-						available_path_names = available_paths_map.keySet().toArray(new String[]{});
+						available_path_names = getPathNames(json_file);
 				}
 				final Dialog dialog = new Dialog(mContext);
 				dialog.setContentView(R.layout.save_waypoints_choose_path_layout);
 				dialog.setTitle(String.format("Saving to %s: Choose path name", filename));
 				ListView available_paths_listview = (ListView) dialog.findViewById(R.id.saved_paths_listview);
-				available_paths_listview.setAdapter(new ArrayAdapter<String>(mContext, R.layout.boat_name, available_path_names));
+				available_paths_listview.setAdapter(new ArrayAdapter<>(mContext, R.layout.boat_name, available_path_names.toArray(new String[]{})));
+				TextView available_paths_label = (TextView) dialog.findViewById(R.id.saved_paths_listview_label);
+				final EditText path_name_edittext = (EditText) dialog.findViewById(R.id.path_name_edittext);
+				if (available_path_names.size() < 1) available_paths_label.setText("File does not yet have any paths");
+				Button save_path_button = (Button) dialog.findViewById(R.id.save_path_button);
+				final JSONObject appended_json = json_file; // needs to be final, but original can't be declared final
+				save_path_button.setOnClickListener(new View.OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+								String path_name = path_name_edittext.getText().toString();
+								Log.i(logTag, String.format("Saving %s to %s as path name %s", points.toString(), filename, path_name));
+								try
+								{
+										appended_json.put(path_name, convertLatLngListToJSONArray(points));
+										Log.i(logTag, String.format("New json: \n%s", appended_json.toString(4)));
+								}
+								catch (Exception e)
+								{
+										Log.e(logTag, String.format("Cannot append to json error: %s", e.getMessage()));
+										return;
+								}
+
+								Writer writer;
+								File file = new File(directory + filename);
+								try
+								{
+										writer = new BufferedWriter(new FileWriter(file));
+										writer.write(appended_json.toString(4));
+										writer.close();
+								}
+								catch (Exception e)
+								{
+										Log.e(logTag, String.format("Cannot write json to file error: %s", e.getMessage()));
+								}
+
+								dialog.dismiss();
+						}
+				});
 				dialog.show();
 		}
 
@@ -129,34 +180,23 @@ class SavedWaypointsStuff
 				{
 						waypoint_filenames[i] = waypoint_files[i].getName();
 				}
-
 				chooseSaveFileDialog(points, waypoint_filenames);
 		}
 
-		ArrayList<LatLng> loadWaypointsFromFile()
+		private ArrayList<String> getPathNames(JSONObject json_file)
 		{
-				// TODO: dialog to select a file
-				String filename = "";
-				File user_file = new File(filename);
-				HashMap<String, ArrayList<LatLng>> available_paths_map = parseWaypointsFile(user_file);
-
-				// make sure to return null if user selects options that lead to no real path
-				if (available_paths_map == null)
+				ArrayList<String> path_names = new ArrayList<>();
+				Iterator<String> file_keys = json_file.keys();
+				while (file_keys.hasNext())
 				{
-						// Toast saying there were no paths in the proper format found in the file
-						return null;
+						path_names.add(file_keys.next());
 				}
-
-				// TODO: dialog to choose a path from the available ones (spinner with the above map's keys as options)
-				String user_path = "";
-
-				// return the path selected by the user
-				return available_paths_map.get(user_path);
+				return path_names;
 		}
 
-		private HashMap<String, ArrayList<LatLng>> parseWaypointsFile(File file)
+		private JSONObject parseWaypointsFileIntoJSONObject(String filename)
 		{
-				// TODO: read the JSON format saved waypoints file
+				File file = new File(directory + filename);
 				Scanner fileScanner;
 				try
 				{
@@ -164,7 +204,7 @@ class SavedWaypointsStuff
 				}
 				catch (Exception e)
 				{
-						Log.e(logTag, String.format("readWaypointsFile() error: %s", e.getMessage()));
+						Log.e(logTag, String.format("parseWaypointsFileIntoJSONObject() file scanning error: %s", e.getMessage()));
 						return null;
 				}
 				StringBuffer buffer = new StringBuffer();
@@ -181,13 +221,18 @@ class SavedWaypointsStuff
 				try
 				{
 						file_json = (JSONObject)tokener.nextValue();
+						return file_json;
 				}
 				catch (Exception e)
 				{
-						Log.w(logTag, String.format("readWaypointsFile() file parsing error: %s", e.getMessage()));
+						Log.w(logTag, String.format("parseWaypointsFileIntoJSONObject() file parsing error: %s", e.getMessage()));
 						return null;
 				}
+		}
 
+		private HashMap<String, ArrayList<LatLng>> parseWaypointsFile(String filename)
+		{
+				JSONObject file_json = parseWaypointsFileIntoJSONObject(filename);
 				// iterate through JSONArray path and fill waypoint_list with new LatLng objects
 				Iterator<String> file_keys = file_json.keys();
 				String path_name;
@@ -214,5 +259,62 @@ class SavedWaypointsStuff
 				}
 
 				return available_paths_map;
+		}
+
+		void loadWaypointsFromFile(String filename, ArrayList<LatLng> result)
+		{
+				HashMap<String, ArrayList<LatLng>> waypoints_map = parseWaypointsFile(filename);
+				// TODO: dialog to select which path
+
+				result.add(new LatLng(45.40662232640679, 11.00061325283366));
+		}
+
+
+		ArrayList<LatLng> loadWaypointsFromFile()
+		{
+				File[] waypoint_files = new File(directory).listFiles();
+				final String[] waypoint_filenames = new String[waypoint_files.length];
+				for (int i = 0; i < waypoint_files.length; i++)
+				{
+						waypoint_filenames[i] = waypoint_files[i].getName();
+				}
+				// TODO: dialog to select a file
+				final Dialog dialog = new Dialog(mContext);
+				dialog.setContentView(R.layout.save_waypoints_choose_file_layout);
+				dialog.setTitle("Choose a saved waypoints file");
+				final EditText filename_edittext = (EditText) dialog.findViewById(R.id.new_wp_filename_text);
+				Button use_existing_button = (Button) dialog.findViewById(R.id.use_existing_wp_file_button);
+				use_existing_button.setText("Load from this file");
+				Button create_new_button = (Button) dialog.findViewById(R.id.create_new_wp_file_button);
+				final Spinner existing_files_spinner = (Spinner) dialog.findViewById(R.id.existing_wp_file_spinner);
+				SpinnerAdapter existing_files_spinner_adapter = new ArrayAdapter<>(mContext, R.layout.boat_name, waypoint_filenames);
+				existing_files_spinner.setAdapter(existing_files_spinner_adapter);
+				create_new_button.setVisibility(View.GONE); // don't need this
+				filename_edittext.setVisibility(View.GONE);
+
+				final ArrayList<LatLng> result = new ArrayList<>();
+				use_existing_button.setOnClickListener(new View.OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+								// TODO: dialog to choose a path from the available ones (spinner with the above map's keys as options)
+								Long iL = existing_files_spinner.getSelectedItemId();
+								int i = iL.intValue();
+								// TODO: have to pass the results list in order to make this process synchronous?
+								loadWaypointsFromFile(waypoint_filenames[i], result);
+								dialog.dismiss();
+						}
+				});
+				dialog.show();
+
+				StringBuilder sb = new StringBuilder();
+				for (LatLng wp : result)
+				{
+						sb.append(wp.toString() + "\n");
+				}
+				Log.i(logTag, String.format("Loaded waypoints: %s", sb.toString()));
+
+				return result;
 		}
 }

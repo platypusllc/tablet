@@ -879,20 +879,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 														{
 																ArrayList<LatLng> temp = saved_waypoint_stuff.loadWaypointsFromFile();
 																if (temp == null) break;
-
+																replaceWaypointMarkers(temp);
 																break;
 														}
-														/*
-														case "Load Waypoint File":
-														{
-																try
-																{
-																		loadWayointFiles();
-																}
-																catch (Exception e) { }
-																break;
-														}
-														*/
 														case "Snooze Alarms":
 														{
 																synchronized (_batteryVoltageLock)
