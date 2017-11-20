@@ -545,7 +545,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				public void run() { Toast.makeText(context, toastString, Toast.LENGTH_SHORT).show(); }
 		}
 
-		void addSingleWaypointMarker(LatLng point) // ASDF
+		void addSingleWaypointMarker(LatLng point)
 		{
 				waypoint_list.add(point);
 				String title = "waypoint_" + Integer.toString(marker_list.size());
@@ -1091,7 +1091,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										path_map.get(boat_name).clearPoints();
 										waypath_outline_map.get(boat_name).clear();
 										waypath_top_map.get(boat_name).clear();
-										clearWaypointMarkers(); // ASDF
+										clearWaypointMarkers();
 								}
 						}
 				});
