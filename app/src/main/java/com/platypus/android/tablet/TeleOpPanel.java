@@ -1200,7 +1200,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								removeWaypaths("");
 								if (waypoint_list.size() > 2)
 								{
-										unowned_path = new Region((ArrayList<LatLng>)waypoint_list.clone(), AreaType.SPIRAL, currentTransectDist);
+										try
+										{
+												Region region = new Region((ArrayList<LatLng>) waypoint_list.clone(), AreaType.SPIRAL, currentTransectDist);
+												unowned_path = region.convertToSimplePath();
+										}
+										catch (Exception e)
+										{
+												Log.e(logTag, String.format("Generating spiral error: %s", e.getMessage()));
+												return;
+										}
 										addWaypaths("");
 										calculatePathDistance();
 								}
@@ -1231,7 +1240,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								removeWaypaths("");
 								if (waypoint_list.size() > 2)
 								{
-										unowned_path = new Region((ArrayList<LatLng>)waypoint_list.clone(), AreaType.LAWNMOWER, currentTransectDist);
+										try
+										{
+												Region region = new Region((ArrayList<LatLng>) waypoint_list.clone(), AreaType.LAWNMOWER, currentTransectDist);
+												unowned_path = region.convertToSimplePath();
+										}
+										catch (Exception e)
+										{
+												Log.e(logTag, String.format("Generating lawnmower error: %s", e.getMessage()));
+												return;
+										}
 										addWaypaths("");
 										calculatePathDistance();
 								}

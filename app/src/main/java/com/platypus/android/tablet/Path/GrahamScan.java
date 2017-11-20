@@ -21,6 +21,9 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * NOTE: modified by Jason Blum Nov. 2017 to use floating point numbers and Android
+ *
  */
 package com.platypus.android.tablet.Path;
 
@@ -30,12 +33,12 @@ import java.util.*;
 /**
  *
  */
-public final class GrahamScan {
+final class GrahamScan {
 
 		/**
 		 * An enum denoting a directional-turn between 3 points (vectors).
 		 */
-		protected static enum Turn { CLOCKWISE, COUNTER_CLOCKWISE, COLLINEAR }
+		protected enum Turn { CLOCKWISE, COUNTER_CLOCKWISE, COLLINEAR }
 
 		/**
 		 * Returns true iff all points in <code>points</code> are collinear.
@@ -43,7 +46,7 @@ public final class GrahamScan {
 		 * @param points the list of points.
 		 * @return       true iff all points in <code>points</code> are collinear.
 		 */
-		protected static boolean areAllCollinear(List<PointF> points) {
+		private static boolean areAllCollinear(List<PointF> points) {
 
 				if(points.size() < 2) {
 						return true;
@@ -65,38 +68,21 @@ public final class GrahamScan {
 		}
 
 		/**
-		 * Returns the convex hull of the points created from <code>xs</code>
-		 * and <code>ys</code>. Note that the first and last point in the returned
-		 * <code>List&lt;java.awt.Point&gt;</code> are the same point.
+		 * Returns the convex hull of the points created from <code>points</code>.
 		 *
-		 * @param xs the x coordinates.
-		 * @param ys the y coordinates.
-		 * @return   the convex hull of the points created from <code>xs</code>
-		 *           and <code>ys</code>.
-		 * @throws IllegalArgumentException if <code>xs</code> and <code>ys</code>
-		 *                                  don't have the same size, if all points
-		 *                                  are collinear or if there are less than
-		 *                                  3 unique points present.
+		 * @param points the x,y coordinates of the points
+		 * @return   the convex hull of the points
 		 */
-		public static List<PointF> getConvexHull(float[] xs, float[] ys) throws IllegalArgumentException {
-
-				if(xs.length != ys.length) {
-						throw new IllegalArgumentException("xs and ys don't have the same size");
-				}
-
-				List<PointF> points = new ArrayList<PointF>();
-
-				for(int i = 0; i < xs.length; i++) {
-						points.add(new PointF(xs[i], ys[i]));
-				}
-
-				return getConvexHull(points);
-		}
-
-		public static ArrayList<Double[]> getConvexHull(ArrayList<Double[]> points)
+		static ArrayList<Integer> getConvexHull(ArrayList<Double[]> points)
 		{
-				float[] xs = new float[];
-				ArrayList<PointF> hull = getConvexHull()
+				List<PointF> p = new ArrayList<>();
+
+				for(int i = 0; i < points.size(); i++) {
+						float x = points.get(i)[0].floatValue();
+						float y = points.get(i)[1].floatValue();
+						p.add(new PointF(x, y));
+				}
+				return getConvexHull(p);
 		}
 
 
@@ -112,9 +98,9 @@ public final class GrahamScan {
 		 * @throws IllegalArgumentException if all points are collinear or if there
 		 *                                  are less than 3 unique points present.
 		 */
-		public static List<PointF> getConvexHull(List<PointF> points) throws IllegalArgumentException {
+		private static ArrayList<Integer> getConvexHull(List<PointF> points) throws IllegalArgumentException {
 
-				List<PointF> sorted = new ArrayList<PointF>(getSortedPointSet(points));
+				List<PointF> sorted = new ArrayList<>(getSortedPointSet(points));
 
 				if(sorted.size() < 3) {
 						throw new IllegalArgumentException("can only create a convex hull of 3 or more unique points");
@@ -124,7 +110,7 @@ public final class GrahamScan {
 						throw new IllegalArgumentException("cannot create a convex hull from collinear points");
 				}
 
-				Stack<PointF> stack = new Stack<PointF>();
+				Stack<PointF> stack = new Stack<>();
 				stack.push(sorted.get(0));
 				stack.push(sorted.get(1));
 
@@ -150,10 +136,18 @@ public final class GrahamScan {
 						}
 				}
 
-				// close the hull
-				stack.push(sorted.get(0));
+				// DON'T close the hull for our spiral creation
+				// stack.push(sorted.get(0));
 
-				return new ArrayList<PointF>(stack);
+				// TODO: instead of returning the points, return the index of the points in the original list
+				ArrayList<Integer> original_indices = new ArrayList<>();
+				for (PointF p : stack)
+				{
+						original_indices.add(points.indexOf(p));
+				}
+
+				//return new ArrayList<>(stack);
+				return original_indices;
 		}
 
 		/**
@@ -204,9 +198,8 @@ public final class GrahamScan {
 										return 0;
 								}
 
-								// use longs to guard against int-underflow
-								double thetaA = Math.atan2((long)a.y - lowest.y, (long)a.x - lowest.x);
-								double thetaB = Math.atan2((long)b.y - lowest.y, (long)b.x - lowest.x);
+								double thetaA = Math.atan2(a.y - lowest.y, a.x - lowest.x);
+								double thetaB = Math.atan2(b.y - lowest.y, b.x - lowest.x);
 
 								if(thetaA < thetaB) {
 										return -1;
@@ -217,11 +210,10 @@ public final class GrahamScan {
 								else {
 										// collinear with the 'lowest' point, let the point closest to it come first
 
-										// use longs to guard against int-over/underflow
-										double distanceA = Math.sqrt((((long)lowest.x - a.x) * ((long)lowest.x - a.x)) +
-														(((long)lowest.y - a.y) * ((long)lowest.y - a.y)));
-										double distanceB = Math.sqrt((((long)lowest.x - b.x) * ((long)lowest.x - b.x)) +
-														(((long)lowest.y - b.y) * ((long)lowest.y - b.y)));
+										double distanceA = Math.sqrt(((lowest.x - a.x) * (lowest.x - a.x)) +
+														((lowest.y - a.y) * (lowest.y - a.y)));
+										double distanceB = Math.sqrt(((lowest.x - b.x) * (lowest.x - b.x)) +
+														((lowest.y - b.y) * (lowest.y - b.y)));
 
 										if(distanceA < distanceB) {
 												return -1;
@@ -259,7 +251,6 @@ public final class GrahamScan {
 		 */
 		protected static Turn getTurn(PointF a, PointF b, PointF c) {
 
-				// use longs to guard against int-over/underflow
 				float crossProduct = ((b.x - a.x) * (c.y - a.y)) -
 								((b.y - a.y) * (c.x - a.x));
 
