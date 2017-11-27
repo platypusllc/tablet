@@ -9,7 +9,6 @@ import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,8 +31,6 @@ public class Region
 		private AreaType area_type;
 		private double transect_distance = 10;
 		private String logTag = "Region";
-		private double last_min_dist_to_centroid = 9999999; // start as a huge number
-		private double last_max_dist_to_centroid = 9999999; // start as a huge number
 
 		public Region (ArrayList<LatLng> _original_points, AreaType _area_type, double _transect_distance) throws Exception
 		{
@@ -66,6 +63,7 @@ public class Region
 				path_points.clear();
 				for (Double[] p : path_xy)
 				{
+						Log.d(logTag, String.format("final sequence point = [%.1f, %.1f]", p[0], p[1]));
 						// add back in the UTM offset
 						p[0] += utm_centroid[0];
 						p[1] += utm_centroid[1];
@@ -129,7 +127,6 @@ public class Region
 		private double distance_to_centroid(Double[] a)
 		{
 				return distance(a, local_centroid);
-				// return Math.sqrt(a[0]*a[0] + a[1]*a[1]); // assuming centroid is 0, 0
 		}
 
 		private double min_distance_to_centroid(ArrayList<Double[]> points)
@@ -188,7 +185,39 @@ public class Region
 				return new int[]{maxi, maxj};
 		}
 
-		private ArrayList<Double[]> mergeClosePoints(ArrayList<Double[]> points)
+		private ArrayList<Boolean> isInsideHull(ArrayList<Double[]> hull, ArrayList<Double[]> points)
+		{
+				// Check sign of dot product between
+				//     vector 1: vector from a vertex to the point in question
+				//     vector 2: the normal vector associated with that vertex's line
+				// If the dot product is negative, the point has to be outside of the hull
+				ArrayList<Boolean> result = new ArrayList<>();
+				ArrayList<Double> normal_angles = lineSegmentNormalAngles(hull);
+				for (int i = 0; i < points.size(); i++)
+				{
+						boolean isInside = true;
+						Double[] p = points.get(i);
+						//Log.d(logTag, String.format("isInside(): checking point = [%.1f, %.1f]", p[0], p[1]));
+						for (int j = 0; j < hull.size(); j++)
+						{
+								//Log.v(logTag, String.format("isInside(): hull vertex = [%.1f, %.1f]", hull.get(j)[0], hull.get(j)[1]));
+								Double[] normal = new Double[]{Math.cos(normal_angles.get(j)), Math.sin(normal_angles.get(j))};
+								Double[] diff = difference(hull.get(j), p);
+								//Log.v(logTag, String.format("isInside(): normal = [%.1f, %.1f],  vertex to point = [%.1f, %.1f], dot = %.1f",
+								//				normal[0], normal[1], diff[0], diff[1], dot(normal, diff)));
+								if (dot(normal, diff) < 0)
+								{
+										Log.v(logTag, String.format("isInside(): point %d is not inside", i));
+										isInside = false;
+										break;
+								}
+						}
+						result.add(isInside);
+				}
+				return result;
+		}
+
+		private ArrayList<Double[]> mergeClosePoints(ArrayList<Double[]> points, double merging_distance)
 		{
 				// merge one pair at a time, recurse until no pairs can be merged OR only 3 points remain OR all points would merge
 				if (points.size() < 4) return points;
@@ -199,7 +228,7 @@ public class Region
 				{
 						for (int j = 0; j < points.size(); j++)
 						{
-								if ((i != j) && (pairwise_distances[i][j] < transect_distance))
+								if ((i != j) && (pairwise_distances[i][j] < merging_distance))
 								{
 										if (!merging_map.containsKey(j)) merging_map.put(i, j);
 										break;
@@ -216,7 +245,7 @@ public class Region
 				{
 						a = entry.getKey();
 						b = entry.getValue();
-						Log.w(logTag, String.format("Merging index %d and %d", a, b));
+						Log.d(logTag, String.format("Merging index %d and %d", a, b));
 						break;
 				}
 
@@ -234,7 +263,7 @@ public class Region
 								result.add(points.get(i));
 						}
 				}
-				return mergeClosePoints(result);
+				return mergeClosePoints(result, merging_distance);
 		}
 
 		private Double[] calculateCentroid(ArrayList<Double[]> points)
@@ -263,22 +292,6 @@ public class Region
 		private ArrayList<Double> lineSegmentNormalAngles(ArrayList<Double[]> points)
 		{
 				ArrayList<Double[]> rolled_points = shiftArrayList(points, 1);
-
-				/*
-				StringBuilder sb0, sb1;
-				sb0 = new StringBuilder();
-				sb1 = new StringBuilder();
-				for (int i = 0; i < points.size(); i++)
-				{
-						String a = String.format("[%.0f, %.0f]\n", points.get(i)[0], points.get(i)[1]);
-						String b = String.format("[%.0f, %.0f]\n", rolled_points.get(i)[0], rolled_points.get(i)[1]);
-						sb0.append(a);
-						sb1.append(b);
-				}
-				Log.v(logTag, "points = \n" + sb0.toString());
-				Log.v(logTag, "rolled_points = \n" + sb1.toString());
-				*/
-
 				ArrayList<Double> result = new ArrayList<>();
 				for (int i = 0; i < points.size(); i++)
 				{
@@ -313,10 +326,8 @@ public class Region
 				{
 						// first call: just add convex hull to path and recurse
 						path_xy.addAll(previous_hull);
-						path_xy.add(path_xy.get(0).clone());
+						path_xy.add(path_xy.get(0).clone()); // close the hull
 						inwardNextHull(previous_hull);
-						last_min_dist_to_centroid = 9999999;
-						last_max_dist_to_centroid = 9999999;
 						return; // recursion stack unravels here, so return, now with path_xy fully populated
 				}
 
@@ -363,8 +374,19 @@ public class Region
 				// to compare old to new for overshoot, need to shift back by one (2nd must become 1st)
 				intersections = shiftArrayList(intersections, -1);
 
+				// TODO: Always check if a point is inside the hull
+				ArrayList<Boolean> is_inside = isInsideHull(previous_hull, intersections);
+				for (int i = 0; i < intersections.size(); i++)
+				{
+						if (!is_inside.get(i))
+						{
+								Log.i(logTag, String.format("Point %d is outside of the previous hull, truncating", i));
+								path_xy.add(local_centroid);
+								return;
+						}
+				}
+
 				// check for overshoot, ending early if you find it
-				local_centroid = calculateCentroid(intersections);
 				for (int i = 0; i < previous_hull.size(); i++)
 				{
 						Double[] p_old = previous_hull.get(i);
@@ -390,10 +412,8 @@ public class Region
 						}
 						if (old_coord*new_coord <= 0)
 						{
-								Log.i(logTag, String.format("inwardNextHull detected overshoot: index %d, %s", i, which_coordinate));
+								Log.i(logTag, String.format("inwardNextHull detected overshoot: index %d, %s. Truncating", i, which_coordinate));
 								path_xy.add(local_centroid);
-								last_min_dist_to_centroid = 9999999;
-								last_max_dist_to_centroid = 9999999;
 								return;
 						}
 				}
@@ -402,75 +422,13 @@ public class Region
 				intersections = shiftArrayList(intersections, -1);
 
 				// merge any points that are too close together to track
-				intersections = mergeClosePoints(intersections);
+				// use the transect distance. This is aggressive, but effectively prevents most transects leapfrogging each other
+				intersections = mergeClosePoints(intersections, transect_distance);
 
 				local_centroid = calculateCentroid(intersections);
-				/*
-				double min_d_to_c = min_distance_to_centroid(intersections);
-				double max_d_to_c = max_distance_to_centroid(intersections);
-				if (min_d_to_c <= transect_distance)
-				{
-						Log.i(logTag, "inwardNextHull detected a point < transect_distance from the centroid.");
-						path_xy.add(local_centroid);
-						last_min_dist_to_centroid = 9999999;
-						return;
-				}
-				Log.d(logTag, String.format("old min dist = %.0f, new min dist = %.0f", last_min_dist_to_centroid, min_d_to_c));
-				Log.d(logTag, String.format("old max dist = %.0f, new max dist = %.0f", last_max_dist_to_centroid, max_d_to_c));
-				if (min_d_to_c < (last_min_dist_to_centroid + transect_distance))
-				{
-						// include that extra buffer of + transect_distance. Only trigger when the algorithm is exploding
-						last_min_dist_to_centroid = min_d_to_c;
-				}
-				else
-				{
-						Log.i(logTag, "inwardNextHull detected an increase in min distance to centroid");
-						// reduction in minimum distance should be monotonic
-						path_xy.add(local_centroid);
-						last_min_dist_to_centroid = 9999999;
-						last_max_dist_to_centroid = 9999999;
-						return;
-				}
-				if (max_d_to_c < (last_max_dist_to_centroid + transect_distance))
-				{
-						last_max_dist_to_centroid = max_d_to_c;
-				}
-				else
-				{
-						Log.i(logTag, "inwardNextHull detected an increase in max distance to centroid");
-						// reduction in minimum distance should be monotonic
-						path_xy.add(local_centroid);
-						last_min_dist_to_centroid = 9999999;
-						last_max_dist_to_centroid = 9999999;
-						return;
-				}
-				*/
+				Log.i(logTag, String.format("New local centroid = [%.1f, %.1f]", local_centroid[0], local_centroid[1]));
 
-				// TODO: check that the spiral always turns the same way, point by point.
-				// TODO:     if it ever deviates, truncate with the centroid and end
-				Double[] p0 = path_xy.get(path_xy.size()-2);
-				Double[] p1 = path_xy.get(path_xy.size()-1);
-				double old_angle = Math.atan2(p1[1]-p0[1], p1[0]-p0[0]);
-				for (int i = 0; i < intersections.size(); i++)
-				{
-						Double[] p2 = intersections.get(i);
-						double angle = Math.atan2(p2[1]-p1[1], p2[0]-p1[0]);
-						if (wrapToPi(angle - old_angle) > -Math.PI/8) // angle should usually increase, certainly no sharp drops
-						{
-								path_xy.add(p2);
-								p1 = p2;
-								old_angle = angle;
-						}
-						else
-						{
-								Log.i(logTag, "inwardNextHull detected wrong spiral direction. Truncating");
-								Log.d(logTag, String.format("wrong spiral, old_angle = %.6f, angle = %.6f", old_angle, angle));
-								path_xy.add(local_centroid);
-								last_min_dist_to_centroid = 9999999;
-								last_max_dist_to_centroid = 9999999;
-								return;
-						}
-				}
+				path_xy.addAll(intersections);
 				path_xy.add(intersections.get(0).clone()); // close the hull before moving to inward hull
 				inwardNextHull(intersections);
 		}
