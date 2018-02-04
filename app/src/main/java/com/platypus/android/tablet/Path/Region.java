@@ -9,8 +9,12 @@ import org.jscience.geography.coordinates.UTM;
 import org.jscience.geography.coordinates.crs.ReferenceEllipsoid;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
@@ -30,6 +34,7 @@ public class Region
 		private UTM original_utm;
 		private AreaType area_type;
 		private double transect_distance = 10;
+		private double max_dist_to_centroid = -1;
 		private String logTag = "Region";
 
 		public Region (ArrayList<LatLng> _original_points, AreaType _area_type, double _transect_distance) throws Exception
@@ -41,7 +46,7 @@ public class Region
 				switch (area_type)
 				{
 						case SPIRAL:
-								inwardNextHull(convex_xy);
+								inwardNextHull(convex_xy, 0);
 								break;
 
 						case LAWNMOWER:
@@ -124,28 +129,28 @@ public class Region
 				return a[0]*b[0] + a[1]*b[1];
 		}
 
-		private double distance_to_centroid(Double[] a)
+		private double distanceToCentroid(Double[] a)
 		{
 				return distance(a, local_centroid);
 		}
 
-		private double min_distance_to_centroid(ArrayList<Double[]> points)
+		private double minDistanceToCentroid(ArrayList<Double[]> points)
 		{
 				double min_distance = -1;
 				for (int i = 0; i < points.size(); i++)
 				{
-						double d = distance_to_centroid(points.get(i));
+						double d = distanceToCentroid(points.get(i));
 						if (min_distance < 0 || d < min_distance) min_distance = d;
 				}
 				return min_distance;
 		}
 
-		private double max_distance_to_centroid(ArrayList<Double[]> points)
+		private double maxDistanceToCentroid(ArrayList<Double[]> points)
 		{
 				double max_distance = -1;
 				for (int i = 0; i < points.size(); i++)
 				{
-						double d = distance_to_centroid(points.get(i));
+						double d = distanceToCentroid(points.get(i));
 						if (max_distance < 0 || d > max_distance) max_distance = d;
 				}
 				return max_distance;
@@ -183,6 +188,54 @@ public class Region
 						}
 				}
 				return new int[]{maxi, maxj};
+		}
+
+		private boolean isMergeValid(ArrayList<Double[]> hull, Double[] i12, Double[] i23, Double[] i13)
+		{
+				double dist_12 = distanceToCentroid(i12);
+				double dist_23 = distanceToCentroid(i23);
+				double dist_13 = distanceToCentroid(i13);
+				Log.i(logTag, String.format("dist_12 = %.1f,  dist_23 = %.1f,  dist_13 = %.1f", dist_12, dist_23, dist_13));
+
+				if (dist_13 < dist_12 && dist_13 < dist_23 && hull.size() > 3 && isInsideHull(hull, i13))
+				{
+						/*
+						How to judge if a point is above or below a line:
+						equation for line --> y = mx + b
+						1) using centroid and i12, find m and b
+							a) know change in y, now change in x --> m
+							b) b = y - mx --> plug in m, x and y of centroid to find b
+						2) plug in i23[0] i23[1] for x and y --> mx + b - y = positive or negative?
+						3) plug in i13[0] i13[1] for x and y --> mx + b - y = positive or negative?
+						4) If the signs in #2 and #3 are the same, then i13 can be valid
+						 */
+						Double[] diff = difference(local_centroid, i12);
+						double m = diff[1]/diff[0];
+						double b = i12[1] - m*i12[0];
+						if (Math.signum((m*i23[0] + b - i23[1])*(m*i13[0] + b - i13[1])) > 0)
+						{
+								// same sign - valid
+								return true;
+						}
+				}
+				return false;
+		}
+
+		private Boolean isInsideHull(ArrayList<Double[]> hull, Double[] p)
+		{
+				ArrayList<Double> normal_angles = lineSegmentNormalAngles(hull);
+				Boolean isInside = true;
+				for (int j = 0; j < hull.size(); j++)
+				{
+						Double[] normal = new Double[]{Math.cos(normal_angles.get(j)), Math.sin(normal_angles.get(j))};
+						Double[] diff = difference(hull.get(j), p);
+						if (dot(normal, diff) < 0)
+						{
+								isInside = false;
+								break;
+						}
+				}
+				return isInside;
 		}
 
 		private ArrayList<Boolean> isInsideHull(ArrayList<Double[]> hull, ArrayList<Double[]> points)
@@ -304,7 +357,7 @@ public class Region
 				return result;
 		}
 
-		private Double[] intersection(Double[] line1_point1, Double[] line1_point2, Double[] line2_point1, Double[] line2_point2)
+		private Double[] findIntersection(Double[] line1_point1, Double[] line1_point2, Double[] line2_point1, Double[] line2_point2)
 		{
 				Double[] d1 = difference(line1_point1, line1_point2);
 				Double[] d2 = difference(line2_point1, line2_point2);
@@ -316,7 +369,7 @@ public class Region
 				return new Double[]{c*d2[0] + line2_point1[0], c*d2[1] + line2_point1[1]};
 		}
 
-		private void inwardNextHull(ArrayList<Double[]> previous_hull)
+		private void inwardNextHull(ArrayList<Double[]> previous_hull, int inward_count)
 		{
 				// recursive. Given the previous set of points, calculate the next set of points. Append them to path_xy until the centroid is reached.
 				// the first points (i.e. path_xy is empty) are the first convex hull
@@ -327,7 +380,7 @@ public class Region
 						// first call: just add convex hull to path and recurse
 						path_xy.addAll(previous_hull);
 						path_xy.add(path_xy.get(0).clone()); // close the hull
-						inwardNextHull(previous_hull);
+						inwardNextHull(previous_hull, 1);
 						return; // recursion stack unravels here, so return, now with path_xy fully populated
 				}
 
@@ -361,22 +414,108 @@ public class Region
 				// find intersections between the new lines
 				ArrayList<Double[]> new_segments_point_1_rolled = shiftArrayList(new_segments_point_1, 1);
 				ArrayList<Double[]> new_segments_point_2_rolled = shiftArrayList(new_segments_point_2, 1);
-				ArrayList<Double[]> intersections = new ArrayList<>();
-				for (int i = 0; i < new_segments_point_1.size(); i++)
+				ArrayList<Double[]> new_segments_point_1_twice_rolled = shiftArrayList(new_segments_point_1, 2);
+				ArrayList<Double[]> new_segments_point_2_twice_rolled = shiftArrayList(new_segments_point_2, 2);
+				ArrayList<Double[]> accepted = new ArrayList<>();
+				Set<List<Double>> intersections = new HashSet<>(); // cannot use Double[] (an array) in a set!
+				Set<List<Double>> rejected = new HashSet<>();
+				int mergedCount = 0;
+				for (int segi = 0; segi < new_segments_point_1.size(); segi++)
 				{
-						intersections.add(intersection(
-										new_segments_point_1.get(i),
-										new_segments_point_2.get(i),
-										new_segments_point_1_rolled.get(i),
-										new_segments_point_2_rolled.get(i)));
+						Double[] p1 = previous_hull.get(segi);
+						Log.v(logTag, String.format("base vertex = [%.1f, %.1f]", p1[0], p1[1]));
+						Log.v(logTag, String.format("vertices, line 1 = [%.1f,%.1f], [%.1f, %.1f]",
+										new_segments_point_1.get(segi)[0],
+										new_segments_point_1.get(segi)[1],
+										new_segments_point_2.get(segi)[0],
+										new_segments_point_2.get(segi)[1]));
+						Log.v(logTag, String.format("vertices, line 2 = [%.1f,%.1f], [%.1f, %.1f]",
+										new_segments_point_1_rolled.get(segi)[0],
+										new_segments_point_1_rolled.get(segi)[1],
+										new_segments_point_2_rolled.get(segi)[0],
+										new_segments_point_2_rolled.get(segi)[1]));
+						Log.v(logTag, String.format("vertices, line 3 = [%.1f,%.1f], [%.1f, %.1f]",
+										new_segments_point_1_twice_rolled.get(segi)[0],
+										new_segments_point_1_twice_rolled.get(segi)[1],
+										new_segments_point_2_twice_rolled.get(segi)[0],
+										new_segments_point_2_twice_rolled.get(segi)[1]));
+
+						Double[] intersection_12 = findIntersection(
+										new_segments_point_1.get(segi),
+										new_segments_point_2.get(segi),
+										new_segments_point_1_rolled.get(segi),
+										new_segments_point_2_rolled.get(segi));
+
+						Double[] intersection_23 = findIntersection(
+										new_segments_point_1_rolled.get(segi),
+										new_segments_point_2_rolled.get(segi),
+										new_segments_point_1_twice_rolled.get(segi),
+										new_segments_point_2_twice_rolled.get(segi));
+
+						Double[] intersection_13 = findIntersection(
+										new_segments_point_1.get(segi),
+										new_segments_point_2.get(segi),
+										new_segments_point_1_twice_rolled.get(segi),
+										new_segments_point_2_twice_rolled.get(segi));
+
+						Log.v(logTag, String.format("i12: [%.1f, %.1f]", intersection_12[0], intersection_12[1]));
+						Log.v(logTag, String.format("i23: [%.1f, %.1f]", intersection_23[0], intersection_23[1]));
+						Log.v(logTag, String.format("i13: [%.1f, %.1f]", intersection_13[0], intersection_13[1]));
+
+						double dist_12 = distanceToCentroid(intersection_12);
+						double dist_23 = distanceToCentroid(intersection_23);
+						double dist_13 = distanceToCentroid(intersection_13);
+						Log.v(logTag, String.format("dist_12 = %.1f,  dist_23 = %.1f,  dist_13 = %.1f", dist_12, dist_23, dist_13));
+						boolean validMerge = isMergeValid(previous_hull, intersection_12, intersection_23, intersection_13);
+						if (validMerge)
+						{
+								// need to merge - only retain intersection_13 and skip ahead
+								// NOTE: this idea totally breaks down if we already have a triangle
+								Log.v(logTag, String.format("segi=%d: merging two intersections", segi));
+								intersections.add(Arrays.asList(intersection_13[0], intersection_13[1]));
+								rejected.add(Arrays.asList(intersection_12[0], intersection_12[1]));
+								rejected.add(Arrays.asList(intersection_23[0], intersection_23[1]));
+								mergedCount += 1;
+						}
+						else
+						{
+								// no need to merge - only retain intersection_12 and move on normally
+								Log.v(logTag, String.format("segi=%d: normal intersection", segi));
+								intersections.add(Arrays.asList(intersection_12[0], intersection_12[1]));
+								intersections.add(Arrays.asList(intersection_23[0], intersection_23[1]));
+						}
 				}
 
-				// to compare old to new for overshoot, need to shift back by one (2nd must become 1st)
-				intersections = shiftArrayList(intersections, -1);
+				for (List<Double> intersection : intersections)
+				{
+						if (!rejected.contains(intersection))
+						{
+								accepted.add(new Double[]{intersection.get(0), intersection.get(1)});
+						}
+				}
 
-				// TODO: Always check if a point is inside the hull
-				ArrayList<Boolean> is_inside = isInsideHull(previous_hull, intersections);
-				for (int i = 0; i < intersections.size(); i++)
+				// if there aren't at least three accepted vertices truncate
+				if (accepted.size() < 3)
+				{
+						Log.i(logTag, "There are less than 3 accepted vertices, truncating");
+						path_xy.add(local_centroid);
+						return;
+				}
+
+				Log.d(logTag, String.format("Accepted %d intersection vertices", accepted.size()));
+
+				// the accepted points will be out of order. Get their convex hull for the order
+				ArrayList<Integer> convex_indices = GrahamScan.getConvexHull(accepted);
+				ArrayList<Double[]> reordered = new ArrayList<>();
+				for (Integer i : convex_indices)
+				{
+						reordered.add(accepted.get(i));
+						Log.v(logTag, String.format("New vertex [%.1f, %.1f]", accepted.get(i)[0], accepted.get(i)[1]));
+				}
+
+				// Check for overshoot #1: Always check if a point is inside the hull
+				ArrayList<Boolean> is_inside = isInsideHull(previous_hull, reordered);
+				for (int i = 0; i < reordered.size(); i++)
 				{
 						if (!is_inside.get(i))
 						{
@@ -386,51 +525,44 @@ public class Region
 						}
 				}
 
-				// check for overshoot, ending early if you find it
-				for (int i = 0; i < previous_hull.size(); i++)
+				/*
+				// Check for overshoot #2: max distance to centroid must always decrease
+				if (max_dist_to_centroid < 0)
 				{
-						Double[] p_old = previous_hull.get(i);
-						Double[] p_new = intersections.get(i);
-						Double[] diff_old = difference(p_old, local_centroid);
-						Double[] diff_new = difference(p_new, local_centroid);
-						double old_coord = 0;
-						double new_coord = 0;
-						String which_coordinate;
-
-						// only use the larger of the two coordinates to avoid false positives
-						if (Math.abs(diff_old[0]) > Math.abs(diff_old[1]))
-						{
-								old_coord = diff_old[0];
-								new_coord = diff_new[0];
-								which_coordinate = "x";
-						}
-						else
-						{
-								old_coord = diff_old[1];
-								new_coord = diff_new[1];
-								which_coordinate = "y";
-						}
-						if (old_coord*new_coord <= 0)
-						{
-								Log.i(logTag, String.format("inwardNextHull detected overshoot: index %d, %s. Truncating", i, which_coordinate));
-								path_xy.add(local_centroid);
-								return;
-						}
+						// the first time
+						max_dist_to_centroid = maxDistanceToCentroid(previous_hull);
 				}
+				double new_max_dist = maxDistanceToCentroid(reordered);
+				if (new_max_dist < max_dist_to_centroid)
+				{
+						max_dist_to_centroid = new_max_dist; // continue normally
+				}
+				else
+				{
+						Log.i(logTag, "Max distance to centroid did not decrease, truncating");
+						path_xy.add(local_centroid);
+						return;
+				}
+				*/
 
 				// to create a *closed-hull* spiral we need to shift back by one again (3rd must become 1st)
-				intersections = shiftArrayList(intersections, -1);
+				// TODO: Find a "primary vertex" in the original first hull that we will use as a tool to order all subsequent hulls
+				// TODO: To find the shift necessary to create that nice inward spiral,
+				// TODO:      we start by finding the index of the point closest to the primary vertex
+				// TODO: Once we know that, shift by the difference between this and the inward_count (the number of hulls inward)
+				// TODO: If done correctly, we can figure out how to perfectly align the order of points
+				int shift = -1*inward_count;
+				shift += mergedCount;
+				reordered = shiftArrayList(reordered, shift);
 
-				// merge any points that are too close together to track
-				// use the transect distance. This is aggressive, but effectively prevents most transects leapfrogging each other
-				intersections = mergeClosePoints(intersections, transect_distance);
-
-				local_centroid = calculateCentroid(intersections);
+				local_centroid = calculateCentroid(reordered);
 				Log.i(logTag, String.format("New local centroid = [%.1f, %.1f]", local_centroid[0], local_centroid[1]));
 
-				path_xy.addAll(intersections);
-				path_xy.add(intersections.get(0).clone()); // close the hull before moving to inward hull
-				inwardNextHull(intersections);
+				path_xy.addAll(reordered);
+				path_xy.add(reordered.get(0).clone()); // close the hull before moving to inward hull
+
+				inward_count += 1;
+				inwardNextHull(reordered, inward_count);
 		}
 
 		private void convexHull() throws Exception
