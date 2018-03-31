@@ -462,15 +462,14 @@
         android:layout_toRightOf="@+id/relativeLayout_boat"
         >
 
-
-
             <com.mapbox.mapboxsdk.maps.MapView
                 android:id="@+id/mapview"
                 android:layout_width="fill_parent"
                 android:layout_height="match_parent"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
-                mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets"/>
+                mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets">
+            </com.mapbox.mapboxsdk.maps.MapView>
 
             <Button
                 style="?android:attr/buttonStyleSmall"
@@ -481,6 +480,14 @@
                 android:layout_alignTop="@id/mapview"
                 android:layout_alignLeft="@id/mapview"/>
 
+            <!--
+            <ToggleButton
+                android:id="@+id/help_mode_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HELP MODE"/>
+            -->
+
             <Button
                 android:id="@+id/advopt"
                 style="?android:attr/buttonStyleSmall"
@@ -490,6 +497,16 @@
                 android:layout_alignParentRight="true"
                 android:text="Advanced Options"
                 />
+
+            <Switch
+                android:id="@+id/help_mode_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_toLeftOf="@id/advopt"
+                android:text=""
+                android:textOff="normal mode"
+                android:textOn="help mode"/>
 
         <com.platypus.android.tablet.Joystick.JoystickView
             android:id="@+id/joystickView"

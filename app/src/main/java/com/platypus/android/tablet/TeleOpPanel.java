@@ -102,6 +102,7 @@ import android.widget.PopupMenu;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -193,6 +194,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		SensorStuff sensor_stuff = null;
 		SavedWaypointsStuff saved_waypoint_stuff = null;
+
+		HelpModeStuff help_mode_stuff = null;
+		Switch help_mode_switch = null;
 
 		TextView battery_value = null;
 		TextView waypointInfo = null;
@@ -582,6 +586,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				this.setContentView(R.layout.tabletlayoutswitch);
 				sensor_stuff = new SensorStuff(this);
 				saved_waypoint_stuff = new SavedWaypointsStuff(context);
+				help_mode_stuff = new HelpModeStuff(this);
 
 				// establish color_map
 				color_map.put(0, new HashMap<String, Integer>());
@@ -624,6 +629,16 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				spiral_button = (Button) this.findViewById(R.id.spiral_button);
 				lawnmower_button = (Button) this.findViewById(R.id.lawnmower_button);
 				reverse_order_button = (Button) this.findViewById(R.id.reverse_order_button);
+
+				help_mode_switch = (Switch) this.findViewById(R.id.help_mode_switch);
+				help_mode_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+				{
+						@Override
+						public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+						{
+								help_mode_stuff.setHelpModeOn(isChecked);
+						}
+				});
 
 				jar1_button = (Button) this.findViewById(R.id.jar1_button);
 				jar2_button = (Button) this.findViewById(R.id.jar2_button);
@@ -823,24 +838,31 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View view)
 						{
-								if (mMapboxMap == null)
+								if (help_mode_stuff.isHelpModeOn())
 								{
-										Toast.makeText(getApplicationContext(), "Please wait for the map to load", Toast.LENGTH_LONG).show();
-										return;
+										help_mode_stuff.getTourGuide("center_view").playOn(view);
 								}
-								Boat boat = currentBoat();
-								if (boat == null)
+								else
 								{
-										Toast.makeText(getApplicationContext(), "Please Connect to a boat first", Toast.LENGTH_LONG).show();
-										return;
+										if (mMapboxMap == null)
+										{
+												Toast.makeText(getApplicationContext(), "Please wait for the map to load", Toast.LENGTH_LONG).show();
+												return;
+										}
+										Boat boat = currentBoat();
+										if (boat == null)
+										{
+												Toast.makeText(getApplicationContext(), "Please Connect to a boat first", Toast.LENGTH_LONG).show();
+												return;
+										}
+										LatLng location = currentBoat().getLocation();
+										if (location == null)
+										{
+												Toast.makeText(getApplicationContext(), "Boat still finding GPS location", Toast.LENGTH_LONG).show();
+												return;
+										}
+										mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(location).zoom(16).build()));
 								}
-								LatLng location = currentBoat().getLocation();
-								if (location == null)
-								{
-										Toast.makeText(getApplicationContext(), "Boat still finding GPS location", Toast.LENGTH_LONG).show();
-										return;
-								}
-								mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(location).zoom(16).build()));
 						}
 				});
 
@@ -990,7 +1012,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
-								connectBox();
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("connect_to_boat").playOn(v);
+								}
+								else
+								{
+										connectBox();
+								}
 						}
 				});
 				connectBox(); // start the app with the connect dialog popped up
