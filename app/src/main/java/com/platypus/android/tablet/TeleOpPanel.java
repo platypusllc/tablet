@@ -841,28 +841,27 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								if (help_mode_stuff.isHelpModeOn())
 								{
 										help_mode_stuff.getTourGuide("center_view").playOn(view);
+										return;
 								}
-								else
+
+								if (mMapboxMap == null)
 								{
-										if (mMapboxMap == null)
-										{
-												Toast.makeText(getApplicationContext(), "Please wait for the map to load", Toast.LENGTH_LONG).show();
-												return;
-										}
-										Boat boat = currentBoat();
-										if (boat == null)
-										{
-												Toast.makeText(getApplicationContext(), "Please Connect to a boat first", Toast.LENGTH_LONG).show();
-												return;
-										}
-										LatLng location = currentBoat().getLocation();
-										if (location == null)
-										{
-												Toast.makeText(getApplicationContext(), "Boat still finding GPS location", Toast.LENGTH_LONG).show();
-												return;
-										}
-										mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(location).zoom(16).build()));
+										Toast.makeText(getApplicationContext(), "Please wait for the map to load", Toast.LENGTH_LONG).show();
+										return;
 								}
+								Boat boat = currentBoat();
+								if (boat == null)
+								{
+										Toast.makeText(getApplicationContext(), "Please Connect to a boat first", Toast.LENGTH_LONG).show();
+										return;
+								}
+								LatLng location = currentBoat().getLocation();
+								if (location == null)
+								{
+										Toast.makeText(getApplicationContext(), "Boat still finding GPS location", Toast.LENGTH_LONG).show();
+										return;
+								}
+								mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(location).zoom(16).build()));
 						}
 				});
 
@@ -1015,11 +1014,9 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								if (help_mode_stuff.isHelpModeOn())
 								{
 										help_mode_stuff.getTourGuide("connect_to_boat").playOn(v);
+										return;
 								}
-								else
-								{
-										connectBox();
-								}
+								connectBox();
 						}
 				});
 				connectBox(); // start the app with the connect dialog popped up
@@ -1029,6 +1026,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("start_autonomy").playOn(v);
+										return;
+								}
 								Log.i(logTag, "startWaypoints() called...");
 								paused = false;
 								pause_wp_button.setBackground(getDrawable(R.drawable.pause_button));
@@ -1084,6 +1086,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("pause_autonomy").playOn(v);
+										return;
+								}
 								Boat boat = currentBoat();
 								if (boat != null)
 								{
@@ -1109,6 +1116,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("stop_autonomy").playOn(v);
+										return;
+								}
 								paused = false;
 								pause_wp_button.setBackground(getDrawable(R.drawable.pause_button));
 								Boat boat = currentBoat();
@@ -1120,7 +1132,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										path_map.get(boat_name).clearPoints();
 										waypath_outline_map.get(boat_name).clear();
 										waypath_top_map.get(boat_name).clear();
-										clearWaypointMarkers(); // ASDF
+										clearWaypointMarkers();
 								}
 						}
 				});
@@ -1130,6 +1142,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("undo_last_wp").playOn(v);
+										return;
+								}
 								Log.i(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
 								if (marker_list.size() > 0)
 								{
@@ -1151,6 +1168,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("remove_all_waypoints").playOn(v);
+										return;
+								}
 								Log.i(logTag, String.format("waypoint_list.size() = %d,   marker_list.size() = %d", waypoint_list.size(), marker_list.size()));
 								if (marker_list.size() > 0)
 								{
@@ -1164,6 +1186,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("drop_wp_at_boat").playOn(v);
+										return;
+								}
 								final Boat boat = currentBoat();
 								if (boat == null)
 								{
@@ -1190,6 +1217,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("straight_path").playOn(v);
+										return;
+								}
 								// create a Path object from the current waypoints
 								// draw the lines between the current waypoints to show the path
 								// calculate the path length and show it in the text
@@ -1214,6 +1246,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("spiral").playOn(v);
+										return;
+								}
 								try
 								{
 										currentTransectDist = Double.valueOf(transect_distance_input.getText().toString());
@@ -1245,6 +1282,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("lawnmower").playOn(v);
+										return;
+								}
 								try
 								{
 										currentTransectDist = Double.valueOf(transect_distance_input.getText().toString());
@@ -1276,6 +1318,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("reverse_wp_order").playOn(v);
+										return;
+								}
 								if (waypoint_list.size() > 1)
 								{
 										unowned_path.clearPoints();
@@ -1357,6 +1404,11 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 						@Override
 						public void onClick(View v)
 						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide(String.format("jar_%d", number)).playOn(v);
+										return;
+								}
 								if (button.isClickable())
 								{
 										Boat boat = currentBoat();
@@ -1412,6 +1464,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								Toast.makeText(context, "Sampler reset or stopped successfully", Toast.LENGTH_SHORT).show();
 						}
 				}
+
+				sampler_reset_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("reset_sampler").playOn(v);
+										return;
+								}
+						}
+				});
 				sampler_reset_button.setOnLongClickListener(new View.OnLongClickListener()
 				{
 						@Override
@@ -1425,6 +1490,18 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								boat.resetSampler(new ResetSamplerSuccessRunnable(),
 												new ToastFailureCallback("Sampler Reset Msg timed out"));
 								return false;
+						}
+				});
+
+				sampler_stop_all_button.setOnClickListener(new OnClickListener()
+				{
+						@Override
+						public void onClick(View v)
+						{
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("stop_jars").playOn(v);
+								}
 						}
 				});
 				sampler_stop_all_button.setOnLongClickListener(new View.OnLongClickListener()
