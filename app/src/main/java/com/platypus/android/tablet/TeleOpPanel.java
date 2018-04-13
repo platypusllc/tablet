@@ -69,6 +69,8 @@ import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.MenuPopupWindow;
 import android.util.JsonReader;
 import android.view.MenuItem;
 import android.view.View;
@@ -97,6 +99,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ListPopupWindow;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.RadioButton;
@@ -156,6 +159,19 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								// TODO: core lib call with void listener, if completed, set acknowledged to true
 								boat.sendAutonomousPredicateMessage(apm.generateStringifiedJSON(), null);
 						}
+				}
+		}
+
+		public void invalidateRecursive(ViewGroup layout) // ASDF
+		{
+				int count = layout.getChildCount();
+				View child;
+				for (int i = 0; i < count; i++) {
+						child = layout.getChildAt(i);
+						if(child instanceof ViewGroup)
+								invalidateRecursive((ViewGroup) child);
+						else
+								child.invalidate();
 				}
 		}
 
@@ -869,9 +885,71 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				advanced_options_button.setOnClickListener(new OnClickListener()
 				{
 						@Override
-						public void onClick(View v)
+						public void onClick(final View v)
 						{
-								PopupMenu popup = new PopupMenu(TeleOpPanel.this, advanced_options_button);
+								final ListPopupWindow list_popup_window = new ListPopupWindow(context);
+								list_popup_window.setAnchorView(v);
+								final String[] items = {
+												"Satellite Map",
+												"Vector Map",
+												"Set Home"
+								};
+								list_popup_window.setAdapter(new ArrayAdapter<String>(context, R.layout.adv_opt_item, items));
+								list_popup_window.setContentWidth(200); // forced to manually set layout width here!
+								list_popup_window.setOnItemClickListener(new AdapterView.OnItemClickListener()
+								{
+										@Override
+										public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+										{
+												String item_string = items[position];
+												switch (item_string)
+												{
+														case "Satellite Map":
+														{
+																if (help_mode_stuff.isHelpModeOn())
+																{
+
+																		help_mode_stuff.getTourGuide("sat_map").playOn(view);
+
+																		help_mode_stuff.getTourGuide("sat_map").getOverlay().bringToFront();
+
+																		//help_mode_stuff.getTourGuide("sat_map").getToolTip().bringToFront();
+																		//help_mode_stuff.getTourGuide("sat_map").getOverlay().setZ(1000);
+																		//ViewCompat.setZ(help_mode_stuff.getTourGuide("sat_map").getOverlay(), 1000);
+																		//ViewCompat.setElevation(help_mode_stuff.getTourGuide("sat_map").getOverlay(), 1000);
+																		//ViewCompat.setTranslationZ(help_mode_stuff.getTourGuide("sat_map").getOverlay(), 1000);
+																		//findViewById(R.id.relativeLayout_map).invalidate();
+																		//parent.invalidate();
+																		//help_mode_stuff.getTourGuide("sat_map").getOverlay().invalidate();
+																		//view.invalidate();
+																		//help_mode_stuff.getTourGuide("sat_map").getToolTip().setZ(2000);
+																		//help_mode_stuff.getTourGuide("sat_map").getToolTip().invalidate();
+
+																		ViewGroup everything = (ViewGroup) findViewById(R.id.linlay);
+																		invalidateRecursive(everything);
+
+																		//parent.invalidate();
+																}
+																else
+																{
+																		if (mMapboxMap != null) mMapboxMap.setStyle(Style.SATELLITE);
+																		list_popup_window.dismiss();
+																}
+																break;
+														}
+												}
+										}
+								});
+								list_popup_window.show();
+								if (help_mode_stuff.isHelpModeOn())
+								{
+
+								}
+
+
+
+								/*
+								final PopupMenu popup = new PopupMenu(TeleOpPanel.this, advanced_options_button);
 								popup.getMenuInflater().inflate(R.menu.dropdownmenu, popup.getMenu());
 								popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener()
 								{
@@ -881,6 +959,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 												{
 														case "Satellite Map":
 														{
+																// ASDF
+																if (help_mode_stuff.isHelpModeOn())
+																{
+																		final View view = findViewById(item.getItemId()); // ASDF
+																		help_mode_stuff.getTourGuide("sat_map").playOn(view);
+																		break;
+																}
+
 																if (mMapboxMap != null) mMapboxMap.setStyle(Style.SATELLITE);
 																break;
 														}
@@ -946,6 +1032,14 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										}
 								});
 								popup.show();
+								*/
+								/*
+								if (help_mode_stuff.isHelpModeOn())
+								{
+										help_mode_stuff.getTourGuide("adv_opts").playOn(v);
+										help_mode_stuff.getTourGuide("adv_opts").getToolTip().bringToFront();
+								}
+								*/
 						}
 				});
 
@@ -997,8 +1091,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 				// Joystick
 				joystick.setYAxisInverted(false);
-				joystick.setOnJostickMovedListener(joystick_moved_listener);
-				joystick.setOnJostickClickedListener(null);
+				joystick.setOnJoystickMovedListener(joystick_moved_listener);
+				joystick.setOnJoystickClickedListener(null);
 
 				senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 				senAccelerometer = senSensorManager

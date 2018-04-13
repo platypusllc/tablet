@@ -3,6 +3,8 @@ package com.platypus.android.tablet;
 import android.app.Activity;
 import android.view.Gravity;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
 
 import java.util.HashMap;
 
@@ -225,6 +227,28 @@ class HelpModeStuff
 								Gravity.RIGHT | Gravity.TOP,
 								40
 				);
+
+				createTourGuide(
+								"adv_opts",
+								"Expands advanced option menu",
+								"",
+								Gravity.LEFT | Gravity.BOTTOM,
+								75
+				);
+
+				createTourGuide(
+								"sat_map",
+								"Switch to satellite map imagery",
+								"",
+								Gravity.LEFT,
+								75
+				);
+
+				// TODO:
+				/*
+
+				all advanced options
+				 */
 
 		}
 }

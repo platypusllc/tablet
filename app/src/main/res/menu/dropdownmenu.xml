@@ -5,7 +5,9 @@
 
     <item
         android:id="@+id/sat"
-        android:title="Satellite Map" />
+        android:title="Satellite Map"
+        android:actionViewClass="android.widget.Button"/>
+
     <item
         android:id="@+id/vector"
         android:title="Vector Map" />
