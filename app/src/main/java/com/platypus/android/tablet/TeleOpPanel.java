@@ -118,6 +118,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 {
 		HashMap<String, Boat> boats_map = new HashMap<>();
 		HashMap<String, MarkerViewOptions> boat_markers_map = new HashMap<>();
+		HashMap<String, MarkerViewOptions> home_markers_map = new HashMap<>();
 		HashMap<String, Path> path_map = new HashMap<>();
 		HashMap<String, ArrayList<Polyline>> waypath_outline_map = new HashMap<>();
 		HashMap<String, ArrayList<Polyline>> waypath_top_map = new HashMap<>();
@@ -211,8 +212,8 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		MapView mv;
 		MapboxMap mMapboxMap;
 
-		LatLng home_location = null;
-		Marker home_marker;
+		//LatLng home_location = null;
+		// Marker home_marker;
 		IconFactory mIconFactory;
 
 		int current_wp_list_selected = -1; // which element selected
@@ -238,8 +239,6 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 		double[] rPID = {1, 0, .2};
 
 		double battery_voltage = 0.0;
-
-		String waypointFileName = "waypoints.txt";
 
 		ArrayList<LatLng> waypoint_list = new ArrayList<LatLng>(); // waypoints selected by the user
 		ArrayList<Marker> marker_list = new ArrayList<>(); // markers associated with those waypoints
@@ -545,7 +544,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 				public void run() { Toast.makeText(context, toastString, Toast.LENGTH_SHORT).show(); }
 		}
 
-		void addSingleWaypointMarker(LatLng point) // ASDF
+		void addSingleWaypointMarker(LatLng point)
 		{
 				waypoint_list.add(point);
 				String title = "waypoint_" + Integer.toString(marker_list.size());
@@ -1091,7 +1090,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 										path_map.get(boat_name).clearPoints();
 										waypath_outline_map.get(boat_name).clear();
 										waypath_top_map.get(boat_name).clear();
-										clearWaypointMarkers(); // ASDF
+										clearWaypointMarkers();
 								}
 						}
 				});
@@ -1671,125 +1670,109 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 
 		public void setHome()
 		{
-				if (home_location == null)
+				// temporarily create new OnClickListener for map
+				// new listener will set home for currently selected boat
+				// then it will reset map's listener back to null
+				// This is all just like the method used for the waypoint movement button
+				final Boat boat = currentBoat();
+				if (boat != null)
 				{
-						new AlertDialog.Builder(context)
-										.setTitle("Set Home")
-										.setMessage("Which position do you want to use?")
-										.setPositiveButton("Boat", new DialogInterface.OnClickListener()
+						// next map click sets the marker's location and resets the map click listener to null
+						mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
+						{
+								@Override
+								public void onMapClick(@NonNull final LatLng point)
+								{
+
+										Runnable successRunnable = new Runnable()
 										{
-												public void onClick(DialogInterface dialog, int which)
+												@Override
+												public void run()
 												{
-														Boat boat = currentBoat();
-														if (boat == null)
-														{
-																Toast.makeText(context, "Connect to a boat first", Toast.LENGTH_SHORT).show();
-																return;
-														}
-														home_location = boat.getLocation();
+														final String boat_name = boat.getName();
 
-														// TODO: set the home location for the server with a core lib call
+														// marker view - automatically generate colored arrow
+														Drawable home = getResources().getDrawable(R.drawable.home_white, null);
+														int boat_color = boat.getBoatColor();
 
-														if (home_location == null)
+														home_markers_map.put(boat_name, new MarkerViewOptions()
+																		.position(point)
+																		.title(boat_name + "_home")
+																		.icon(colorIconFromDrawable(home, boat_color))
+																		.rotation(0)
+																		.anchor(0.5f, 0.5f)
+																		.flat(true));
+
+														// try to add the marker until mMapboxMap exists and it is added
+														uiHandler.post(new Runnable()
 														{
-																Toast.makeText(context, "Waiting for boat GPS", Toast.LENGTH_SHORT).show();
-																return;
-														}
-														Drawable mhome = ContextCompat.getDrawable(getApplicationContext(), R.drawable.home1);
-														Icon home_icon = colorIconFromDrawable(mhome, null);
-														MarkerOptions home_marker_options = new MarkerOptions()
-																		.position(home_location)
-																		.title("Home")
-																		.icon(home_icon);
-														home_marker = mMapboxMap.addMarker(home_marker_options);
-														marker_types_map.put(home_marker.getTitle(), PlatypusMarkerTypes.HOME);
-														mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home_location));
+																@Override
+																public void run()
+																{
+																		if (mMapboxMap != null)
+																		{
+																				Log.i(logTag, String.format("Adding home marker for %s", boat_name));
+																				mMapboxMap.addMarker(home_markers_map.get(boat_name));
+																				marker_types_map.put(home_markers_map.get(boat_name).getTitle(),
+																								PlatypusMarkerTypes.HOME);
+																		}
+																		else
+																		{
+																				uiHandler.postDelayed(this, 1000);
+																		}
+																}
+														});
 												}
-										})
-										.setNegativeButton("Tablet", new DialogInterface.OnClickListener()
+										};
+
+										boat.setHome(point, successRunnable, new ToastFailureCallback("set home message timed out"));
+
+										mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
 										{
-												public void onClick(DialogInterface dialog, int which)
-												{
-														Toast.makeText(getApplicationContext(), "Tablet-based home location not available", Toast.LENGTH_SHORT).show();
-														/* TODO: tablet location as home
-														Location tempLocation = LocationServices.FusedLocationApi.getLastLocation();
-														if (tempLocation == null)
-														{
-																Toast.makeText(getApplicationContext(), "Tablet doesn't have a location", Toast.LENGTH_SHORT).show();
-																return;
-														}
-														LatLng loc = new LatLng(tempLocation.getLatitude(), tempLocation.getLongitude());
-
-														if (loc != null)
-														{
-																Drawable mhome = ContextCompat.getDrawable(getApplicationContext(), R.drawable.home1);
-																Icon home_icon = colorIconFromDrawable(mhome, null);
-																home_location = loc;
-																MarkerOptions home_marker_options = new MarkerOptions()
-																				.position(home_location)
-																				.title("Home")
-																				.icon(home_icon);
-																home_marker = mMapboxMap.addMarker(home_marker_options);
-																marker_types_map.put(home_marker.getTitle(), PlatypusMarkerTypes.HOME);
-																mMapboxMap.moveCamera(CameraUpdateFactory.newLatLng(home_location));
-														}
-														else
-														{
-																Toast.makeText(getApplicationContext(), "Tablet doesn't have GPS Signal", Toast.LENGTH_SHORT).show();
-														}
-														*/
-												}
-										})
-										.show();
+												@Override
+												public void onMapClick(@NonNull LatLng point) { }
+										});
+								}
+						});
 				}
 				else
 				{
-						new AlertDialog.Builder(context)
-										.setTitle("Set Home")
-										.setMessage("Do you want to remove the home?")
-										.setPositiveButton("Yes", new DialogInterface.OnClickListener()
-										{
-												public void onClick(DialogInterface dialog, int which)
-												{
-														mMapboxMap.removeMarker(home_marker);
-														home_location = null;
-												}
-										})
-										.setNegativeButton("No", new DialogInterface.OnClickListener()
-										{
-												public void onClick(DialogInterface dialog, int which)
-												{
-												}
-										})
-										.show();
+						Toast.makeText(context, "Connect to a boat first", Toast.LENGTH_SHORT).show();
 				}
 		}
 
 		public void goHome()
 		{
-				if (home_location == null)
+				final Boat boat = currentBoat();
+				if (boat != null)
 				{
-						Toast.makeText(getApplicationContext(), "Set home first!", Toast.LENGTH_SHORT).show();
-						return;
-				}
-				new AlertDialog.Builder(context)
-								.setTitle("Go Home")
-								.setMessage("Let the boat go home ?")
-								.setPositiveButton("Yes", new DialogInterface.OnClickListener()
-								{
-										public void onClick(DialogInterface dialog, int which)
+						final LatLng home = boat.getHome();
+						if (home == null)
+						{
+								Toast.makeText(getApplicationContext(), "Set home first!", Toast.LENGTH_SHORT).show();
+								return;
+						}
+						new AlertDialog.Builder(context)
+										.setTitle("Go Home")
+										.setMessage("Force the boat to go home ?")
+										.setPositiveButton("Yes", new DialogInterface.OnClickListener()
 										{
-												double[] home = new double[]{home_location.getLatitude(), home_location.getLongitude()};
-												Boat boat = currentBoat();
-												boat.addWaypoint(home, new ToastFailureCallback("Go home msg timed out"));
-												Log.i(logTag, "Go home");
-										}
-								})
-								.setNegativeButton("No", new DialogInterface.OnClickListener()
-								{
-										public void onClick(DialogInterface dialog, int which) { }
-								})
-								.show();
+												public void onClick(DialogInterface dialog, int which)
+												{
+														Log.i(logTag, String.format("Forcing boat %s to home home", boat.getName()));
+														boat.goHome(new ToastFailureCallback("go home message timed out"));
+												}
+										})
+										.setNegativeButton("No", new DialogInterface.OnClickListener()
+										{
+												public void onClick(DialogInterface dialog, int which) { }
+										})
+										.show();
+				}
+				else
+				{
+						Toast.makeText(context, "Connect to a boat first", Toast.LENGTH_SHORT).show();
+				}
 		}
 
 		public void sendPID()
