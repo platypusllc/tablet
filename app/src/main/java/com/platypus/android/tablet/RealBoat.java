@@ -449,6 +449,69 @@ public class RealBoat extends Boat
 		}
 
 		@Override
+		public void setHome(LatLng home, final Runnable successCallback, final Runnable failureCallback)
+		{
+				home_location = home;
+				final double[] home_doubles = new double[]{home.getLatitude(), home.getLongitude()};
+				class SetHomeAsyncTask extends AsyncTask<Void, Void, Void>
+				{
+
+						@Override
+						protected Void doInBackground(Void... params)
+						{
+								server.setHome(home_doubles, new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												Log.i(logTag, "setting boat home successfully completed");
+												uiHandler.post(successCallback);
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.w(logTag, "setting boat home failed:" + functionError);
+												uiHandler.post(failureCallback);
+										}
+								});
+								return null;
+						}
+				}
+				new SetHomeAsyncTask().execute();
+		}
+
+		@Override
+		public void goHome(final Runnable failureCallback)
+		{
+				class GoHomeAsyncTask extends AsyncTask<Void, Void, Void>
+				{
+
+						@Override
+						protected Void doInBackground(Void... voids)
+						{
+								server.startGoHome(new FunctionObserver<Void>()
+								{
+										@Override
+										public void completed(Void aVoid)
+										{
+												Log.i(logTag, "starting go home successful");
+										}
+
+										@Override
+										public void failed(FunctionError functionError)
+										{
+												Log.w(logTag, "starting go home failed");
+												uiHandler.post(failureCallback);
+										}
+								});
+								return null;
+						}
+				}
+				new GoHomeAsyncTask().execute();
+		}
+
+		@Override
 		public void sendAutonomousPredicateMessage(final String apm, final Runnable failureCallback)
 		{
 				// TODO: need user interface to generate APMs

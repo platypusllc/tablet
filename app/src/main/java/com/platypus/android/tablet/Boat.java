@@ -41,6 +41,7 @@ public abstract class Boat
 		AtomicInteger current_waypoint_index = new AtomicInteger(-1);
 		String logTag = "Boat"; //Boat.class.getName();
 		LatLng currentLocation = null;
+		LatLng home_location = null;
 		final Object location_lock = new Object();
 		LatLng new_crumb_LatLng = null;
 		UTM new_crumb_UTM = null;
@@ -60,8 +61,8 @@ public abstract class Boat
 		String waypointState;
 		Object waypoint_state_lock = new Object();
 		boolean[] sampler_running = {false, false, false, false};
-		int boat_color;
-		int line_color;
+		private int boat_color;
+		private int line_color;
 
 		abstract public void createListeners(
 						final Runnable poseListenerCallback,
@@ -81,6 +82,8 @@ public abstract class Boat
 		abstract public void stopSample(final int jar_number, final Runnable successCallback, final Runnable failureCallback);
 		abstract public void stopSampleAll(final Runnable successCallback, final Runnable failureCallback);
 		abstract public void resetSampler(final Runnable successCallback, final Runnable failureCallback);
+		abstract public void setHome(final LatLng home, final Runnable successCallback, final Runnable failureCallback);
+		abstract public void goHome(final Runnable failureCallback);
 
 		public String getName() { return name; }
 		void setBoatColor(int _color) { boat_color = _color; }
@@ -94,6 +97,11 @@ public abstract class Boat
 		String getIpAddressString()
 		{
 				return ipAddressString;
+		}
+
+		LatLng getHome()
+		{
+				return home_location;
 		}
 
 		double getYaw()

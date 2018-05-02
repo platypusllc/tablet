@@ -578,6 +578,21 @@ public class SimulatedBoat extends Boat
 
 		}
 
+		@Override
+		public void setHome(LatLng home, final Runnable successCallback, final Runnable failureCallback)
+		{
+				home_location = home;
+				uiHandler.post(successCallback);
+		}
+
+		@Override
+		public void goHome(final Runnable failureCallback)
+		{
+				double[] home_doubles = new double[] {home_location.getLatitude(), home_location.getLongitude()};
+				addWaypoint(home_doubles, failureCallback);
+				// TODO: switch to A* method of going home
+		}
+
 
 		///////////////////////////////////////////////////////////////////////////
 		// BREADCRUMBS STUFF
