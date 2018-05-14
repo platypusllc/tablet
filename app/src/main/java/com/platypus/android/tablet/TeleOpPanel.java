@@ -377,26 +377,32 @@ public class TeleOpPanel extends Activity implements SensorEventListener
 								// TODO: only update the text fields if the current boat is selected
 								switch (lastReceived.channel)
 								{
-										case 1:
-												sensorType1.setText(label);
-												sensorData1.setText(data);
-												break;
-										case 2:
-												sensorType2.setText(label);
-												sensorData2.setText(data);
-												break;
-										case 3:
-												sensorType3.setText(label);
-												sensorData3.setText(data);
-												break;
-										case 4:
-												String[] data_split = data.split(",");
-												battery_value.setText(data_split[0].substring(1) + " V");
-												synchronized (_batteryVoltageLock)
-												{
-														battery_voltage = Double.parseDouble(data_split[0].substring(1));
-												}
-												break;
+									case 0:
+											sensorType3.setText(label);
+											sensorData3.setText(data);
+											break;
+									case 1:
+											sensorType1.setText(label);
+											sensorData1.setText(data);
+											break;
+									case 2:
+											sensorType2.setText(label);
+											sensorData2.setText(data);
+											break;
+									case 3:
+											sensorType3.setText(label);
+											sensorData3.setText(data);
+											break;
+									case 4:
+											String[] data_split = data.split(",");
+											battery_value.setText(data_split[0].substring(1) + " V");
+											synchronized (_batteryVoltageLock)
+											{
+													battery_voltage = Double.parseDouble(data_split[0].substring(1));
+											}
+											break;
+									default:
+										Log.e("sensor teleop update", "Invalid sensor channel: " + lastReceived.channel);
 								}
 						}
 				}

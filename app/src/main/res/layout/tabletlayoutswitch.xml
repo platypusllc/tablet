@@ -498,8 +498,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
-            android:layout_marginLeft="150dp"
-            android:layout_marginRight="100dp"
+            android:layout_marginLeft="50dp"
+            android:layout_marginRight="50dp"
             android:layout_toLeftOf="@id/joystickView"
             android:background="?android:attr/windowBackground"
             >
