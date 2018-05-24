@@ -3,17 +3,15 @@ package com.platypus.android.tablet.Joystick;
 /**
  * Created by zeshengxi on 10/28/15.
  */
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.HapticFeedbackConstants;
-import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
-import java.util.ArrayList;
 
 public class JoystickView extends View {
     public static final int INVALID_POINTER_ID = -1;
@@ -143,12 +141,6 @@ public class JoystickView extends View {
         yAxisInverted = true;
         userCoordinateSystem = COORDINATE_CARTESIAN;
         autoReturnToCenter = true;
-//
-//        // see if a gamepad is connected
-//        ArrayList gameControllerIds = getGameControllerIds();
-//        if (gameControllerIds.size() > 0) {
-//            Log.d(TAG, "Number of controllers connected: " + gameControllerIds.size());
-//        }
     }
 
     public void setYAxisInverted(boolean yAxisInverted) {
