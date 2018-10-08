@@ -770,4 +770,12 @@ public class SimulatedBoat extends Boat
 				}
 				startWaypoints(waypoints, null);
 		}
+		public void repeatWaypoints(boolean action)
+		{
+
+		}
+		public void holdPosition(boolean action)
+		{
+
+		}
 }

@@ -52,6 +52,10 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     public static final String KEY_PREF_VOLTAGE_ALARM = "pref_voltage_alarm";
     public static final String KEY_PREF_SNOOZE = "pref_snooze";
 
+    public static final String KEY_PREF_TURBIDITY_THRESHOLD = "pref_tt";
+    public static final String KEY_PREF_PH_THRESHOLD = "pref_pht";
+    public static final String KEY_PREF_EC_THRESHOLD = "pref_ect";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,6 +104,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
                 editor.putString(KEY_PREF_VOLTAGE_ALARM, "14.0");
                 editor.putString(KEY_PREF_SNOOZE, "5");
                 editor.putBoolean(KEY_PREF_SAVE_MAP, true);
+
                 editor.apply();
                 editor.commit();
                 return false;

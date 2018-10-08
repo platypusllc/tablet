@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:mapbox="http://schemas.android.com/apk/res-auto"
-                xmlns:tools="http://schemas.android.com/tools"
-                android:id="@+id/linlay"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linlay"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -456,61 +456,78 @@
 
     <RelativeLayout
         android:id="@+id/relativeLayout_map"
-        android:layout_height="wrap_content"
         android:layout_width="fill_parent"
-        android:layout_weight="0.5"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="0dp"
         android:layout_toRightOf="@+id/relativeLayout_boat"
-        >
+        android:layout_weight="0.5">
 
 
+        <com.mapbox.mapboxsdk.maps.MapView
+            android:id="@+id/mapview"
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets" />
 
-            <com.mapbox.mapboxsdk.maps.MapView
-                android:id="@+id/mapview"
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
-                mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets"/>
+        <Button
+            android:id="@+id/centermap"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@id/mapview"
+            android:layout_alignTop="@id/mapview"
+            android:text="Center" />
 
-            <Button
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/centermap"
-                android:text="Center"
-                android:layout_alignTop="@id/mapview"
-                android:layout_alignLeft="@id/mapview"/>
-
-            <Button
-                android:id="@+id/advopt"
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentRight="true"
-                android:text="Advanced Options"
-                />
+        <Button
+            android:id="@+id/advopt"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:text="Advanced Options" />
 
         <com.platypus.android.tablet.Joystick.JoystickView
             android:id="@+id/joystickView"
             android:layout_width="200dp"
             android:layout_height="200dp"
-            android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
-            />
+            android:layout_alignParentBottom="true" />
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/sensor_recycler_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
             android:layout_marginLeft="125dp"
             android:layout_marginRight="75dp"
             android:layout_toLeftOf="@id/joystickView"
             android:background="@color/background_holo_light"
             android:clipToPadding="false"
-            android:scrollbars="vertical"/>
-        </RelativeLayout>
+            android:scrollbars="vertical" />
+    </RelativeLayout>
+
+    <CheckBox
+        android:id="@+id/repeat_waypoints"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="281dp"
+        android:text="Repeat Waypoints" />
+
+    <CheckBox
+        android:id="@+id/station_keep"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="500dp"
+        android:layout_marginTop="0dp"
+        android:text="Hold Position" />
 
 </RelativeLayout>

@@ -157,4 +157,25 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:key="pref_sensor_notification"
+        android:title="Sensor Thresholds">
+
+        <EditTextPreference
+            android:key="pref_tt"
+            android:summary=""
+            android:title="Turbidity Threshold" />
+        <EditTextPreference
+            android:key="pref_pht"
+            android:summary=""
+            android:title="PH Threshold" />
+
+        <EditTextPreference
+            android:key="pref_ect"
+            android:summary=""
+            android:title="EC Threshold"
+            />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

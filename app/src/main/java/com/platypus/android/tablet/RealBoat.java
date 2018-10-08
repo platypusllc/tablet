@@ -724,5 +724,55 @@ public class RealBoat extends Boat
 				}
 				new ResetSamplerAsyncTask().execute();
 		}
+	public void holdPosition(boolean action)
+	{
+		if (server != null && isConnected() == true)
+		{
+			double value[]= new double[1];
+			if (action == false) {
+				value[0] = -1;
+			}
+			else
+			{
+				value[0] = 1;
+			}
+			server.setGains(9, value, new FunctionObserver<Void>() {
+				@Override
+				public void completed(Void aVoid) {
 
+				}
+
+				@Override
+				public void failed(FunctionError functionError) {
+
+				}
+			});
+		}
+	}
+	public void repeatWaypoints(boolean action)//9
+	{
+		if (server != null && isConnected() == true)
+		{
+			double value[] = new double[1];
+			if (action == false)
+			{
+				value[0] = -1;
+			}
+			else
+			{
+				value[0] = 1;
+			}
+			server.setGains(8, value, new FunctionObserver<Void>() {
+				@Override
+				public void completed(Void aVoid) {
+
+				}
+
+				@Override
+				public void failed(FunctionError functionError) {
+
+				}
+			});
+		}
+	}
 }

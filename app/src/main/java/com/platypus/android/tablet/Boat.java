@@ -84,6 +84,8 @@ public abstract class Boat
 		abstract public void resetSampler(final Runnable successCallback, final Runnable failureCallback);
 		abstract public void setHome(final LatLng home, final Runnable successCallback, final Runnable failureCallback);
 		abstract public void goHome(final Runnable failureCallback);
+	    abstract public void holdPosition(boolean action);
+	    abstract public void repeatWaypoints(boolean action);
 
 		public String getName() { return name; }
 		void setBoatColor(int _color) { boat_color = _color; }
@@ -150,6 +152,7 @@ public abstract class Boat
 		{
 				return connected.get();
 		}
+
 
 		LatLng getLocation()
 		{

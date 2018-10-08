@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.jscience:jscience:4.3.1@jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jscience/jscience/4.3.1/f97e69c82fd27ea668c624b667d72cfeb0e78bdd/jscience-4.3.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jscience/jscience/4.3.1/d94a0c8b0beaa0c6b019f452584739c0ca056b5/jscience-4.3.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
