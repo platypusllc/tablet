@@ -5,7 +5,7 @@ task accessToken {
     if (!tokenFile.exists()) {
         String tokenFileContents = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
                 "<resources>\n" +
-                "    <string name=\"mapbox_access_token\">" + "$System.env.MAPBOX_ACCESS_TOKEN" + "</string>\n" +
+                "    <string name=\"mapbox_access_token\">" + "$System.env.MAPBOX_ACCESS_TOKEN" + "</string>\n"+
                 "</resources>"
 
         if (tokenFileContents == null) {
@@ -26,20 +26,17 @@ ext {
 
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion '25'
-    defaultConfig {
+    compileSdkVersion 26
+        defaultConfig {
         applicationId "com.platypus.android.tablet"
-        minSdkVersion 21
-        targetSdkVersion 21
-        multiDexEnabled true
+            multiDexEnabled true
     }
     dexOptions {
         preDexLibraries = false
     }
     buildTypes {
         release {
-            minifyEnabled false
+            //minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
@@ -50,22 +47,22 @@ android {
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/NOTICE'
     }
-    buildTypes {
+    buildTypes{
         release {
-            minifyEnabled false
+            //minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig getSigningConfig()
-            applicationVariants.all { variant ->
-                variant.outputs.each { output ->
-                    def date = new Date();
-                    //def formattedDate = date.format('yyyyMMddHHmmss')
-                    output.outputFile = new File(output.outputFile.parent,
-                            output.outputFile.name.replace("app-release", "platypus-Tablet")
-                            //for Debug use output.outputFile = new File(output.outputFile.parent,
-                            //                             output.outputFile.name.replace("-debug", "-" + formattedDate)
-                    )
-                }
-            }
+//            applicationVariants.all { variant ->
+//                variant.outputs.each { output ->
+//                    def date = new Date();
+//                    //def formattedDate = date.format('yyyyMMddHHmmss')
+//  //                output.outputFile = new File(output.outputFile.parent,
+////                          output.outputFile.name.replace("app-release ", "platypus-Tablet")
+//                            //for Debug use output.outputFile = new File(output.outputFile.parent,
+//                            //                             output.outputFile.name.replace("-debug", "-" + formattedDate)
+//                    //)
+//                }
+//            }
         }
     }
 
@@ -87,8 +84,8 @@ dependencies {
     }
     //compile 'com.google.firebase:firebase-crash:9.4.0'
 
-    compile "com.android.support:appcompat-v7:25.4.0"
-    compile 'com.android.support:recyclerview-v7:25.4.0'
+    compile "com.android.support:appcompat-v7:26.+"
+    compile 'com.android.support:recyclerview-v7:26.+'
 
     //compile 'com.android.support:support-v4:25.0.1'
     //compile 'com.firebase:firebase-client-android:2.3.1'

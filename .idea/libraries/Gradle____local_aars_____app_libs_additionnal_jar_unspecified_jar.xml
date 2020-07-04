@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="Gradle: __local_jars__:/home/shenty/Desktop/platypus/tablet/app/libs/additionnal.jar:unspecified@jar">
+  <library name="Gradle: __local_aars__:./app/libs/additionnal.jar:unspecified@jar">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/app/libs/additionnal.jar!/" />
     </CLASSES>
