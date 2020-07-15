@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
@@ -842,6 +843,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
                         public void onClick(View v)
                         {
                           // next map click sets the marker's location and resets the map click listener to null
+
                           mMapboxMap.setOnMapClickListener(new MapboxMap.OnMapClickListener()
                             {
                               @Override
@@ -859,6 +861,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
                         }
                       });
                     waypoint_index_textview.setText(marker.getTitle());
+
                     return view;
                   }
                 else
@@ -1130,6 +1133,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
           double[][] waypoints = new double[points.size()][2];
           for (int i = 0; i < points.size(); i++)
             {
+              System.out.println("waypoint logging - tablet " + points.get(i).toString());
               LatLng latlng = points.get(i);
               waypoints[i] = new double[] {latlng.getLatitude(), latlng.getLongitude()};
             }
@@ -1799,6 +1803,7 @@ public class TeleOpPanel extends Activity implements SensorEventListener
                                          .rotation(0)
                                          .anchor(0.5f, 0.5f)
                                          .flat(true));
+
 
                     // try to add the marker until mMapboxMap exists and it is added
                     uiHandler.post(new Runnable()

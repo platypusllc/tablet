@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="Gradle: __local_aars__:./app/libs/mail.jar:unspecified@jar">
+  <library name="Gradle: ./app/libs/mail.jar">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/app/libs/mail.jar!/" />
     </CLASSES>
